@@ -47,7 +47,7 @@ BouncyCastle decides to use in the future, since it's their code and I don't hav
 any control over that.
 
 The build files (i.e. pom.xml files) are copyrighted by me (Sergio Aguayo) and fall
-under the BSD 3-clause license.
+under the same MIT license as BouncyCastle.
 
 Versions
 ========
