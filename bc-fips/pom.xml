@@ -1,0 +1,64 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bc-java-fips-parent</artifactId>
+        <version>2.0.0</version>
+    </parent>
+
+    <artifactId>bc-fips</artifactId>
+    <packaging>jar</packaging>
+    <name>Bouncy Castle Provider (FIPS Distribution)</name>
+    <version>2.0.0</version>
+    <description>The FIPS 140-3 Bouncy Castle Crypto package is a Java implementation of cryptographic algorithms certified to FIPS 140-3 level 1. This jar contains JCE provider and low-level API for the BC-FJA version 2.0.0, FIPS Certificate #4743. Please see certificate for certified platform details.</description>
+    <url>https://www.bouncycastle.org/fips-java</url>
+    <licenses>
+        <license>
+            <name>Bouncy Castle Licence</name>
+            <url>https://www.bouncycastle.org/licence.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <scm>
+        <url>bcgit@git.bouncycastle.org:bc-fips-java.git</url>
+    </scm>
+    <issueManagement>
+        <system>Support Contract</system>
+        <url>https://www.bouncycastle.org/fips-java/support</url>
+    </issueManagement>
+    <developers>
+        <developer>
+            <id>feedback-crypto</id>
+            <name>The Legion of the Bouncy Castle Inc.</name>
+            <email>feedback-crypto@bouncycastle.org</email>
+        </developer>
+    </developers>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <Application-Name>Bouncy Castle FIPS Provider</Application-Name>
+                            <Implementation-Version>${project.version}</Implementation-Version>
+                            <Specification-Vendor>BouncyCastle.org</Specification-Vendor>
+                            <Implementation-Vendor-Id>org.bouncycastle</Implementation-Vendor-Id>
+                            <Application-Library-Allowable-Codebase>*</Application-Library-Allowable-Codebase>
+                            <Implementation-Vendor>BouncyCastle.org</Implementation-Vendor>
+                            <Permissions>all-permissions</Permissions>
+                            <Caller-Allowable-Codebase>*</Caller-Allowable-Codebase>
+                            <Trusted-Library>true</Trusted-Library>
+                            <Codebase>*</Codebase>
+                            <Extension-Name>org.bouncycastle.bcfips</Extension-Name>
+                            <Specification-Version>1.1</Specification-Version>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
