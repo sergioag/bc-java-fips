@@ -26,6 +26,10 @@ Third, this repository contains the code from the source JARs without any modifi
 than organizing it for build purposes. Unfortunately, this means that it cannot be used outright,
 as described in the "Known issues" section.
 
+Finally, this repository doesn't contain any test suite for the FIPS libraries, since
+none is provided. Maybe the test suite for bc-java would be applicable for FIPS to some
+extent but, for now, it's out of scope.
+
 Known issues
 ============
 The following is the list of known issues:
