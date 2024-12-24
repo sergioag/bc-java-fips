@@ -36,6 +36,9 @@ The following is the list of known issues:
   while the original files don't. Unfortunately, this is the result of a behavior of
   maven-compiler-plugin when it detects that module-info.java exists, and it cannot be disabled.
   However, it doesn't seem to cause any harm so far. Any ideas to fix this would be appreciated.
+- JAR files are not signed. This will be added in the future, in case someone
+  wants to have sign them with an internal certificate and will be enabled via a different
+  Maven profile.
 
 License
 =======
@@ -43,8 +46,8 @@ The library code falls under the BouncyCastle license, or whatever other license
 BouncyCastle decides to use in the future, since it's their code and I don't have
 any control over that.
 
-The build files (i.e. pom.xml files) are copyrighted by me (Sergio Aguayo) and fall
-under the same MIT license as BouncyCastle.
+The build files (i.e. pom.xml files) and other misc files are copyrighted by
+me (Sergio Aguayo) and fall under the same MIT license as BouncyCastle.
 
 Versions
 ========
