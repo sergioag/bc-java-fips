@@ -23,8 +23,7 @@ real JARs as possible, there's no guarantee that there may be mistakes that may 
 not affect the functionality of the library. Thus, you're using this at your own risk.
 
 Third, this repository contains the code from the source JARs without any modifications, other
-than organizing it for build purposes. Unfortunately, this means that it cannot be used outright,
-as described in the "Known issues" section.
+than organizing it for build purposes.
 
 Finally, this repository doesn't contain any test suite for the FIPS libraries, since
 none is provided. Maybe the test suite for bc-java would be applicable for FIPS to some
@@ -33,12 +32,6 @@ extent but, for now, it's out of scope.
 Known issues
 ============
 The following is the list of known issues:
-- You'll get a "Module checksum failed" exception on startup. This is because there is no
-  HMAC.SHA256 file in the generated jars. Generating this file is out of the scope of this
-  repository. You can easily modify ``bc-fips/src/main/java/org/bouncycastle/crypto/fips/FipsStatus.java``
-  to disable this check. Since one of the goals of this repo is to have the source files
-  unchanged when compared to the upstream version, this will never be updated and no PRs
-  will be accepted for this.
 - The module-info.class files generated during the build contain the module version in it,
   while the original files don't. Unfortunately, this is the result of a behavior of
   maven-compiler-plugin when it detects that module-info.java exists, and it cannot be disabled.

@@ -13,6 +13,7 @@
         <module>bcpkix-fips</module>
         <module>bctls-fips</module>
         <module>bcutil-fips</module>
+        <module>plugins</module>
     </modules>
 
     <properties>
