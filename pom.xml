@@ -167,4 +167,42 @@
             </plugins>
         </pluginManagement>
     </build>
+    <profiles>
+        <profile>
+            <id>sign</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <!-- Jar Signer info - passed via command line -->
+                <sign.keystore>dummy</sign.keystore>
+                <sign.alias>dummy</sign.alias>
+                <sign.storepass>dummy</sign.storepass>
+                <sign.keypass>dummy</sign.keypass>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jarsigner-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>sign</id>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <keystore>${sign.keystore}</keystore>
+                            <alias>${sign.alias}</alias>
+                            <storepass>${sign.storepass}</storepass>
+                            <keypass>${sign.keypass}</keypass>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

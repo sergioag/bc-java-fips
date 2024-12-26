@@ -36,9 +36,15 @@ The following is the list of known issues:
   while the original files don't. Unfortunately, this is the result of a behavior of
   maven-compiler-plugin when it detects that module-info.java exists, and it cannot be disabled.
   However, it doesn't seem to cause any harm so far. Any ideas to fix this would be appreciated.
-- JAR files are not signed. This will be added in the future, in case someone
-  wants to have sign them with an internal certificate and will be enabled via a different
-  Maven profile.
+
+How to build
+============
+For an unsigned build, just running ``mvn package`` will do.
+
+For a signed build, you must have a keystore with the signing cert available. Then you must use the
+"sign" profile specifying some additional properties. This is a sample of such command:
+
+```mvn -Psign -Dsign.keystore=your/keystore/file -Dsign.alias=youralias -Dsign.storepass=keystorePassword -Dsign.keypass=certPassword package```
 
 License
 =======
