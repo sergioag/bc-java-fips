@@ -161,14 +161,14 @@ public class HmacGeneratorMojo extends AbstractMojo {
 
 
     /* Adapted from bc-fips/src/main/java/org/bouncycastle/util/encoders/HexEncoder.java */
-    protected final byte[] encodingTable =
+    private final byte[] encodingTable =
     {
             (byte)'0', (byte)'1', (byte)'2', (byte)'3', (byte)'4', (byte)'5', (byte)'6', (byte)'7',
             (byte)'8', (byte)'9', (byte)'a', (byte)'b', (byte)'c', (byte)'d', (byte)'e', (byte)'f'
     };
 
     /* Adapted from bc-fips/src/main/java/org/bouncycastle/util/encoders/HexEncoder.java */
-    public void encode(byte[] inBuf, byte[] outBuf) {
+    private void encode(byte[] inBuf, byte[] outBuf) {
         int inPos = 0;
         int inEnd = inBuf.length;
         int outPos = 0;
