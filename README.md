@@ -39,6 +39,18 @@ The following is the list of known issues:
 
 How to build
 ============
+
+You need to have the following JDK versions installed:
+- 1.8
+- 9
+- 11
+- 15
+
+All of these JDKs need to be registered in your `toolchains.xml` file. You can create this
+file initially by running: ``mvn toolchains:generate-jdk-toolchains-xml -Dtoolchain.file=/your/home/.m2/toolchains.xml``
+
+If you don't have the required JDK versions, the build will fail very quickly.
+
 For an unsigned build, just running ``mvn package`` will do.
 
 For a signed build, you must have a keystore with the signing cert available. Then you must use the

@@ -63,6 +63,11 @@
                             <configuration>
                                 <source>1.8</source>
                                 <target>1.8</target>
+                                <!-- Only for 1.8 as to mostly replicate the upstream jars -->
+                                <debuglevel>none</debuglevel>
+                                <jdkToolchain>
+                                    <version>[1.8,1.9)</version>
+                                </jdkToolchain>
                             </configuration>
                         </execution>
                         <execution>
@@ -77,6 +82,9 @@
                                     <compileSourceRoot>${project.basedir}/src/main/java9</compileSourceRoot>
                                 </compileSourceRoots>
                                 <multiReleaseOutput>true</multiReleaseOutput>
+                                <jdkToolchain>
+                                    <version>[9,10)</version>
+                                </jdkToolchain>
                             </configuration>
                         </execution>
                         <execution>
@@ -91,6 +99,9 @@
                                     <compileSourceRoot>${project.basedir}/src/main/java11</compileSourceRoot>
                                 </compileSourceRoots>
                                 <multiReleaseOutput>true</multiReleaseOutput>
+                                <jdkToolchain>
+                                    <version>[11,12)</version>
+                                </jdkToolchain>
                             </configuration>
                         </execution>
                         <execution>
@@ -105,6 +116,9 @@
                                     <compileSourceRoot>${project.basedir}/src/main/java15</compileSourceRoot>
                                 </compileSourceRoots>
                                 <multiReleaseOutput>true</multiReleaseOutput>
+                                <jdkToolchain>
+                                    <version>[15,16)</version>
+                                </jdkToolchain>
                             </configuration>
                         </execution>
                     </executions>
