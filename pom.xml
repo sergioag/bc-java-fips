@@ -66,6 +66,7 @@
                                 <!-- Only for 1.8 as to mostly replicate the upstream jars -->
                                 <debuglevel>none</debuglevel>
                                 <jdkToolchain>
+                                    <!-- JDK 1.8.x -->
                                     <version>[1.8,1.9)</version>
                                 </jdkToolchain>
                             </configuration>
@@ -83,6 +84,7 @@
                                 </compileSourceRoots>
                                 <multiReleaseOutput>true</multiReleaseOutput>
                                 <jdkToolchain>
+                                    <!-- JDK 9.x -->
                                     <version>[9,10)</version>
                                 </jdkToolchain>
                             </configuration>
@@ -100,6 +102,7 @@
                                 </compileSourceRoots>
                                 <multiReleaseOutput>true</multiReleaseOutput>
                                 <jdkToolchain>
+                                    <!-- JDK 11.x -->
                                     <version>[11,12)</version>
                                 </jdkToolchain>
                             </configuration>
@@ -117,6 +120,7 @@
                                 </compileSourceRoots>
                                 <multiReleaseOutput>true</multiReleaseOutput>
                                 <jdkToolchain>
+                                    <!-- JDK 15.x -->
                                     <version>[15,16)</version>
                                 </jdkToolchain>
                             </configuration>
