@@ -17,6 +17,8 @@ import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.AltSignatureAlgorithm;
+import org.bouncycastle.asn1.x509.AltSignatureValue;
 import org.bouncycastle.asn1.x509.Certificate;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.Extensions;
@@ -225,6 +227,11 @@ public class X509CertificateHolder
         return x509Certificate.getSubjectPublicKeyInfo();
     }
 
+    public TBSCertificate getTBSCertificate()
+    {
+        return x509Certificate.getTBSCertificate();
+    }
+
     /**
      * Return the underlying ASN.1 structure for the certificate in this holder.
      *
@@ -300,6 +307,53 @@ public class X509CertificateHolder
 
         return verifier.verify(this.getSignature());
     }
+
+    /**
+     * Validate the signature on the certificate in this holder.
+     *
+     * @param verifierProvider a ContentVerifierProvider that can generate a verifier for the signature.
+     * @return true if the signature is valid, false otherwise.
+     * @throws CertException if the signature cannot be processed or is inappropriate.
+     */
+//    public boolean isAlternativeSignatureValid(ContentVerifierProvider verifierProvider)
+//        throws CertException
+//    {
+//        TBSCertificate tbsCert = x509Certificate.getTBSCertificate();
+//        AltSignatureAlgorithm altSigAlg = AltSignatureAlgorithm.fromExtensions(tbsCert.getExtensions());
+//        AltSignatureValue altSigValue = AltSignatureValue.fromExtensions(tbsCert.getExtensions());
+//
+//        ContentVerifier verifier;
+//
+//        try
+//        {
+//            verifier = verifierProvider.get(AlgorithmIdentifier.getInstance(altSigAlg.toASN1Primitive()));
+//
+//            OutputStream sOut = verifier.getOutputStream();
+//
+//            ASN1Sequence tbsSeq = ASN1Sequence.getInstance(tbsCert.toASN1Primitive());
+//            ASN1EncodableVector v = new ASN1EncodableVector();
+//
+//            for (int i = 0; i != tbsSeq.size() - 1; i++)
+//            {
+//                if (i != 2) // signature field - must be ver 3 so version always present
+//                {
+//                    v.add(tbsSeq.getObjectAt(i));
+//                }
+//            }
+//
+//            v.add(CertUtils.trimExtensions(3, tbsCert.getExtensions()));
+//
+//            new DERSequence(v).encodeTo(sOut, ASN1Encoding.DER);
+//
+//            sOut.close();
+//        }
+//        catch (Exception e)
+//        {
+//            throw new CertException("unable to process signature: " + e.getMessage(), e);
+//        }
+//
+//        return verifier.verify(altSigValue.getSignature().getOctets());
+//    }
 
     public boolean equals(
         Object o)

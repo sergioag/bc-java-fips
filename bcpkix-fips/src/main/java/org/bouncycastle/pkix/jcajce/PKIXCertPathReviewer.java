@@ -162,7 +162,7 @@ public class PKIXCertPathReviewer extends CertPathValidatorUtilities
             }
             try
             {
-                CertificateFactory cf = CertificateFactory.getInstance("X.509", "BC");
+                CertificateFactory cf = CertificateFactory.getInstance("X.509", "BCFIPS");
 
                 this.certPath = cf.generateCertPath(certs);
             }
@@ -2143,7 +2143,7 @@ public class PKIXCertPathReviewer extends CertPathValidatorUtilities
             {
                 try
                 {
-                    crl.verify(workingPublicKey, "BC");
+                    crl.verify(workingPublicKey, "BCFIPS");
                 }
                 catch (Exception e)
                 {
@@ -2415,7 +2415,7 @@ public class PKIXCertPathReviewer extends CertPathValidatorUtilities
                 conn.connect();
                 if (conn.getResponseCode() == HttpURLConnection.HTTP_OK)
                 {
-                    CertificateFactory cf = CertificateFactory.getInstance("X.509","BC");
+                    CertificateFactory cf = CertificateFactory.getInstance("X.509","BCFIPS");
                     result = (X509CRL) cf.generateCRL(conn.getInputStream());
                 }
                 else

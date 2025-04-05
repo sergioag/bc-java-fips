@@ -107,8 +107,21 @@ public class PKCS12PfxPdu
         if (hasMac())
         {
             MacData pfxmData = pfx.getMacData();
-            MacDataGenerator mdGen = new MacDataGenerator(macCalcProviderBuilder.get(new AlgorithmIdentifier(pfxmData.getMac().getAlgorithmId().getAlgorithm(), new PKCS12PBEParams(pfxmData.getSalt(), pfxmData.getIterationCount().intValue()))));
-
+            MacDataGenerator mdGen;
+            if (PKCSObjectIdentifiers.id_PBMAC1.equals(pfxmData.getMac().getAlgorithmId().getAlgorithm()))
+            {
+                PBMAC1Params pbmac1Params = PBMAC1Params.getInstance(pfxmData.getMac().getAlgorithmId().getParameters());
+                if (pbmac1Params == null)
+                {
+                    throw new PKCSException("If the DigestAlgorithmIdentifier is id-PBMAC1, then the parameters field must contain valid PBMAC1-params parameters.");
+                }
+                mdGen = new MacDataGenerator(macCalcProviderBuilder.get(new AlgorithmIdentifier(pfxmData.getMac().getAlgorithmId().getAlgorithm(), pbmac1Params)));
+            }
+            else
+            {
+                mdGen = new MacDataGenerator(macCalcProviderBuilder.get(new AlgorithmIdentifier(pfxmData.getMac().getAlgorithmId().getAlgorithm(), new PKCS12PBEParams(pfxmData.getSalt(), pfxmData.getIterationCount().intValue()))));
+            }
+            
             try
             {
                 MacData mData = mdGen.build(

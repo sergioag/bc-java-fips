@@ -16,6 +16,7 @@ import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERBitString;
+import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -27,7 +28,6 @@ import org.bouncycastle.asn1.x509.TBSCertList;
 import org.bouncycastle.asn1.x509.Time;
 import org.bouncycastle.asn1.x509.V2TBSCertListGenerator;
 import org.bouncycastle.operator.ContentSigner;
-//import org.bouncycastle.util.Exceptions;
 
 /**
  * class to produce an X.509 Version 2 CRL.
@@ -116,7 +116,14 @@ public class X509v2CRLBuilder
         {
             for (Enumeration en = exts.oids(); en.hasMoreElements(); )
             {
-                extGenerator.addExtension(exts.getExtension((ASN1ObjectIdentifier)en.nextElement()));
+                ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier)en.nextElement();
+                // we remove the altSignatureAlgorithm and altSignatureValue extensions as they
+                // need to be regenerated.
+                if (Extension.altSignatureAlgorithm.equals(oid) || Extension.altSignatureValue.equals(oid))
+                {
+                    continue;
+                }
+                extGenerator.addExtension(exts.getExtension(oid));
 
             }
         }
@@ -377,7 +384,8 @@ public class X509v2CRLBuilder
     {
         try
         {
-            extGenerator = CertUtils.doReplaceExtension(extGenerator, new Extension(oid, isCritical, value.toASN1Primitive().getEncoded(ASN1Encoding.DER)));
+            extGenerator = CertUtils.doReplaceExtension(extGenerator,
+                new Extension(oid, isCritical, new DEROctetString(value)));
         }
         catch (IOException e)
         {
@@ -461,15 +469,15 @@ public class X509v2CRLBuilder
         return generateFullCRL(signer, tbsGen.generateTBSCertList());
     }
 
-//    /**
-//     * Generate an X.509 CRL, based on the current issuer
-//     * using the passed in signer and containing altSignatureAlgorithm and altSignatureValue extensions
-//     * based on the passed altSigner.
-//     *
-//     * @param signer the content signer to be used to generate the signature validating the CRL.
-//     * @param altSigner the content signer used to create the altSignatureAlgorithm and altSignatureValue extension.
-//     * @return a holder containing the resulting signed CRL.
-//     */
+    /**
+     * Generate an X.509 CRL, based on the current issuer
+     * using the passed in signer and containing altSignatureAlgorithm and altSignatureValue extensions
+     * based on the passed altSigner.
+     *
+     * @param signer the content signer to be used to generate the signature validating the CRL.
+     * @param altSigner the content signer used to create the altSignatureAlgorithm and altSignatureValue extension.
+     * @return a holder containing the resulting signed CRL.
+     */
 //    public X509CRLHolder build(
 //        ContentSigner signer,
 //        boolean isCritical,
@@ -483,7 +491,7 @@ public class X509v2CRLBuilder
 //        }
 //        catch (IOException e)
 //        {
-//            throw Exceptions.illegalStateException("cannot add altSignatureAlgorithm extension", e);
+//            throw new IllegalStateException("cannot add altSignatureAlgorithm extension", e);
 //        }
 //
 //        tbsGen.setExtensions(extGenerator.generate());
@@ -502,7 +510,7 @@ public class X509v2CRLBuilder
 //        }
 //        catch (IOException e)
 //        {
-//            throw new IllegalArgumentException("cannot produce certificate signature");
+//            throw new IllegalArgumentException("cannot produce certificate signature", e);
 //        }
 //    }
 
@@ -514,7 +522,7 @@ public class X509v2CRLBuilder
         }
         catch (IOException e)
         {
-            throw new IllegalStateException("cannot produce certificate signature");
+            throw new IllegalStateException("cannot produce certificate signature", e);
         }
     }
 
