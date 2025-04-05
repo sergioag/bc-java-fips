@@ -52,7 +52,7 @@ class ProvSSLSocketFactory
         return SSLSocketUtil.create(contextData, host, port, localHost, localPort);
     }
 
-    @Override
+    // No @Override for 1.8 method 
     public Socket createSocket(Socket s, InputStream consumed, boolean autoClose) throws IOException
     {
         return SSLSocketUtil.create(contextData, s, consumed, autoClose);
@@ -67,12 +67,12 @@ class ProvSSLSocketFactory
     @Override
     public String[] getDefaultCipherSuites()
     {
-        return contextData.getContext().getDefaultCipherSuites(true);
+        return contextData.getDefaultCipherSuites(true);
     }
 
     @Override
     public String[] getSupportedCipherSuites()
     {
-        return contextData.getContext().getSupportedCipherSuites();
+        return contextData.getSupportedCipherSuites();
     }
 }

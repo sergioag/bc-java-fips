@@ -1,8 +1,6 @@
 package org.bouncycastle.tls.crypto.impl;
 
 import java.io.IOException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 
 import org.bouncycastle.tls.AlertDescription;
 import org.bouncycastle.tls.ContentType;
@@ -32,9 +30,7 @@ public final class TlsAEADCipher
     private static final int NONCE_RFC7905 = 2;
     private static final long SEQUENCE_NUMBER_PLACEHOLDER = -1L;
 
-    private static final byte[] EPOCH_1 = {0x00, 0x01};
-
-    private static final Class fipsNonceGeneratorClass = lookup("org.bouncycastle.crypto.fips.FipsNonceGenerator");
+    private static final byte[] EPOCH_1 = { 0x00, 0x01 };
 
     private final TlsCryptoParameters cryptoParams;
     private final int keySize;
@@ -49,10 +45,18 @@ public final class TlsAEADCipher
 
     private final boolean isTLSv13;
     private final int nonceMode;
-    protected final AEADNonceGenerator encryptNonceGenerator;
+    private final AEADNonceGenerator nonceGenerator;
 
-    public TlsAEADCipher(TlsCryptoParameters cryptoParams, TlsAEADCipherImpl encryptCipher, TlsAEADCipherImpl decryptCipher,
-        int keySize, int macSize, int aeadType) throws IOException
+    /** @deprecated Use version with extra 'nonceGeneratorFactory' parameter */ 
+    public TlsAEADCipher(TlsCryptoParameters cryptoParams, TlsAEADCipherImpl encryptCipher,
+        TlsAEADCipherImpl decryptCipher, int keySize, int macSize, int aeadType) throws IOException
+    {
+        this(cryptoParams, encryptCipher, decryptCipher, keySize, macSize, aeadType, null);
+    }
+
+    public TlsAEADCipher(TlsCryptoParameters cryptoParams, TlsAEADCipherImpl encryptCipher,
+        TlsAEADCipherImpl decryptCipher, int keySize, int macSize, int aeadType,
+        AEADNonceGeneratorFactory nonceGeneratorFactory) throws IOException
     {
         final SecurityParameters securityParameters = cryptoParams.getSecurityParametersHandshake();
         final ProtocolVersion negotiatedVersion = securityParameters.getNegotiatedVersion();
@@ -98,7 +102,7 @@ public final class TlsAEADCipher
         final boolean isServer = cryptoParams.isServer();
         if (isTLSv13)
         {
-            this.encryptNonceGenerator = null;
+            nonceGenerator = null;
             rekeyCipher(securityParameters, decryptCipher, decryptNonce, !isServer);
             rekeyCipher(securityParameters, encryptCipher, encryptNonce, isServer);
             return;
@@ -130,25 +134,26 @@ public final class TlsAEADCipher
             throw new TlsFatalAlert(AlertDescription.internal_error);
         }
 
-        if (AEAD_GCM == aeadType && null != fipsNonceGeneratorClass)
+        if (AEAD_GCM == aeadType && nonceGeneratorFactory != null)
         {
             int nonceLength = fixed_iv_length + record_iv_length;
-
-            int counterBits = 64;
             byte[] baseNonce = Arrays.copyOf(encryptNonce, nonceLength);
-
+            int counterSizeInBits;
             if (negotiatedVersion.isDTLS())
             {
-                counterBits = 48;
+                counterSizeInBits = (record_iv_length - 2) * 8; // 48
                 baseNonce[baseNonce.length - 8] ^= EPOCH_1[0];
                 baseNonce[baseNonce.length - 7] ^= EPOCH_1[1];
             }
-
-            this.encryptNonceGenerator = new BCFipsAEADNonceGenerator(baseNonce, counterBits);
+            else
+            {
+                counterSizeInBits = record_iv_length * 8; // 64
+            }
+            nonceGenerator = nonceGeneratorFactory.create(baseNonce, counterSizeInBits);
         }
         else
         {
-            this.encryptNonceGenerator = null;
+            nonceGenerator = null;
         }
     }
 
@@ -185,9 +190,9 @@ public final class TlsAEADCipher
     {
         byte[] nonce = new byte[encryptNonce.length + record_iv_length];
 
-        if (null != encryptNonceGenerator)
+        if (null != nonceGenerator)
         {
-            encryptNonceGenerator.generateNonce(nonce);
+            nonceGenerator.generateNonce(nonce);
         }
         else
         {
@@ -450,33 +455,5 @@ public final class TlsAEADCipher
         default:
             throw new TlsFatalAlert(AlertDescription.internal_error);
         }
-    }
-
-    static Class lookup(final String className)
-    {
-        if (null == className)
-        {
-            return null;
-        }
-
-        return AccessController.doPrivileged(new PrivilegedAction<Class<?>>()
-        {
-            public Class<?> run()
-            {
-                try
-                {
-                    ClassLoader classLoader = TlsAEADCipher.class.getClassLoader();
-                    Class<?> clazz = (null == classLoader)
-                        ? Class.forName(className)
-                        : classLoader.loadClass(className);
-                    return clazz;
-                }
-                catch (Exception e)
-                {
-                }
-
-                return null;
-            }
-        });
     }
 }

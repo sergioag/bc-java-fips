@@ -10,7 +10,7 @@
     <artifactId>bctls-fips</artifactId>
     <packaging>bundle</packaging>
     <name>Bouncy Castle TLS/JSSE APIs (FIPS Distribution)</name>
-    <version>2.0.19</version>
+    <version>2.0.20</version>
     <description>The Bouncy Castle Java APIs for the TLS, including a JSSE provider. The APIs are designed primarily to be used in conjunction with the BC FIPS provider. The APIs may also be used with other providers although if being used in a FIPS context it is the responsibility of the user to ensure that any other providers used are FIPS certified and used appropriately.</description>
     <url>https://www.bouncycastle.org/fips-java</url>
     <licenses>

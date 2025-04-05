@@ -406,10 +406,10 @@ public class TlsServerProtocol
             {
                 agreement = crypto.createDHDomain(new TlsDHConfig(namedGroup, true)).createDH();
             }
-            else if (NamedGroup.refersToASpecificKem(namedGroup))
-            {
-                agreement = crypto.createKemDomain(new TlsKemConfig(namedGroup, true)).createKem();
-            }
+//            else if (NamedGroup.refersToASpecificKem(namedGroup))
+//            {
+//                agreement = crypto.createKemDomain(new TlsKemConfig(namedGroup, true)).createKem();
+//            }
             else
             {
                 throw new TlsFatalAlert(AlertDescription.internal_error);

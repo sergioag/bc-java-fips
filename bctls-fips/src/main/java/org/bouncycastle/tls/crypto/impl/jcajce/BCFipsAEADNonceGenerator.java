@@ -1,10 +1,11 @@
-package org.bouncycastle.tls.crypto.impl;
+package org.bouncycastle.tls.crypto.impl.jcajce;
 
 import org.bouncycastle.crypto.fips.FipsNonceGenerator;
 import org.bouncycastle.tls.AlertDescription;
 import org.bouncycastle.tls.TlsFatalAlert;
+import org.bouncycastle.tls.crypto.impl.AEADNonceGenerator;
 
-public class BCFipsAEADNonceGenerator
+class BCFipsAEADNonceGenerator
     implements AEADNonceGenerator
 {
     private final FipsNonceGenerator nonceGenerator;

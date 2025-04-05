@@ -58,6 +58,8 @@ import org.bouncycastle.tls.crypto.TlsSRPConfig;
 import org.bouncycastle.tls.crypto.TlsSecret;
 import org.bouncycastle.tls.crypto.TlsStreamSigner;
 import org.bouncycastle.tls.crypto.TlsStreamVerifier;
+import org.bouncycastle.tls.crypto.impl.AEADNonceGenerator;
+import org.bouncycastle.tls.crypto.impl.AEADNonceGeneratorFactory;
 import org.bouncycastle.tls.crypto.impl.AbstractTlsCrypto;
 import org.bouncycastle.tls.crypto.impl.TlsAEADCipher;
 import org.bouncycastle.tls.crypto.impl.TlsAEADCipherImpl;
@@ -237,9 +239,12 @@ public class JcaTlsCrypto
                 // NOTE: Ignores macAlgorithm
                 return createCipher_SM4_GCM(cryptoParams);
 
+            case EncryptionAlgorithm._28147_CNT_IMIT:
             case EncryptionAlgorithm.DES40_CBC:
             case EncryptionAlgorithm.DES_CBC:
             case EncryptionAlgorithm.IDEA_CBC:
+            case EncryptionAlgorithm.KUZNYECHIK_CTR_OMAC:
+            case EncryptionAlgorithm.MAGMA_CTR_OMAC:
             case EncryptionAlgorithm.RC2_CBC_40:
             case EncryptionAlgorithm.RC4_128:
             case EncryptionAlgorithm.RC4_40:
@@ -408,6 +413,8 @@ public class JcaTlsCrypto
             return "HmacSHA512";
         case CryptoHashAlgorithm.sm3:
             return "HmacSM3";
+        case CryptoHashAlgorithm.gostr3411_2012_256:
+            return "HmacGOST3411-2012-256";
         default:
             throw new IllegalArgumentException("invalid CryptoHashAlgorithm: " + cryptoHashAlgorithm);
         }
@@ -448,8 +455,9 @@ public class JcaTlsCrypto
             case NamedGroup.OQS_mlkem512:
             case NamedGroup.OQS_mlkem768:
             case NamedGroup.OQS_mlkem1024:
-            case NamedGroup.DRAFT_mlkem768:
-            case NamedGroup.DRAFT_mlkem1024:
+            case NamedGroup.MLKEM512:
+            case NamedGroup.MLKEM768:
+            case NamedGroup.MLKEM1024:
                 return null;
             }
         }
@@ -555,7 +563,7 @@ public class JcaTlsCrypto
         case CryptoSignatureAlgorithm.rsa_pss_pss_sha512:
             return true;
 
-        // TODO[draft-smyshlyaev-tls12-gost-suites-10]
+        // TODO[RFC 9189]
         case CryptoSignatureAlgorithm.gostr34102012_256:
         case CryptoSignatureAlgorithm.gostr34102012_512:
 
@@ -575,11 +583,6 @@ public class JcaTlsCrypto
     public boolean hasECDHAgreement()
     {
         return true;
-    }
-    
-    public boolean hasKemAgreement()
-    {
-        return false;
     }
 
     public boolean hasEncryptionAlgorithm(int encryptionAlgorithm)
@@ -628,6 +631,11 @@ public class JcaTlsCrypto
         default:
             return false;
         }
+    }
+
+    public boolean hasKemAgreement()
+    {
+        return true;
     }
 
     public boolean hasMacAlgorithm(int macAlgorithm)
@@ -737,11 +745,13 @@ public class JcaTlsCrypto
         case SignatureAlgorithm.ecdsa_brainpoolP512r1tls13_sha512:
             return true;
 
-        // TODO[draft-smyshlyaev-tls12-gost-suites-10]
+        // TODO[RFC 9189]
         case SignatureAlgorithm.gostr34102012_256:
         case SignatureAlgorithm.gostr34102012_512:
+
         // TODO[RFC 8998]
 //        case SignatureAlgorithm.sm2:
+
         default:
             return false;
         }
@@ -768,6 +778,10 @@ public class JcaTlsCrypto
         switch (signatureScheme)
         {
         case SignatureScheme.sm2sig_sm3:
+        // TODO[tls] Implement before adding
+        case SignatureScheme.DRAFT_mldsa44:
+        case SignatureScheme.DRAFT_mldsa65:
+        case SignatureScheme.DRAFT_mldsa87:
             return false;
         default:
         {
@@ -848,7 +862,7 @@ public class JcaTlsCrypto
     
     public TlsKemDomain createKemDomain(TlsKemConfig kemConfig)
     {
-        return null; // new JceTlsMLKemDomain(this, kemConfig);
+        return null; //new JceTlsMLKemDomain(this, kemConfig);
     }
 
     public TlsSecret hkdfInit(int cryptoHashAlgorithm)
@@ -1050,39 +1064,6 @@ public class JcaTlsCrypto
         }
     }
 
-    protected TlsStreamSigner createVerifyingStreamSigner(SignatureAndHashAlgorithm algorithm, PrivateKey privateKey,
-        boolean needsRandom, PublicKey publicKey) throws IOException
-    {
-        String algorithmName = JcaUtils.getJcaAlgorithmName(algorithm);
-
-        return createVerifyingStreamSigner(algorithmName, null, privateKey, needsRandom, publicKey);
-    }
-
-    protected TlsStreamSigner createVerifyingStreamSigner(String algorithmName, AlgorithmParameterSpec parameter,
-        PrivateKey privateKey, boolean needsRandom, PublicKey publicKey) throws IOException
-    {
-        try
-        {
-            Signature signer = getHelper().createSignature(algorithmName);
-            Signature verifier = getHelper().createSignature(algorithmName);
-
-            if (null != parameter)
-            {
-                signer.setParameter(parameter);
-                verifier.setParameter(parameter);
-            }
-
-            signer.initSign(privateKey, needsRandom ? getSecureRandom() : null);
-            verifier.initVerify(publicKey);
-
-            return new JcaVerifyingStreamSigner(signer, verifier);
-        }
-        catch (GeneralSecurityException e)
-        {
-            throw new TlsFatalAlert(AlertDescription.internal_error, e);
-        }
-    }
-
     protected Boolean isSupportedEncryptionAlgorithm(int encryptionAlgorithm)
     {
         switch (encryptionAlgorithm)
@@ -1132,9 +1113,12 @@ public class JcaTlsCrypto
         case EncryptionAlgorithm.SM4_GCM:
             return isUsableCipher("SM4/GCM/NoPadding", 128);
 
+        case EncryptionAlgorithm._28147_CNT_IMIT:
         case EncryptionAlgorithm.DES_CBC:
         case EncryptionAlgorithm.DES40_CBC:
         case EncryptionAlgorithm.IDEA_CBC:
+        case EncryptionAlgorithm.KUZNYECHIK_CTR_OMAC:
+        case EncryptionAlgorithm.MAGMA_CTR_OMAC:
         case EncryptionAlgorithm.RC2_CBC_40:
         case EncryptionAlgorithm.RC4_128:
         case EncryptionAlgorithm.RC4_40:
@@ -1248,7 +1232,7 @@ public class JcaTlsCrypto
         throws IOException, GeneralSecurityException
     {
         return new TlsAEADCipher(cryptoParams, new JceChaCha20Poly1305(this, helper, true),
-            new JceChaCha20Poly1305(this, helper, false), 32, 16, TlsAEADCipher.AEAD_CHACHA20_POLY1305);
+            new JceChaCha20Poly1305(this, helper, false), 32, 16, TlsAEADCipher.AEAD_CHACHA20_POLY1305, null);
     }
 
     private TlsAEADCipher createCipher_AES_CCM(TlsCryptoParameters cryptoParams, int cipherKeySize, int macSize)
@@ -1256,7 +1240,7 @@ public class JcaTlsCrypto
     {
         return new TlsAEADCipher(cryptoParams, createAEADCipher("AES/CCM/NoPadding", "AES", cipherKeySize, true),
             createAEADCipher("AES/CCM/NoPadding", "AES", cipherKeySize, false), cipherKeySize, macSize,
-            TlsAEADCipher.AEAD_CCM);
+            TlsAEADCipher.AEAD_CCM, null);
     }
 
     private TlsAEADCipher createCipher_AES_GCM(TlsCryptoParameters cryptoParams, int cipherKeySize, int macSize)
@@ -1264,7 +1248,7 @@ public class JcaTlsCrypto
     {
         return new TlsAEADCipher(cryptoParams, createAEADCipher("AES/GCM/NoPadding", "AES", cipherKeySize, true),
             createAEADCipher("AES/GCM/NoPadding", "AES", cipherKeySize, false), cipherKeySize, macSize,
-            TlsAEADCipher.AEAD_GCM);
+            TlsAEADCipher.AEAD_GCM, getFipsGCMNonceGeneratorFactory());
     }
 
     private TlsAEADCipher createCipher_ARIA_GCM(TlsCryptoParameters cryptoParams, int cipherKeySize, int macSize)
@@ -1272,7 +1256,7 @@ public class JcaTlsCrypto
     {
         return new TlsAEADCipher(cryptoParams, createAEADCipher("ARIA/GCM/NoPadding", "ARIA", cipherKeySize, true),
             createAEADCipher("ARIA/GCM/NoPadding", "ARIA", cipherKeySize, false), cipherKeySize, macSize,
-            TlsAEADCipher.AEAD_GCM);
+            TlsAEADCipher.AEAD_GCM, getFipsGCMNonceGeneratorFactory());
     }
 
     private TlsAEADCipher createCipher_Camellia_GCM(TlsCryptoParameters cryptoParams, int cipherKeySize, int macSize)
@@ -1281,7 +1265,7 @@ public class JcaTlsCrypto
         return new TlsAEADCipher(cryptoParams,
             createAEADCipher("Camellia/GCM/NoPadding", "Camellia", cipherKeySize, true),
             createAEADCipher("Camellia/GCM/NoPadding", "Camellia", cipherKeySize, false), cipherKeySize, macSize,
-            TlsAEADCipher.AEAD_GCM);
+            TlsAEADCipher.AEAD_GCM, getFipsGCMNonceGeneratorFactory());
     }
 
     protected TlsCipher createCipher_CBC(TlsCryptoParameters cryptoParams, String algorithm, int cipherKeySize,
@@ -1302,7 +1286,7 @@ public class JcaTlsCrypto
         int cipherKeySize = 16, macSize = 16;
         return new TlsAEADCipher(cryptoParams, createAEADCipher("SM4/CCM/NoPadding", "SM4", cipherKeySize, true),
             createAEADCipher("SM4/CCM/NoPadding", "SM4", cipherKeySize, false), cipherKeySize, macSize,
-            TlsAEADCipher.AEAD_CCM);
+            TlsAEADCipher.AEAD_CCM, null);
     }
 
     private TlsAEADCipher createCipher_SM4_GCM(TlsCryptoParameters cryptoParams)
@@ -1311,7 +1295,27 @@ public class JcaTlsCrypto
         int cipherKeySize = 16, macSize = 16;
         return new TlsAEADCipher(cryptoParams, createAEADCipher("SM4/GCM/NoPadding", "SM4", cipherKeySize, true),
             createAEADCipher("SM4/GCM/NoPadding", "SM4", cipherKeySize, false), cipherKeySize, macSize,
-            TlsAEADCipher.AEAD_GCM);
+            TlsAEADCipher.AEAD_GCM, getFipsGCMNonceGeneratorFactory());
+    }
+
+    /**
+     * Optionally return an {@link AEADNonceGeneratorFactory} that creates {@link AEADNonceGenerator}
+     * instances suitable for generating TLS 1.2 GCM nonces in a FIPS approved way (or null). It is not needed
+     * or intended to be used in a non-FIPS context.
+     * <p/>
+     * Clients of this {@link JcaTlsCrypto} instance MAY assume from a non-null return value that the
+     * resulting {@link AEADNonceGenerator} implementation(s) are FIPS compliant; implementations that violate
+     * this assumption risk FIPS compliance failures.
+     * <p/>
+     * In particular, when BCJSSE is configured in FIPS mode, GCM cipher suites are enabled for TLS 1.2 if
+     * (and only if) a call to this method returns a non-null value. This can be achieved by configuring
+     * BCJSSE with a user-defined {@link JcaTlsCryptoProvider} subclass, which in turn creates instances of a
+     * {@link JcaTlsCrypto} subclass, with this method overridden to return a suitable
+     * {@link AEADNonceGeneratorFactory}.
+     */
+    public AEADNonceGeneratorFactory getFipsGCMNonceGeneratorFactory()
+    {
+        return GCMFipsUtil.getDefaultFipsGCMNonceGeneratorFactory();
     }
 
     String getDigestName(int cryptoHashAlgorithm)
@@ -1332,6 +1336,8 @@ public class JcaTlsCrypto
             return "SHA-512";
         case CryptoHashAlgorithm.sm3:
             return "SM3";
+        case CryptoHashAlgorithm.gostr3411_2012_256:
+            return "GOST3411-2012-256";
         default:
             throw new IllegalArgumentException("invalid CryptoHashAlgorithm: " + cryptoHashAlgorithm);
         }

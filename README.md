@@ -83,8 +83,8 @@ Currently, the following versions are used here:
 - Jakarta SMIME source: [bcjmail-fips-2.0.5-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcjmail-fips/2.0.5/bcjmail-fips-2.0.5-sources.jar) ``SHA256SUM=16131f03c976bda42ac967d045e884ca1005d95dc661779f2d47d7199e7368a0``
 - OpenPGP/BCPG: [bcpg-fips-2.0.9.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpg-fips/2.0.9/bcpg-fips-2.0.9.jar) ``SHA256SUM=a9daf4d3c8d484a510b66dc121db1aafa435504f2aef0fa01ef3a020aae5f3ec``
 - OpenPGP/BCPG source: [bcpg-fips-2.0.9-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpg-fips/2.0.9/bcpg-fips-2.0.9-sources.jar) ``SHA256SUM=912a6e17ea91dc191a9cd01e9ae79c3625af3b0fd1aff8f6a9eb720a6d6cf23f``
-- DTLS/TLS API/JSSE Provider: [bctls-fips-2.0.19.jar](https://repo1.maven.org/maven2/org/bouncycastle/bctls-fips/2.0.19/bctls-fips-2.0.19.jar) ``SHA256SUM=0bceb027307098323b0e1365b31bca19caf4f0f20e787d1b48b40be3e6804be0``
-- DTLS/TLS API/JSSE Provider source: [bctls-fips-2.0.19-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bctls-fips/2.0.19/bctls-fips-2.0.19-sources.jar) ``SHA256SUM=a2248814a5fec8d4aa0650904f63da3a84a307ee4ae7f4c2d6c0354fe4c1b7bb``
+- DTLS/TLS API/JSSE Provider: [bctls-fips-2.0.20.jar](https://repo1.maven.org/maven2/org/bouncycastle/bctls-fips/2.0.20/bctls-fips-2.0.20.jar) ``SHA256SUM=5965f713e29fd1ebf680d4b8f6b663f1aa1b17306acb2dcbb35b20862a55cd2f``
+- DTLS/TLS API/JSSE Provider source: [bctls-fips-2.0.20-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bctls-fips/2.0.20/bctls-fips-2.0.20-sources.jar) ``SHA256SUM=f22b29f63cbfb0faf67a4a90ae8ad43e3e72ec32682458b973b6e0a8ac961d12``
 
 I try to update to new versions as soon as they get published, but there's no
 guarantee of the timing or if it will happen at all. 
