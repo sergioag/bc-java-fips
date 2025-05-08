@@ -28,7 +28,8 @@ final class X448PublicKeyParameters
         System.arraycopy(buf, off, data, 0, KEY_SIZE);
     }
 
-    public X448PublicKeyParameters(InputStream input) throws IOException
+    public X448PublicKeyParameters(InputStream input)
+        throws IOException
     {
         super(false);
 

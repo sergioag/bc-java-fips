@@ -85,10 +85,10 @@ public final class FipsPBKD
     {
         private final FipsDigestAlgorithm digestAlgorithm;
         private final PasswordConverter converter;
-        private final byte[] salt;
-        private final int    iterationCount;
+        private final byte[] password;
 
-        private byte[] password;
+        private final byte[] salt;
+        private final int iterationCount;
 
         private Parameters(FipsDigestAlgorithm digestAlgorithm, PasswordConverter converter, byte[] password, int iterationCount, byte[] salt)
         {
@@ -129,7 +129,7 @@ public final class FipsPBKD
 
         synchronized byte[] getPassword()
         {
-            return Arrays.clone(password);
+            return Arrays.clone(password); // to protect against premature finalization
         }
 
         public FipsDigestAlgorithm getPRF()
@@ -158,7 +158,6 @@ public final class FipsPBKD
             {
                 // explicitly zeroize password on deallocation
                 Arrays.fill(password, (byte)0);
-                password = null;
             }
         }
     }
@@ -210,7 +209,7 @@ public final class FipsPBKD
         public boolean hasTestPassed(T generator)
         {
             generator.init(params.password, params.salt, params.iterationCount);
-            
+
             byte[] result = generator.deriveKey(PasswordBasedDeriver.KeyType.CIPHER, 16);
 
             return Arrays.areEqual(result, kat);

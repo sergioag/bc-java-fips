@@ -15,7 +15,7 @@ import org.bouncycastle.util.Pack;
 class BaseKDFBytesGenerator
     implements DigestDerivationFunction
 {
-    private int    counterStart;
+    private int counterStart;
     private Digest digest;
     private byte[] shared;
     private byte[] iv;
@@ -23,11 +23,9 @@ class BaseKDFBytesGenerator
     /**
      * Construct a KDF Parameters generator.
      * <p>
-     * 
-     * @param counterStart
-     *            value of counter.
-     * @param digest
-     *            the digest to be used as the source of derived keys.
+     *
+     * @param counterStart value of counter.
+     * @param digest       the digest to be used as the source of derived keys.
      */
     protected BaseKDFBytesGenerator(int counterStart, Digest digest)
     {
@@ -61,14 +59,13 @@ class BaseKDFBytesGenerator
     /**
      * fill len bytes of the output buffer with bytes generated from the
      * derivation function.
-     * 
-     * @throws IllegalArgumentException
-     *             if the size of the request will cause an overflow.
-     * @throws DataLengthException
-     *             if the out buffer is too small.
+     *
+     * @throws IllegalArgumentException if the size of the request will cause an overflow.
+     * @throws DataLengthException      if the out buffer is too small.
      */
-    public int generateBytes(byte[] out, int outOff, int len) throws DataLengthException,
-            IllegalArgumentException
+    public int generateBytes(byte[] out, int outOff, int len)
+        throws DataLengthException,
+        IllegalArgumentException
     {
         if ((out.length - len) < outOff)
         {

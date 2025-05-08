@@ -131,10 +131,7 @@ class KtsCipherSpi
     protected void engineInit(int opmode, Key key, AlgorithmParameterSpec paramSpec, SecureRandom random)
         throws InvalidKeyException, InvalidAlgorithmParameterException
     {
-        if (random == null)
-        {
-            this.random = fipsProvider.getDefaultSecureRandom();
-        }
+        this.random = (random != null) ? random : fipsProvider.getDefaultSecureRandom();
 
         if (paramSpec == null)
         {

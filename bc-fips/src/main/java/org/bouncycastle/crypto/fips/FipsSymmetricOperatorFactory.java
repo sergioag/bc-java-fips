@@ -15,7 +15,7 @@ public abstract class FipsSymmetricOperatorFactory<T extends Parameters>
     // package protect constructor
     FipsSymmetricOperatorFactory()
     {
-          FipsStatus.isReady();
+        FipsStatus.isReady();
     }
 
     public abstract FipsOutputEncryptor<T> createOutputEncryptor(SymmetricKey key, T parameter);

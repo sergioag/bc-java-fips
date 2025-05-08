@@ -14,7 +14,8 @@ abstract class VariantInternalKatTest
         throw new SelfTestExecutor.TestFailedException(message);
     }
 
-    abstract void evaluate() throws Exception;
+    abstract void evaluate()
+        throws Exception;
 
     public FipsAlgorithm getAlgorithm()
     {

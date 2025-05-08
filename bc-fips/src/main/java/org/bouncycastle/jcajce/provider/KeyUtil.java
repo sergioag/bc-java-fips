@@ -217,6 +217,7 @@ class KeyUtil
 
         byte[] keyBytes = pubKey.getPublicData();
 
+        // -DM Hex.toHexString
         buf.append(algorithm)
             .append(" ")
             .append(label).append(" [")
@@ -237,6 +238,7 @@ class KeyUtil
 
         byte[] keyBytes = pubKey.getPublicData();
 
+        // -DM Hex.toHexString
         buf.append(algorithm)
             .append(" ")
             .append(label).append(" [")
@@ -257,6 +259,7 @@ class KeyUtil
 
         byte[] keyBytes = pubKey.getPublicData();
 
+        // -DM Hex.toHexString
         buf.append(algorithm)
             .append(" ")
             .append(label).append(" [")

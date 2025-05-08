@@ -12,7 +12,7 @@ import org.bouncycastle.crypto.internal.params.DhPublicKeyParameters;
 
 /**
  * a Diffie-Hellman key pair generator.
- *
+ * <p>
  * This generates keys consistent for use in the MTI/A0 key agreement protocol
  * as described in "Handbook of Applied Cryptography", Pages 516-519.
  */
@@ -32,7 +32,7 @@ class DhKeyPairGenerator
         DhKeyGeneratorHelper helper = DhKeyGeneratorHelper.INSTANCE;
         DhParameters dhp = param.getParameters();
 
-        BigInteger x = helper.calculatePrivate(dhp, param.getRandom()); 
+        BigInteger x = helper.calculatePrivate(dhp, param.getRandom());
         BigInteger y = helper.calculatePublic(dhp, x);
 
         return new AsymmetricCipherKeyPair(

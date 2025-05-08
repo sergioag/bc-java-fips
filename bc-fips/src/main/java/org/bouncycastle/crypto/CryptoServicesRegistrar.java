@@ -8,12 +8,15 @@ import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.bouncycastle.crypto.asymmetric.DHDomainParameters;
 import org.bouncycastle.crypto.asymmetric.DHValidationParameters;
 import org.bouncycastle.crypto.asymmetric.DSADomainParameters;
 import org.bouncycastle.crypto.asymmetric.DSAValidationParameters;
 import org.bouncycastle.crypto.asymmetric.ECDomainParameters;
+import org.bouncycastle.crypto.fips.FipsDRBG;
+import org.bouncycastle.crypto.fips.FipsNative;
 import org.bouncycastle.crypto.fips.FipsSecureRandom;
 import org.bouncycastle.crypto.fips.FipsStatus;
 import org.bouncycastle.crypto.fips.FipsUnapprovedOperationError;
@@ -36,8 +39,8 @@ public final class CryptoServicesRegistrar
     private static final ThreadLocal<Map<String, Object[]>> threadProperties = new ThreadLocal<Map<String, Object[]>>();
     private static final Map<String, Object[]>  globalProperties = Collections.synchronizedMap(new HashMap<String, Object[]>());
     private static final boolean isDefaultModeApprovedMode = getDefaultMode();
+    private static final AtomicReference<SecureRandomProvider> defaultSecureRandomProvider = new AtomicReference<SecureRandomProvider>();
 
-    private static volatile SecureRandomProvider defaultSecureRandomProvider;
 
     static
     {
@@ -174,6 +177,21 @@ public final class CryptoServicesRegistrar
         return approvedMode.booleanValue();
     }
 
+    public static boolean isNativeEnabled()
+    {
+        return FipsNative.isEnabled();
+    }
+
+    public static void setNativeEnabled(boolean enabled)
+    {
+        FipsNative.setEnabled(enabled);
+    }
+
+    public static NativeServices getNativeServices()
+    {
+         return FipsNative.getServices();
+    }
+
     /**
      * Return the default source of randomness.
      *
@@ -182,12 +200,14 @@ public final class CryptoServicesRegistrar
      */
     public static SecureRandom getSecureRandom()
     {
-        if (defaultSecureRandomProvider == null)
+        SecureRandomProvider secureRandomProvider = defaultSecureRandomProvider.get();
+
+        if (secureRandomProvider == null)
         {
             throw new IllegalStateException("No default SecureRandom specified and one requested - use CryptoServicesRegistrar.setSecureRandom() or CryptoServicesRegistrar.setSecureRandomProvider().");
         }
 
-        SecureRandom secureRandom = defaultSecureRandomProvider.get();
+        SecureRandom secureRandom = secureRandomProvider.get();
 
         if (isInApprovedOnlyMode())
         {
@@ -220,7 +240,9 @@ public final class CryptoServicesRegistrar
      */
     public static SecureRandom getSecureRandomIfSet(SecureRandomProvider secureRandomProvider)
     {
-        return null == defaultSecureRandomProvider ? secureRandomProvider.get() : defaultSecureRandomProvider.get();
+        SecureRandomProvider internalSecureRandomProvider = defaultSecureRandomProvider.get();
+
+        return null == internalSecureRandomProvider ? secureRandomProvider.get() : internalSecureRandomProvider.get();
     }
 
     /**
@@ -234,7 +256,7 @@ public final class CryptoServicesRegistrar
 
         if (secureRandom == null)
         {
-            defaultSecureRandomProvider = null;
+            defaultSecureRandomProvider.set(null);
             return;
         }
 
@@ -246,14 +268,14 @@ public final class CryptoServicesRegistrar
             }
         }
 
-        defaultSecureRandomProvider = new SecureRandomProvider()
+        defaultSecureRandomProvider.set(new SecureRandomProvider()
         {
             @Override
             public SecureRandom get()
             {
                 return secureRandom;
             }
-        };
+        });
     }
 
     /**
@@ -265,7 +287,17 @@ public final class CryptoServicesRegistrar
     {
         checkPermission(CanSetDefaultRandom);
 
-        defaultSecureRandomProvider = secureRandomProvider;
+        defaultSecureRandomProvider.set(secureRandomProvider);
+    }
+
+    /**
+     * Return the default entropy source for this JVM.
+     *
+     * @return the default entropy source.
+     */
+    public static EntropySourceProvider getDefaultEntropySourceProvider()
+    {
+        return FipsDRBG.getDefaultEntropySourceProvider();
     }
 
     /**
@@ -500,6 +532,7 @@ public final class CryptoServicesRegistrar
         return new DHDomainParameters(dsaParams.getP(), dsaParams.getQ(), dsaParams.getG(), L, dsaParams.getP().bitLength(), null,
             new DHValidationParameters(dsaParams.getValidationParameters().getSeed(), dsaParams.getValidationParameters().getCounter()));
     }
+
 
     /**
      * Available properties that can be set.

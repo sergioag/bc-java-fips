@@ -48,8 +48,8 @@ public class IETFUtils
         }
 
         boolean nonWhiteSpaceEncountered = false;
-        int     lastEscaped = 0;
-        char    hex1 = 0;
+        int lastEscaped = 0;
+        char hex1 = 0;
 
         for (int i = start; i != elts.length; i++)
         {
@@ -136,21 +136,21 @@ public class IETFUtils
 
         while (nTok.hasMoreTokens())
         {
-            String  token = nTok.nextToken();
+            String token = nTok.nextToken();
 
             if (token.indexOf('+') > 0)
             {
-                X500NameTokenizer   pTok = new X500NameTokenizer(token, '+');
-                X500NameTokenizer   vTok = new X500NameTokenizer(pTok.nextToken(), '=');
+                X500NameTokenizer pTok = new X500NameTokenizer(token, '+');
+                X500NameTokenizer vTok = new X500NameTokenizer(pTok.nextToken(), '=');
 
-                String              attr = vTok.nextToken();
+                String attr = vTok.nextToken();
 
                 if (!vTok.hasMoreTokens())
                 {
                     throw new IllegalArgumentException("badly formatted directory string");
                 }
 
-                String               value = vTok.nextToken();
+                String value = vTok.nextToken();
                 ASN1ObjectIdentifier oid = x500Style.attrNameToOID(attr.trim());
 
                 if (pTok.hasMoreTokens())
@@ -189,16 +189,16 @@ public class IETFUtils
             }
             else
             {
-                X500NameTokenizer   vTok = new X500NameTokenizer(token, '=');
+                X500NameTokenizer vTok = new X500NameTokenizer(token, '=');
 
-                String              attr = vTok.nextToken();
+                String attr = vTok.nextToken();
 
                 if (!vTok.hasMoreTokens())
                 {
                     throw new IllegalArgumentException("badly formatted directory string");
                 }
 
-                String               value = vTok.nextToken();
+                String value = vTok.nextToken();
                 ASN1ObjectIdentifier oid = x500Style.attrNameToOID(attr.trim());
 
                 builder.addRDN(oid, unescape(value));
@@ -234,10 +234,10 @@ public class IETFUtils
 
     public static String[] findAttrNamesForOID(
         ASN1ObjectIdentifier oid,
-        Hashtable            lookup)
+        Hashtable lookup)
     {
         int count = 0;
-        for (Enumeration en = lookup.elements(); en.hasMoreElements();)
+        for (Enumeration en = lookup.elements(); en.hasMoreElements(); )
         {
             if (oid.equals(en.nextElement()))
             {
@@ -248,7 +248,7 @@ public class IETFUtils
         String[] aliases = new String[count];
         count = 0;
 
-        for (Enumeration en = lookup.keys(); en.hasMoreElements();)
+        for (Enumeration en = lookup.keys(); en.hasMoreElements(); )
         {
             String key = (String)en.nextElement();
             if (oid.equals(lookup.get(key)))
@@ -261,8 +261,8 @@ public class IETFUtils
     }
 
     public static ASN1ObjectIdentifier decodeAttrName(
-        String      name,
-        Hashtable   lookUp)
+        String name,
+        Hashtable lookUp)
     {
         if (Strings.toUpperCase(name).startsWith("OID."))
         {
@@ -283,8 +283,8 @@ public class IETFUtils
     }
 
     public static ASN1Encodable valueFromHexString(
-        String  str,
-        int     off)
+        String str,
+        int off)
         throws IOException
     {
         byte[] data = new byte[(str.length() - off) / 2];
@@ -300,9 +300,9 @@ public class IETFUtils
     }
 
     public static void appendRDN(
-        StringBuffer          buf,
-        RDN                   rdn,
-        Hashtable             oidSymbols)
+        StringBuffer buf,
+        RDN rdn,
+        Hashtable oidSymbols)
     {
         if (rdn.isMultiValued())
         {
@@ -333,11 +333,11 @@ public class IETFUtils
     }
 
     public static void appendTypeAndValue(
-        StringBuffer          buf,
+        StringBuffer buf,
         AttributeTypeAndValue typeAndValue,
-        Hashtable             oidSymbols)
+        Hashtable oidSymbols)
     {
-        String  sym = (String)oidSymbols.get(typeAndValue.getType());
+        String sym = (String)oidSymbols.get(typeAndValue.getType());
 
         if (sym != null)
         {
@@ -372,6 +372,7 @@ public class IETFUtils
             try
             {
                 vBuf.append('#');
+                // -DM Hex.toHexString
                 vBuf.append(Hex.toHexString(value.toASN1Primitive().getEncoded(ASN1Encoding.DER)));
             }
             catch (IOException e)
@@ -392,25 +393,25 @@ public class IETFUtils
         {
             switch (vBuf.charAt(index))
             {
-                case ',':
-                case '"':
-                case '\\':
-                case '+':
-                case '=':
-                case '<':
-                case '>':
-                case ';':
-                {
-                    vBuf.insert(index, "\\");
-                    index += 2;
-                    ++end;
-                    break;
-                }
-                default:
-                {
-                    ++index;
-                    break;
-                }
+            case ',':
+            case '"':
+            case '\\':
+            case '+':
+            case '=':
+            case '<':
+            case '>':
+            case ';':
+            {
+                vBuf.insert(index, "\\");
+                index += 2;
+                ++end;
+                break;
+            }
+            default:
+            {
+                ++index;
+                break;
+            }
             }
         }
 

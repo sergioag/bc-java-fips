@@ -7,7 +7,7 @@ import org.bouncycastle.util.Strings;
 
 /**
  * TupleHash - a hash designed  to  simply  hash  a  tuple  of  input  strings,  any  or  all  of  which  may  be  empty  strings,
- *  in  an  unambiguous way with an optional XOF mode.
+ * in  an  unambiguous way with an optional XOF mode.
  * <p>
  * From NIST Special Publication 800-185 - SHA-3 Derived Functions:cSHAKE, KMAC, TupleHash and ParallelHash
  * </p>
@@ -96,7 +96,7 @@ class TupleHash
         {
             wrapUp(getDigestSize());
         }
-        
+
         int rv = cshake.doFinal(out, outOff, getDigestSize());
 
         reset();
@@ -110,7 +110,7 @@ class TupleHash
         {
             wrapUp(getDigestSize());
         }
-        
+
         int rv = cshake.doFinal(out, outOff, outLen);
 
         reset();

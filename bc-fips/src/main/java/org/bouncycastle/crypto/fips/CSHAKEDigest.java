@@ -79,9 +79,9 @@ class CSHAKEDigest
     }
 
     public String getAlgorithmName()
-        {
-            return "CSHAKE" + fixedOutputLength;
-        }
+    {
+        return "CSHAKE" + fixedOutputLength;
+    }
 
     public int doOutput(byte[] out, int outOff, int outLen)
     {
@@ -105,7 +105,7 @@ class CSHAKEDigest
     public void reset()
     {
         super.reset();
-        
+
         if (diff != null)
         {
             diffPadAndAbsorb();

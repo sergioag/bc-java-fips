@@ -10,7 +10,9 @@ class Salsa20CoreEngine
 {
     public final static int DEFAULT_ROUNDS = 20;
 
-    /** Constants */
+    /**
+     * Constants
+     */
     private final static int STATE_SIZE = 16; // 16, 32 bit ints = 64 bytes
 
     private final static int[] TAU_SIGMA = Pack.littleEndianToInt(Strings.toByteArray("expand 16-byte k" + "expand 32-byte k"), 0, 8);
@@ -19,8 +21,8 @@ class Salsa20CoreEngine
     /**
      * Salsa20 function
      *
-     * @param   input   input data
-     */    
+     * @param input input data
+     */
     public static void salsaCore(int rounds, int[] input, int[] x)
     {
         if (input.length != 16)
@@ -36,16 +38,16 @@ class Salsa20CoreEngine
             throw new IllegalArgumentException("Number of rounds must be even");
         }
 
-        int x00 = input[ 0];
-        int x01 = input[ 1];
-        int x02 = input[ 2];
-        int x03 = input[ 3];
-        int x04 = input[ 4];
-        int x05 = input[ 5];
-        int x06 = input[ 6];
-        int x07 = input[ 7];
-        int x08 = input[ 8];
-        int x09 = input[ 9];
+        int x00 = input[0];
+        int x01 = input[1];
+        int x02 = input[2];
+        int x03 = input[3];
+        int x04 = input[4];
+        int x05 = input[5];
+        int x06 = input[6];
+        int x07 = input[7];
+        int x08 = input[8];
+        int x09 = input[9];
         int x10 = input[10];
         int x11 = input[11];
         int x12 = input[12];
@@ -90,16 +92,16 @@ class Salsa20CoreEngine
             x15 ^= rotl(x14 + x13, 18);
         }
 
-        x[ 0] = x00 + input[ 0];
-        x[ 1] = x01 + input[ 1];
-        x[ 2] = x02 + input[ 2];
-        x[ 3] = x03 + input[ 3];
-        x[ 4] = x04 + input[ 4];
-        x[ 5] = x05 + input[ 5];
-        x[ 6] = x06 + input[ 6];
-        x[ 7] = x07 + input[ 7];
-        x[ 8] = x08 + input[ 8];
-        x[ 9] = x09 + input[ 9];
+        x[0] = x00 + input[0];
+        x[1] = x01 + input[1];
+        x[2] = x02 + input[2];
+        x[3] = x03 + input[3];
+        x[4] = x04 + input[4];
+        x[5] = x05 + input[5];
+        x[6] = x06 + input[6];
+        x[7] = x07 + input[7];
+        x[8] = x08 + input[8];
+        x[9] = x09 + input[9];
         x[10] = x10 + input[10];
         x[11] = x11 + input[11];
         x[12] = x12 + input[12];
@@ -111,10 +113,9 @@ class Salsa20CoreEngine
     /**
      * Rotate left
      *
-     * @param   x   value to rotate
-     * @param   y   amount to rotate x
-     *
-     * @return  rotated x
+     * @param x value to rotate
+     * @param y amount to rotate x
+     * @return rotated x
      */
     protected static int rotl(int x, int y)
     {

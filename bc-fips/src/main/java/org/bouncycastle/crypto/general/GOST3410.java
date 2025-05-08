@@ -54,7 +54,7 @@ public final class GOST3410
      * GOST3410 key pair generation parameters.
      */
     public static final class KeyGenParameters
-         extends GeneralParameters
+        extends GeneralParameters
     {
         private final GOST3410Parameters<GOST3410DomainParameters> domainParameters;
 
@@ -116,7 +116,7 @@ public final class GOST3410
      * GOST3410 key pair generator class.
      */
     public static final class KeyPairGenerator
-       extends GuardedAsymmetricKeyPairGenerator<KeyGenParameters, AsymmetricGOST3410PublicKey, AsymmetricGOST3410PrivateKey>
+        extends GuardedAsymmetricKeyPairGenerator<KeyGenParameters, AsymmetricGOST3410PublicKey, AsymmetricGOST3410PrivateKey>
     {
         private final Gost3410KeyPairGenerator engine = new Gost3410KeyPairGenerator();
         private final GOST3410Parameters<GOST3410DomainParameters> parameters;
@@ -166,10 +166,10 @@ public final class GOST3410
 
             return new DSAOutputSigner<SignatureParameters>(gost3410Signer, digest, parameters, new DSAOutputSigner.Initializer()
             {
-                  public void initialize(DSA signer, SecureRandom random)
-                  {
-                       signer.init(true, new ParametersWithRandom(privateKeyParameters, random));
-                  }
+                public void initialize(DSA signer, SecureRandom random)
+                {
+                    signer.init(true, new ParametersWithRandom(privateKeyParameters, random));
+                }
             });
         }
 

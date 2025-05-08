@@ -16,13 +16,13 @@ import org.bouncycastle.util.encoders.Hex;
 class HashSP800DRBG
     implements SP80090DRBG
 {
-    private final static byte[]     ZERO = { 0x00 };
-    private final static byte[]     ONE = { 0x01 };
+    private final static byte[] ZERO = {0x00};
+    private final static byte[] ONE = {0x01};
 
-    private final static long       RESEED_MAX = 1L << (48 - 1);
-    private final static int        MAX_BITS_REQUEST = 1 << (19 - 1);
+    private final static long RESEED_MAX = 1L << (48 - 1);
+    private final static int MAX_BITS_REQUEST = 1 << (19 - 1);
 
-    private final static Hashtable  seedlens = new Hashtable();
+    private final static Hashtable seedlens = new Hashtable();
     private final static Map<String, byte[][]> kats = new HashMap<String, byte[][]>();
     private final static Map<String, byte[]> reseedVs = new HashMap<String, byte[]>();
     private final static Map<String, byte[][]> reseedKats = new HashMap<String, byte[][]>();
@@ -37,33 +37,33 @@ class HashSP800DRBG
         seedlens.put("SHA-384", Integers.valueOf(888));
         seedlens.put("SHA-512", Integers.valueOf(888));
 
-        kats.put("SHA-1", new byte[][] {
+        kats.put("SHA-1", new byte[][]{
             Hex.decode("61a50e3970bdb72c7ebf2a6225519ea2f324148123a3503443ec80993a62c4ea6528ff4f5f4fe778"),
-            Hex.decode("71adf1e44be3e0a6af022d6e79aad42a99d8261ef41e06c3efed4ac8bf9687e8e1bab92da552e109") });
+            Hex.decode("71adf1e44be3e0a6af022d6e79aad42a99d8261ef41e06c3efed4ac8bf9687e8e1bab92da552e109")});
 
-        kats.put("SHA-224", new byte[][] {
+        kats.put("SHA-224", new byte[][]{
             Hex.decode("5be6d688ee42f489506a5a3407380325c633627f8c2458c1d82fc9a3db5787565c9d6c5e0e32b5f0"),
-            Hex.decode("3726e8c434f91c2fdd6d80621e79005f38320932ca9da5edad095eeff18693b7908f936268e20b58") });
+            Hex.decode("3726e8c434f91c2fdd6d80621e79005f38320932ca9da5edad095eeff18693b7908f936268e20b58")});
 
-        kats.put("SHA-256", new byte[][] {
+        kats.put("SHA-256", new byte[][]{
             Hex.decode("788dd696649d97295de7ed10a2c55104abb36cd0f262abdc2b8b2b183a3602c3f7513d2a4893b759"),
-            Hex.decode("3db6a852f92035e4890fa53438cf8070020a95ae19f1098f98a4d4bdb65f3c5c2dd4c9fb5483410d") });
+            Hex.decode("3db6a852f92035e4890fa53438cf8070020a95ae19f1098f98a4d4bdb65f3c5c2dd4c9fb5483410d")});
 
-        kats.put("SHA-384", new byte[][] {
+        kats.put("SHA-384", new byte[][]{
             Hex.decode("0536f72f4123b8e438981912b3c60b09d1303a93b7cbe4af13cd3ae01d389720ff687916135bb254"),
-            Hex.decode("80ae6b3d1a120d9f58d427a178c7d73d429758f6039962b66f8afbc7fa758228b13b8f5829588cd6") });
+            Hex.decode("80ae6b3d1a120d9f58d427a178c7d73d429758f6039962b66f8afbc7fa758228b13b8f5829588cd6")});
 
-        kats.put("SHA-512", new byte[][] {
+        kats.put("SHA-512", new byte[][]{
             Hex.decode("ca8387ba70bc7f8cb71e5d25703972ed58c7b5c81649050cdc17a9f646f7bd57857ca715e411d2ca"),
-            Hex.decode("ce2fe5ba54cde888bee0f4863ca70b258ab6e2be31523542a4da66033433fb8e7e394b28198daa1e") });
+            Hex.decode("ce2fe5ba54cde888bee0f4863ca70b258ab6e2be31523542a4da66033433fb8e7e394b28198daa1e")});
 
-        kats.put("SHA-512(224)", new byte[][] {
+        kats.put("SHA-512(224)", new byte[][]{
             Hex.decode("d2a49d96a75e30d65da621aaf5e3e84b1c3d5313aefa2d276c9e1d836615217b67d766ccd342e956"),
-            Hex.decode("32195006d69ed3cdef3d6e5af94ae91c0c3282202b0bfebdc11cc9d4c02f534b0f6bb9a8b8f2b7fe") });
+            Hex.decode("32195006d69ed3cdef3d6e5af94ae91c0c3282202b0bfebdc11cc9d4c02f534b0f6bb9a8b8f2b7fe")});
 
-        kats.put("SHA-512(256)", new byte[][] {
+        kats.put("SHA-512(256)", new byte[][]{
             Hex.decode("881b2a06f0f23921341819bf9cf78ed122850a80ae6c6eaf84e84600d756486c442305a495db0d96"),
-            Hex.decode("c9351dfad36fd8309a5bd598ac4ee9ca22297263f21c21d8481acefea97f5e508134f43959ac7f90") });
+            Hex.decode("c9351dfad36fd8309a5bd598ac4ee9ca22297263f21c21d8481acefea97f5e508134f43959ac7f90")});
 
         reseedVs.put("SHA-1", Hex.decode("3c01bdbb26f358bab27f267924aa2c9a03fcfdb8"));
 
@@ -79,53 +79,54 @@ class HashSP800DRBG
 
         reseedVs.put("SHA-512(256)", Hex.decode("625c3e642852cb343b9b06eae14b47a7da0fd292a7be7b8a251208a65271af36"));
 
-        reseedKats.put("SHA-1", new byte[][] {
+        reseedKats.put("SHA-1", new byte[][]{
             Hex.decode("657d09ba244bf82e69ee1f860d9bfbf53aebd25827aab770e1f33d4d7bd34596d5f1be2ff0dcde4c"),
-            Hex.decode("01b3e73d42c180963004e6d4d31f38f1bfa3a815c8571f4d9bbed56d5f8afc8f1da145d36232554f") });
+            Hex.decode("01b3e73d42c180963004e6d4d31f38f1bfa3a815c8571f4d9bbed56d5f8afc8f1da145d36232554f")});
 
-        reseedKats.put("SHA-224", new byte[][] {
+        reseedKats.put("SHA-224", new byte[][]{
             Hex.decode("267c1bc6462b4157320dfe212118370788cff8124af984c3aac5f543228ad69ebdbbf401db50de77"),
-            Hex.decode("9b7b7b267d3d7bd6cead4242b9bae3bcdf812901bcff06dca582dfa01e2db3cada2e77f665db1e20") });
+            Hex.decode("9b7b7b267d3d7bd6cead4242b9bae3bcdf812901bcff06dca582dfa01e2db3cada2e77f665db1e20")});
 
-        reseedKats.put("SHA-256", new byte[][] {
+        reseedKats.put("SHA-256", new byte[][]{
             Hex.decode("05e4940b7cbb02e2bfa3cb03e369379f068ff7d51595403c41579791ee585605b8c4a676bf3a9b52"),
-            Hex.decode("dbb50e0e562f3d83fee0c1f020ffbc04f2eaa8e78009cae0eb8c40628a25dcb4ac096732cc2fa1b4") });
+            Hex.decode("dbb50e0e562f3d83fee0c1f020ffbc04f2eaa8e78009cae0eb8c40628a25dcb4ac096732cc2fa1b4")});
 
-        reseedKats.put("SHA-384", new byte[][] {
+        reseedKats.put("SHA-384", new byte[][]{
             Hex.decode("5ad1f8c6d18dc235cdb306613926eb9ba67fc910ee7d5483ccc4c9717c576342945aaead78a99bbb"),
-            Hex.decode("03a45f886270781455ff6242d2052b5d84fcea57d95de31fdbd7f973d4027586972da7028fa4c820") });
+            Hex.decode("03a45f886270781455ff6242d2052b5d84fcea57d95de31fdbd7f973d4027586972da7028fa4c820")});
 
-        reseedKats.put("SHA-512", new byte[][] {
+        reseedKats.put("SHA-512", new byte[][]{
             Hex.decode("147abe77d9b19bf6331691eeb3571e55afb406d1ddcd7aa5f1b3de71f0d3eb6949ea580764588000"),
-            Hex.decode("59c18dd408b82f930411bfdeea503d0154a77263c934d7888677ce34018307d4dd035effed210979") });
+            Hex.decode("59c18dd408b82f930411bfdeea503d0154a77263c934d7888677ce34018307d4dd035effed210979")});
 
-        reseedKats.put("SHA-512(224)", new byte[][] {
+        reseedKats.put("SHA-512(224)", new byte[][]{
             Hex.decode("b8517f43fb91321ee4b6e2d9478970b4fa727518e0176e97536dbb3a55cba46a29557a8dd9db26d4"),
-            Hex.decode("d9d32c83c6586c3ab235830367733fa405ade3c8ff6d24ea28bf6ba3f4ab4784336a32a2a8535be5") });
+            Hex.decode("d9d32c83c6586c3ab235830367733fa405ade3c8ff6d24ea28bf6ba3f4ab4784336a32a2a8535be5")});
 
-        reseedKats.put("SHA-512(256)", new byte[][] {
+        reseedKats.put("SHA-512(256)", new byte[][]{
             Hex.decode("a33a0d6840f8be385f9aa683cb01e0e0b4d36a1de33e2ea931c015f86f231f574569452950537db7"),
-            Hex.decode("e862780ba48bab8df070be0ca429299a9c744cfa84acb578be5f86155719a23aab6c92b432e9f85b") });
+            Hex.decode("e862780ba48bab8df070be0ca429299a9c744cfa84acb578be5f86155719a23aab6c92b432e9f85b")});
     }
 
-    private Digest        _digest;
+    private Digest _digest;
     private WorkingBuffer workingBuf = new WorkingBuffer();
-    private long          _reseedCounter;
+    private long _reseedCounter;
     private EntropySource _entropySource;
-    private int           _securityStrength;
-    private int           _seedLength;
-    private byte[]        _personalizationString;
+    private int _securityStrength;
+    private int _seedLength;
+    private byte[] _personalizationString;
 
     /**
      * Construct a SP800-90A Hash DRBG.
      * <p>
      * Minimum entropy requirement is the security strength requested.
      * </p>
-     * @param digest  source digest to use for DRB stream.
-     * @param securityStrength security strength required (in bits)
-     * @param entropySource source of entropy to use for seeding/reseeding.
+     *
+     * @param digest                source digest to use for DRB stream.
+     * @param securityStrength      security strength required (in bits)
+     * @param entropySource         source of entropy to use for seeding/reseeding.
      * @param personalizationString personalization string to distinguish this DRBG (may be null).
-     * @param nonce nonce to further distinguish this DRBG (may be null).
+     * @param nonce                 nonce to further distinguish this DRBG (may be null).
      */
     public HashSP800DRBG(Digest digest, int securityStrength, EntropySource entropySource, byte[] personalizationString, byte[] nonce)
     {
@@ -198,10 +199,9 @@ class HashSP800DRBG
     /**
      * Populate a passed in array with random data.
      *
-     * @param output output array for generated bits.
-     * @param additionalInput additional input to be added to the DRBG in this step.
+     * @param output              output array for generated bits.
+     * @param additionalInput     additional input to be added to the DRBG in this step.
      * @param predictionResistant true if a reseed should be forced, false otherwise.
-     *
      * @return number of bits generated, -1 if a reseed required.
      */
     public int generate(byte[] output, byte[] additionalInput, boolean predictionResistant)
@@ -219,7 +219,7 @@ class HashSP800DRBG
         // 6. reseed_counter = reseed_counter + 1.
         // 7. Return SUCCESS, returned_bits, and the new values of V, C, and
         // reseed_counter for the new_working_state.
-        int numberOfBits = output.length*8;
+        int numberOfBits = output.length * 8;
 
         if (numberOfBits > MAX_BITS_REQUEST)
         {
@@ -284,26 +284,26 @@ class HashSP800DRBG
     private void addTo(byte[] longer, byte[] shorter)
     {
         int carry = 0;
-        for (int i=1;i <= shorter.length; i++) // warning
+        for (int i = 1; i <= shorter.length; i++) // warning
         {
-            int res = (longer[longer.length-i] & 0xff) + (shorter[shorter.length-i] & 0xff) + carry;
+            int res = (longer[longer.length - i] & 0xff) + (shorter[shorter.length - i] & 0xff) + carry;
             carry = (res > 0xff) ? 1 : 0;
-            longer[longer.length-i] = (byte)res;
+            longer[longer.length - i] = (byte)res;
         }
 
-        for (int i=shorter.length+1;i <= longer.length; i++) // warning
+        for (int i = shorter.length + 1; i <= longer.length; i++) // warning
         {
-            int res = (longer[longer.length-i] & 0xff) + carry;
+            int res = (longer[longer.length - i] & 0xff) + carry;
             carry = (res > 0xff) ? 1 : 0;
-            longer[longer.length-i] = (byte)res;
+            longer[longer.length - i] = (byte)res;
         }
     }
 
     /**
-      * Reseed the DRBG.
-      *
-      * @param additionalInput additional input to be added to the DRBG in this step.
-      */
+     * Reseed the DRBG.
+     *
+     * @param additionalInput additional input to be added to the DRBG in this step.
+     */
     public void reseed(byte[] additionalInput)
     {
         // 1. seed_material = 0x01 || V || entropy_input || additional_input.
@@ -590,8 +590,8 @@ class HashSP800DRBG
             doHash(data, dig);
 
             int bytesToCopy = ((W.length - i * dig.length) > dig.length)
-                    ? dig.length
-                    : (W.length - i * dig.length);
+                ? dig.length
+                : (W.length - i * dig.length);
             System.arraycopy(dig, 0, W, i * dig.length, bytesToCopy);
 
             addTo(data, ONE);
@@ -606,7 +606,8 @@ class HashSP800DRBG
         private byte[] _C;
 
         @Override
-        protected void finalize() throws Throwable
+        protected void finalize()
+            throws Throwable
         {
             super.finalize();
 

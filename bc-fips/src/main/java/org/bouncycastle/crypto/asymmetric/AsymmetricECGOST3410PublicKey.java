@@ -127,7 +127,7 @@ public final class AsymmetricECGOST3410PublicKey
             {
                 return KeyUtils.getEncodedSubjectPublicKeyInfo(new AlgorithmIdentifier(RosstandartObjectIdentifiers.id_tc26_gost_3410_12_512, pubParams), new DEROctetString(encKey));
             }
-            if (pubParams.getEncryptionParamSet() != null && pubParams.getEncryptionParamSet().on(RosstandartObjectIdentifiers.id_tc26))
+            if (pubParams.getEncryptionParamSet().on(RosstandartObjectIdentifiers.id_tc26))
             {
                 return KeyUtils.getEncodedSubjectPublicKeyInfo(new AlgorithmIdentifier(RosstandartObjectIdentifiers.id_tc26_gost_3410_12_256, pubParams), new DEROctetString(encKey));
             }

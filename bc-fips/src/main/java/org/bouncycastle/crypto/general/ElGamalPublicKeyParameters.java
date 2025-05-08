@@ -5,16 +5,16 @@ import java.math.BigInteger;
 class ElGamalPublicKeyParameters
     extends ElGamalKeyParameters
 {
-    private final BigInteger      y;
+    private final BigInteger y;
 
     public ElGamalPublicKeyParameters(
-        BigInteger      y,
-        ElGamalParameters    params)
+        BigInteger y,
+        ElGamalParameters params)
     {
         super(false, params);
 
         this.y = y;
-    }   
+    }
 
     public BigInteger getY()
     {

@@ -37,7 +37,8 @@ final class X448PrivateKeyParameters
         System.arraycopy(buf, off, data, 0, KEY_SIZE);
     }
 
-    public X448PrivateKeyParameters(InputStream input) throws IOException
+    public X448PrivateKeyParameters(InputStream input)
+        throws IOException
     {
         super(true);
 

@@ -17,7 +17,7 @@ class ISO9796d2PSSSigner
      */
     public ISO9796d2PSSSigner(
         Digest digest,
-        int    saltLength)
+        int saltLength)
     {
         super((AsymmetricBlockCipher)FipsRegister.getProvider(FipsRSA.ALGORITHM).createEngine(), digest, saltLength, ISOTrailers.noTrailerAvailable(digest));
     }

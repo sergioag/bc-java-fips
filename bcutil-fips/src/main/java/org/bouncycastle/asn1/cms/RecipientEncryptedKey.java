@@ -1,9 +1,6 @@
-/***************************************************************/
-/******    DO NOT EDIT THIS CLASS bc-java SOURCE FILE     ******/
-/***************************************************************/
 package org.bouncycastle.asn1.cms;
 
-import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -12,7 +9,7 @@ import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.DERSequence;
 
 /**
- * <a href="http://tools.ietf.org/html/rfc5652#section-6.2.2">RFC 5652</a>:
+ * <a href="https://tools.ietf.org/html/rfc5652#section-6.2.2">RFC 5652</a>:
  * Content encryption key delivery mechanisms.
  * <pre>
  * RecipientEncryptedKey ::= SEQUENCE {
@@ -102,11 +99,6 @@ public class RecipientEncryptedKey
      */
     public ASN1Primitive toASN1Primitive()
     {
-        ASN1EncodableVector  v = new ASN1EncodableVector();
-
-        v.add(identifier);
-        v.add(encryptedKey);
-
-        return new DERSequence(v);
+        return new DERSequence(new ASN1Encodable[]{identifier, encryptedKey});
     }
 }

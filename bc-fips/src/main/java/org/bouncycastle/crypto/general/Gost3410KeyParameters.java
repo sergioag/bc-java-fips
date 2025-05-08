@@ -7,13 +7,13 @@ import org.bouncycastle.crypto.internal.params.AsymmetricKeyParameter;
 
 
 class Gost3410KeyParameters
-        extends AsymmetricKeyParameter
+    extends AsymmetricKeyParameter
 {
-    private Gost3410Parameters    params;
+    private Gost3410Parameters params;
 
     public Gost3410KeyParameters(
-        boolean         isPrivate,
-        Gost3410Parameters   params)
+        boolean isPrivate,
+        Gost3410Parameters params)
     {
         super(isPrivate);
 

@@ -477,21 +477,25 @@ abstract class X509CertificateImpl
 
         if (sig.length > 20)
         {
+            // -DM Hex.toHexString
             buf.append("            Signature: ").append(Hex.toHexString(sig, 0, 20)).append(nl);
             for (int i = 20; i < sig.length; i += 20)
             {
                 if (i < sig.length - 20)
                 {
+                    // -DM Hex.toHexString
                     buf.append("                       ").append(Hex.toHexString(sig, i, 20)).append(nl);
                 }
                 else
                 {
+                    // -DM Hex.toHexString
                     buf.append("                       ").append(Hex.toHexString(sig, i, sig.length - i)).append(nl);
                 }
             }
         }
         else
         {
+            // -DM Hex.toHexString
             buf.append("            Signature: ").append(Hex.toHexString(sig)).append(nl);
         }
         Extensions extensions = c.getTBSCertificate().getExtensions();

@@ -691,6 +691,30 @@ class ProvRSA
         addPSSSignature(provider, "SHA3-256", FipsSHS.Algorithm.SHA3_256, new PSSParameterSpec("SHA3-256", "MGF1", new MGF1ParameterSpec("SHA3-256"), 32, 1));
         addPSSSignature(provider, "SHA3-384", FipsSHS.Algorithm.SHA3_384, new PSSParameterSpec("SHA3-384", "MGF1", new MGF1ParameterSpec("SHA3-384"), 48, 1));
         addPSSSignature(provider, "SHA3-512", FipsSHS.Algorithm.SHA3_512, new PSSParameterSpec("SHA3-512", "MGF1", new MGF1ParameterSpec("SHA3-512"), 64, 1));
+        addPSSSignature(provider, "SHAKE128", FipsSHS.Algorithm.SHAKE128, new PSSParameterSpec("SHAKE128", "SHAKE128", null, 32, 1));
+        addPSSSignature(provider, "SHAKE256", FipsSHS.Algorithm.SHAKE256, new PSSParameterSpec("SHAKE256", "SHAKE256", null, 64, 1));
+        addPSSShakeSignature(provider, "SHA1", FipsSHS.Algorithm.SHA1, new PSSParameterSpec("SHA-1", "SHAKE128", null, 20, 1));
+        addPSSShakeSignature(provider, "SHA224", FipsSHS.Algorithm.SHA224, new PSSParameterSpec("SHA-224", "SHAKE128", null, 28, 1));
+        addPSSShakeSignature(provider, "SHA256", FipsSHS.Algorithm.SHA256, new PSSParameterSpec("SHA-256", "SHAKE128", null, 32, 1));
+        addPSSShakeSignature(provider, "SHA384", FipsSHS.Algorithm.SHA384, new PSSParameterSpec("SHA-384", "SHAKE128", null, 48, 1));
+        addPSSShakeSignature(provider, "SHA512", FipsSHS.Algorithm.SHA512, new PSSParameterSpec("SHA-512", "SHAKE128", null, 64, 1));
+        addPSSShakeSignature(provider, "SHA512(224)", FipsSHS.Algorithm.SHA512_224, new PSSParameterSpec("SHA-512(224)", "SHAKE128", null, 28, 1));
+        addPSSShakeSignature(provider, "SHA512(256)", FipsSHS.Algorithm.SHA512_256, new PSSParameterSpec("SHA-512(256)", "SHAKE128", null, 32, 1));
+        addPSSShakeSignature(provider, "SHA3-224", FipsSHS.Algorithm.SHA3_224, new PSSParameterSpec("SHA3-224", "SHAKE128", null, 28, 1));
+        addPSSShakeSignature(provider, "SHA3-256", FipsSHS.Algorithm.SHA3_256, new PSSParameterSpec("SHA3-256", "SHAKE128", null, 32, 1));
+        addPSSShakeSignature(provider, "SHA3-384", FipsSHS.Algorithm.SHA3_384, new PSSParameterSpec("SHA3-384", "SHAKE128", null, 48, 1));
+        addPSSShakeSignature(provider, "SHA3-512", FipsSHS.Algorithm.SHA3_512, new PSSParameterSpec("SHA3-512", "SHAKE128", null, 64, 1));
+        addPSSShakeSignature(provider, "SHA1", FipsSHS.Algorithm.SHA1, new PSSParameterSpec("SHA-1", "SHAKE256", null, 20, 1));
+        addPSSShakeSignature(provider, "SHA224", FipsSHS.Algorithm.SHA224, new PSSParameterSpec("SHA-224", "SHAKE256", null, 28, 1));
+        addPSSShakeSignature(provider, "SHA256", FipsSHS.Algorithm.SHA256, new PSSParameterSpec("SHA-256", "SHAKE256", null, 32, 1));
+        addPSSShakeSignature(provider, "SHA384", FipsSHS.Algorithm.SHA384, new PSSParameterSpec("SHA-384", "SHAKE256", null, 48, 1));
+        addPSSShakeSignature(provider, "SHA512", FipsSHS.Algorithm.SHA512, new PSSParameterSpec("SHA-512", "SHAKE256", null, 64, 1));
+        addPSSShakeSignature(provider, "SHA512(224)", FipsSHS.Algorithm.SHA512_224, new PSSParameterSpec("SHA-512(224)", "SHAKE256", null, 28, 1));
+        addPSSShakeSignature(provider, "SHA512(256)", FipsSHS.Algorithm.SHA512_256, new PSSParameterSpec("SHA-512(256)", "SHAKE256", null, 32, 1));
+        addPSSShakeSignature(provider, "SHA3-224", FipsSHS.Algorithm.SHA3_224, new PSSParameterSpec("SHA3-224", "SHAKE256", null, 28, 1));
+        addPSSShakeSignature(provider, "SHA3-256", FipsSHS.Algorithm.SHA3_256, new PSSParameterSpec("SHA3-256", "SHAKE256", null, 32, 1));
+        addPSSShakeSignature(provider, "SHA3-384", FipsSHS.Algorithm.SHA3_384, new PSSParameterSpec("SHA3-384", "SHAKE256", null, 48, 1));
+        addPSSShakeSignature(provider, "SHA3-512", FipsSHS.Algorithm.SHA3_512, new PSSParameterSpec("SHA3-512", "SHAKE256", null, 64, 1));
 
         addX931Signature(provider, "SHA1", FipsSHS.Algorithm.SHA1);
         addX931Signature(provider, "SHA224", FipsSHS.Algorithm.SHA224);
@@ -773,8 +797,30 @@ class ProvRSA
             }
         });
         provider.addAttributes("Signature." + digestName + "WITHRSA/PSS", generalRsaAttributes);
-        provider.addAlias("Signature", digestName + "WITHRSA/PSS", digestName + "WITHRSAANDMGF1", digestName + "WITHRSASSA-PSS");
-        provider.addAlias("AlgorithmParameters", "PSS", digestName + "WITHRSA/PSS", digestName + "WITHRSAANDMGF1",  digestName + "WITHRSASSA-PSS");
+        if (digestName.startsWith("SHAKE"))
+        {
+            provider.addAlias("Signature", digestName + "WITHRSA/PSS", digestName + "WITHRSASSA-PSS");
+            provider.addAlias("AlgorithmParameters", "PSS", digestName + "WITHRSA/PSS",  digestName + "WITHRSASSA-PSS");
+        }
+        else
+        {
+            provider.addAlias("Signature", digestName + "WITHRSA/PSS", digestName + "WITHRSAANDMGF1", digestName + "WITHRSASSA-PSS");
+            provider.addAlias("AlgorithmParameters", "PSS", digestName + "WITHRSA/PSS", digestName + "WITHRSAANDMGF1", digestName + "WITHRSASSA-PSS");
+        }
+    }
+
+    private void addPSSShakeSignature(final BouncyCastleFipsProvider provider, String digestName, final Algorithm digest, final PSSParameterSpec pssSPec)
+    {
+        provider.addAlgorithmImplementation("Signature." + digestName + "WITHRSAAND" + pssSPec.getMGFAlgorithm(), PREFIX + "PSSSignatureSpi$" + digestName + pssSPec.getMGFAlgorithm(), new EngineCreator()
+        {
+            public Object createInstance(Object constructorParameter)
+            {
+                return new BaseSignature(provider, fipsRsaSigFactory, publicKeyConverter, privateKeyConverter, FipsRSA.PSS.withDigestAlgorithm((FipsDigestAlgorithm)digest)
+                    .withMGFDigest(pssSPec.getMGFAlgorithm().equals("SHAKE128") ? FipsSHS.Algorithm.SHAKE128 : FipsSHS.Algorithm.SHAKE256), pssSPec);
+            }
+        });
+        provider.addAttributes("Signature." + digestName + "WITHRSAAND" + pssSPec.getMGFAlgorithm(), generalRsaAttributes);
+        provider.addAlias("AlgorithmParameters", "PSS", digestName + "WITHRSAAND" + pssSPec.getMGFAlgorithm());
     }
 
     private void addX931Signature(final BouncyCastleFipsProvider provider, String digestName, final DigestAlgorithm digest)
@@ -1417,7 +1463,14 @@ class ProvRSA
         {
             return "MGF1";
         }
-
+        if (NISTObjectIdentifiers.id_shake128.equals(mgfOid))
+        {
+            return "SHAKE128";
+        }
+        if (NISTObjectIdentifiers.id_shake256.equals(mgfOid))
+        {
+            return "SHAKE256";
+        }
         return mgfOid.getId();
     }
 
@@ -1499,13 +1552,33 @@ class ProvRSA
             throws IOException
         {
             PSSParameterSpec pssSpec = currentSpec;
-            AlgorithmIdentifier hashAlgorithm = new AlgorithmIdentifier(
-                DigestUtil.getOID(pssSpec.getDigestAlgorithm()),
-                DERNull.INSTANCE);
+            ASN1ObjectIdentifier digestOid = DigestUtil.getOID(pssSpec.getDigestAlgorithm());
+            AlgorithmIdentifier hashAlgorithm;
+
+            // RFC 8702
+            if (NISTObjectIdentifiers.id_shake128.equals(digestOid) || NISTObjectIdentifiers.id_shake256.equals(digestOid))
+            {
+                hashAlgorithm = new AlgorithmIdentifier(digestOid);
+            }
+            else
+            {
+                hashAlgorithm = new AlgorithmIdentifier(
+                    digestOid,
+                    DERNull.INSTANCE);
+            }
+
             MGF1ParameterSpec mgfSpec = (MGF1ParameterSpec)pssSpec.getMGFParameters();
-            AlgorithmIdentifier maskGenAlgorithm = new AlgorithmIdentifier(
-                PKCSObjectIdentifiers.id_mgf1,
-                new AlgorithmIdentifier(DigestUtil.getOID(mgfSpec.getDigestAlgorithm()), DERNull.INSTANCE));
+            AlgorithmIdentifier maskGenAlgorithm;
+            if (mgfSpec != null)
+            {
+                maskGenAlgorithm = new AlgorithmIdentifier(
+                    PKCSObjectIdentifiers.id_mgf1,
+                    new AlgorithmIdentifier(DigestUtil.getOID(mgfSpec.getDigestAlgorithm()), DERNull.INSTANCE));
+            }
+            else
+            {
+                maskGenAlgorithm = new AlgorithmIdentifier(DigestUtil.getOID(pssSpec.getMGFAlgorithm()));
+            }
             RSASSAPSSparams pssP = new RSASSAPSSparams(hashAlgorithm, maskGenAlgorithm, new ASN1Integer(pssSpec.getSaltLength()), new ASN1Integer(pssSpec.getTrailerField()));
 
             return pssP.getEncoded("DER");
@@ -1541,12 +1614,24 @@ class ProvRSA
         {
             RSASSAPSSparams pssP = RSASSAPSSparams.getInstance(params);
 
-            currentSpec = new PSSParameterSpec(
-                MessageDigestUtils.getDigestName(pssP.getHashAlgorithm().getAlgorithm()),
-                getMGFName(pssP.getMaskGenAlgorithm().getAlgorithm()),
-                new MGF1ParameterSpec(MessageDigestUtils.getDigestName(AlgorithmIdentifier.getInstance(pssP.getMaskGenAlgorithm().getParameters()).getAlgorithm())),
-                pssP.getSaltLength().intValue(),
-                pssP.getTrailerField().intValue());
+            if (PKCSObjectIdentifiers.id_mgf1.equals(pssP.getMaskGenAlgorithm().getAlgorithm()))
+            {
+                currentSpec = new PSSParameterSpec(
+                    MessageDigestUtils.getDigestName(pssP.getHashAlgorithm().getAlgorithm()),
+                    getMGFName(pssP.getMaskGenAlgorithm().getAlgorithm()),
+                    new MGF1ParameterSpec(MessageDigestUtils.getDigestName(AlgorithmIdentifier.getInstance(pssP.getMaskGenAlgorithm().getParameters()).getAlgorithm())),
+                    pssP.getSaltLength().intValue(),
+                    pssP.getTrailerField().intValue());
+            }
+            else     // using SHAKE
+            {
+                currentSpec = new PSSParameterSpec(
+                    MessageDigestUtils.getDigestName(pssP.getHashAlgorithm().getAlgorithm()),
+                    getMGFName(pssP.getMaskGenAlgorithm().getAlgorithm()),
+                    null,
+                    pssP.getSaltLength().intValue(),
+                    pssP.getTrailerField().intValue());
+            }
         }
 
         protected String engineToString()

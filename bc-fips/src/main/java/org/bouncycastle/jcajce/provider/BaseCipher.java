@@ -66,7 +66,7 @@ import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.encoders.Hex;
 
 class BaseCipher
-    extends CipherSpi
+        extends CipherSpi
 {
     private static final Logger LOG = Logger.getLogger(BaseCipher.class.getName());
 
@@ -196,22 +196,22 @@ class BaseCipher
 
     private Set<Algorithm> activeAlgorithmSet = new HashSet<Algorithm>();
 
-    private PBEParameterSpec        pbeSpec = null;
-    private String                  pbeAlgorithm = null;
+    private PBEParameterSpec pbeSpec = null;
+    private String pbeAlgorithm = null;
 
-    private AlgorithmParameters     engineParams = null;
-    private String                  modeName = null;
+    private AlgorithmParameters engineParams = null;
+    private String modeName = null;
 
     private OutputCipher<Parameters> cipher;
 
-    private OutputEncryptor<Parameters>    encryptor;
+    private OutputEncryptor<Parameters> encryptor;
 
 
     private OutputDecryptor<Parameters> decryptor;
 
     private UpdateOutputStream aadStream;
     private UpdateOutputStream processingStream;
-    private WrappedByteArrayOutputStream resultStream = new WrappedByteArrayOutputStream();
+    private org.bouncycastle.util.io.WrappedByteArrayOutputStream resultStream = new org.bouncycastle.util.io.WrappedByteArrayOutputStream();
     private byte[] associatedData = null;
 
     private BaseCipher(BouncyCastleFipsProvider fipsProvider, int blockSizeInBits, int keySizeInBits, DigestAlgorithm prf, PBEScheme scheme,
@@ -238,7 +238,7 @@ class BaseCipher
         this.generalParametersProvider = generalParametersCreatorProvider;
         this.baseParametersMap = baseParametersMap;
         this.algorithms = algorithms;
-        activeAlgorithmSet.addAll(java.util.Arrays.asList((Algorithm[])algorithms));
+        activeAlgorithmSet.addAll(java.util.Arrays.asList((Algorithm[]) algorithms));
     }
 
     protected int engineGetBlockSize()
@@ -252,20 +252,20 @@ class BaseCipher
 
         if (params instanceof org.bouncycastle.crypto.ParametersWithIV)
         {
-            return ((org.bouncycastle.crypto.ParametersWithIV)params).getIV();
+            return ((org.bouncycastle.crypto.ParametersWithIV) params).getIV();
         }
 
         return null;
     }
 
     protected int engineGetKeySize(
-        Key     key)
+            Key key)
     {
         return key.getEncoded().length * 8;
     }
 
     protected int engineGetOutputSize(
-        int     inputLen)
+            int inputLen)
     {
         return cipher.getMaxOutputSize(inputLen);
     }
@@ -275,13 +275,13 @@ class BaseCipher
         if (engineParams == null && cipher != null)
         {
             Parameters params = cipher.getParameters();
-            String  name = Utils.getBaseName(params.getAlgorithm());
+            String name = Utils.getBaseName(params.getAlgorithm());
 
             if (params instanceof AuthenticationParametersWithIV)
             {
                 try
                 {
-                    AuthenticationParametersWithIV authParams = (AuthenticationParametersWithIV)params;
+                    AuthenticationParametersWithIV authParams = (AuthenticationParametersWithIV) params;
 
                     engineParams = AlgorithmParameters.getInstance(name, fipsProvider);
                     engineParams.init(new GCMParameters(authParams.getIV(), authParams.getMACSizeInBits() / 8).getEncoded());
@@ -293,7 +293,7 @@ class BaseCipher
             }
             else if (params instanceof org.bouncycastle.crypto.ParametersWithIV)
             {
-                ParametersWithIV ivParams = (ParametersWithIV)params;
+                ParametersWithIV ivParams = (ParametersWithIV) params;
 
                 if (ivParams.getIV() != null)
                 {
@@ -328,8 +328,8 @@ class BaseCipher
     }
 
     protected void engineSetMode(
-        String  mode)
-        throws NoSuchAlgorithmException
+            String mode)
+            throws NoSuchAlgorithmException
     {
         modeName = Strings.toUpperCase(mode);
 
@@ -365,7 +365,7 @@ class BaseCipher
         {
             if (alg.getName().endsWith(modeMatch2) || alg.getName().contains(modeMatch1))
             {
-                 activeAlgorithmSet.add(alg);
+                activeAlgorithmSet.add(alg);
             }
         }
 
@@ -376,10 +376,10 @@ class BaseCipher
     }
 
     protected void engineSetPadding(
-        String  padding)
-    throws NoSuchPaddingException
+            String padding)
+            throws NoSuchPaddingException
     {
-        String  paddingName = Strings.toUpperCase(padding);
+        String paddingName = Strings.toUpperCase(padding);
 
         Set<Algorithm> currentAlgs = new HashSet<Algorithm>(activeAlgorithmSet);
 
@@ -392,7 +392,7 @@ class BaseCipher
                 // one or none
                 if (alg.getName().indexOf('/') == alg.getName().lastIndexOf('/'))
                 {
-                     activeAlgorithmSet.add(alg);
+                    activeAlgorithmSet.add(alg);
                 }
             }
 
@@ -415,7 +415,7 @@ class BaseCipher
                 {
                     if (alg.getName().endsWith("PKCS7"))
                     {
-                         activeAlgorithmSet.add(alg);
+                        activeAlgorithmSet.add(alg);
                     }
                 }
             }
@@ -425,7 +425,7 @@ class BaseCipher
                 {
                     if (alg.getName().endsWith("ISO10126-2"))
                     {
-                         activeAlgorithmSet.add(alg);
+                        activeAlgorithmSet.add(alg);
                     }
                 }
             }
@@ -435,7 +435,7 @@ class BaseCipher
                 {
                     if (alg.getName().endsWith("X9.23"))
                     {
-                         activeAlgorithmSet.add(alg);
+                        activeAlgorithmSet.add(alg);
                     }
                 }
             }
@@ -445,7 +445,7 @@ class BaseCipher
                 {
                     if (alg.getName().endsWith("ISO7816-4"))
                     {
-                         activeAlgorithmSet.add(alg);
+                        activeAlgorithmSet.add(alg);
                     }
                 }
             }
@@ -455,7 +455,7 @@ class BaseCipher
                 {
                     if (alg.getName().endsWith("TBC"))
                     {
-                         activeAlgorithmSet.add(alg);
+                        activeAlgorithmSet.add(alg);
                     }
                 }
             }
@@ -465,7 +465,7 @@ class BaseCipher
                 {
                     if (alg.getName().endsWith("CS3"))
                     {
-                         activeAlgorithmSet.add(alg);
+                        activeAlgorithmSet.add(alg);
                     }
                 }
             }
@@ -475,7 +475,7 @@ class BaseCipher
                 {
                     if (alg.getName().endsWith("CS1"))
                     {
-                         activeAlgorithmSet.add(alg);
+                        activeAlgorithmSet.add(alg);
                     }
                 }
             }
@@ -485,7 +485,7 @@ class BaseCipher
                 {
                     if (alg.getName().endsWith("CS2"))
                     {
-                         activeAlgorithmSet.add(alg);
+                        activeAlgorithmSet.add(alg);
                     }
                 }
             }
@@ -502,22 +502,22 @@ class BaseCipher
     }
 
     protected void engineInit(
-        int                     opmode,
-        Key                     key,
-        AlgorithmParameterSpec  params,
-        SecureRandom            random)
-        throws InvalidKeyException, InvalidAlgorithmParameterException
+            int opmode,
+            Key key,
+            AlgorithmParameterSpec params,
+            SecureRandom random)
+            throws InvalidKeyException, InvalidAlgorithmParameterException
     {
         doEngineInit(opmode, key, params, random, false);
     }
 
     private void doEngineInit(
-        int                     opmode,
-        Key                     key,
-        AlgorithmParameterSpec  params,
-        SecureRandom            random,
-        boolean                 originatesInModule)
-        throws InvalidKeyException, InvalidAlgorithmParameterException
+            int opmode,
+            Key key,
+            AlgorithmParameterSpec params,
+            SecureRandom random,
+            boolean originatesInModule)
+            throws InvalidKeyException, InvalidAlgorithmParameterException
     {
         this.pbeAlgorithm = null;
         this.engineParams = null;
@@ -544,7 +544,7 @@ class BaseCipher
         if (alg instanceof FipsAlgorithm)
         {
             if (opmode == Cipher.ENCRYPT_MODE && params != null
-                && alg.equals(FipsAES.GCM.getAlgorithm()))
+                    && alg.equals(FipsAES.GCM.getAlgorithm()))
             {
                 if (!originatesInModule)
                 {
@@ -562,7 +562,7 @@ class BaseCipher
                 }
             }
 
-            parametersCreator = fipsParametersProvider.get((FipsParameters)baseParametersMap.get(alg));
+            parametersCreator = fipsParametersProvider.get((FipsParameters) baseParametersMap.get(alg));
             operatorFactory = fipsFactory;
             aeadOperatorFactory = fipsAeadFactory;
         }
@@ -581,16 +581,16 @@ class BaseCipher
 
         switch (opmode)
         {
-        case Cipher.ENCRYPT_MODE:
-        case Cipher.WRAP_MODE:
-            forEncryption = true;
-            break;
-        case Cipher.UNWRAP_MODE:
-        case Cipher.DECRYPT_MODE:
-            forEncryption = false;
-            break;
-        default:
-            throw new InvalidParameterException("unknown opmode " + opmode + " passed");
+            case Cipher.ENCRYPT_MODE:
+            case Cipher.WRAP_MODE:
+                forEncryption = true;
+                break;
+            case Cipher.UNWRAP_MODE:
+            case Cipher.DECRYPT_MODE:
+                forEncryption = false;
+                break;
+            default:
+                throw new InvalidParameterException("unknown opmode " + opmode + " passed");
         }
 
         Parameters parameters;
@@ -602,11 +602,11 @@ class BaseCipher
 
             if (params instanceof PBEParameterSpec)
             {
-                this.pbeSpec = spec = (PBEParameterSpec)params;
+                this.pbeSpec = spec = (PBEParameterSpec) params;
             }
             else if (key instanceof PBEKey)
             {
-                PBEKey pbeKey = (PBEKey)key;
+                PBEKey pbeKey = (PBEKey) key;
 
                 this.pbeSpec = spec = new PBEParameterSpec(pbeKey.getSalt(), pbeKey.getIterationCount());
             }
@@ -624,7 +624,7 @@ class BaseCipher
 
             try
             {
-                pbeKey = (SecretKey)key;
+                pbeKey = (SecretKey) key;
             }
             catch (Exception e)
             {
@@ -768,18 +768,18 @@ class BaseCipher
                 {
                     cipher = encryptor = Utils.addRandomIfNeeded(aeadOperatorFactory.createOutputAEADEncryptor(symmetricKey, parameters), random);
                     processingStream = encryptor.getEncryptingStream(resultStream);
-                    aadStream = ((OutputAEADEncryptor)encryptor).getAADStream();
+                    aadStream = ((OutputAEADEncryptor) encryptor).getAADStream();
                 }
                 else
                 {
                     cipher = decryptor = Utils.addRandomIfNeeded(aeadOperatorFactory.createOutputAEADDecryptor(symmetricKey, parameters), random);
                     processingStream = decryptor.getDecryptingStream(resultStream);
-                    aadStream = ((OutputAEADDecryptor)decryptor).getAADStream();
+                    aadStream = ((OutputAEADDecryptor) decryptor).getAADStream();
                 }
 
                 if (params instanceof AEADParameterSpec)
                 {
-                    associatedData = ((AEADParameterSpec)params).getAssociatedData();
+                    associatedData = ((AEADParameterSpec) params).getAssociatedData();
                     if (associatedData != null)
                     {
                         aadStream.update(associatedData);
@@ -829,12 +829,13 @@ class BaseCipher
         byte[] nonce = null;
         if (params instanceof IvParameterSpec)
         {
-            nonce = ((IvParameterSpec)params).getIV();
+            nonce = ((IvParameterSpec) params).getIV();
         }
         else if (params instanceof GCMParameterSpec)
         {
-            nonce = ((GCMParameterSpec)params).getIV();
+            nonce = ((GCMParameterSpec) params).getIV();
         }
+        // -DM Hex.toHexString
         return (nonce != null) ? ": " + Hex.toHexString(nonce) : "";
     }
 
@@ -853,13 +854,13 @@ class BaseCipher
     }
 
     protected void engineInit(
-        int                 opmode,
-        Key                 key,
-        AlgorithmParameters params,
-        SecureRandom        random)
-    throws InvalidKeyException, InvalidAlgorithmParameterException
+            int opmode,
+            Key key,
+            AlgorithmParameters params,
+            SecureRandom random)
+            throws InvalidKeyException, InvalidAlgorithmParameterException
     {
-        AlgorithmParameterSpec  paramSpec = null;
+        AlgorithmParameterSpec paramSpec = null;
         boolean originatesInModule = false;
 
         if (params != null)
@@ -899,14 +900,14 @@ class BaseCipher
     }
 
     protected void engineInit(
-        int                 opmode,
-        Key                 key,
-        SecureRandom        random)
-        throws InvalidKeyException
+            int opmode,
+            Key key,
+            SecureRandom random)
+            throws InvalidKeyException
     {
         try
         {
-            engineInit(opmode, key, (AlgorithmParameterSpec)null, random);
+            engineInit(opmode, key, (AlgorithmParameterSpec) null, random);
         }
         catch (InvalidAlgorithmParameterException e)
         {
@@ -954,17 +955,25 @@ class BaseCipher
     }
 
     protected byte[] engineUpdate(
-        byte[]  input,
-        int     inputOffset,
-        int     inputLen)
+            byte[] input,
+            int inputOffset,
+            int inputLen)
     {
+        byte[] out = new byte[cipher.getUpdateOutputSize(inputLen)];
+
+        resultStream.setBuffer(out);
+
         processingStream.update(input, inputOffset, inputLen);
 
         if (resultStream.size() > 0)
         {
-            byte[] result = resultStream.toByteArray();
+            byte[] result = resultStream.toTrimmedByteArray();
 
-            resultStream.reset();
+            // only zero out if plaintext at risk.
+            if (cipher == decryptor)
+            {
+                resultStream.erase();
+            }
 
             return result;
         }
@@ -973,41 +982,41 @@ class BaseCipher
     }
 
     protected int engineUpdate(
-        byte[]  input,
-        int     inputOffset,
-        int     inputLen,
-        byte[]  output,
-        int     outputOffset)
-        throws ShortBufferException
+            byte[] input,
+            int inputOffset,
+            int inputLen,
+            byte[] output,
+            int outputOffset)
+            throws ShortBufferException
     {
         if (outputOffset + cipher.getUpdateOutputSize(inputLen) > output.length)
         {
             throw new ShortBufferException("Output buffer too short for input.");
         }
 
-        try
-        {
-            resultStream.setWrappedMode(output, outputOffset);
+        resultStream.setBuffer(output, outputOffset);
 
+        if (inputLen != 0)
+        {
             processingStream.update(input, inputOffset, inputLen);
+        }
 
-            return resultStream.size();
-        }
-        finally
-        {
-            resultStream.clearWrappedMode();
-        }
+        return resultStream.size();
     }
 
     protected byte[] engineDoFinal(
-        byte[]  input,
-        int     inputOffset,
-        int     inputLen)
-        throws IllegalBlockSizeException, BadPaddingException
+            byte[] input,
+            int inputOffset,
+            int inputLen)
+            throws IllegalBlockSizeException, BadPaddingException
     {
         try
         {
-            if (input != null && inputLen != 0)
+
+            byte[] out = new byte[cipher.getMaxOutputSize(inputLen)];
+            resultStream.setBuffer(out);
+
+            if (inputLen != 0)
             {
                 processingStream.update(input, inputOffset, inputLen);
             }
@@ -1020,14 +1029,18 @@ class BaseCipher
             {
                 ClassUtil.throwBadTagException(e.getMessage());
             }
+
             throw new BadPaddingException(e.getMessage());
         }
 
-        byte[] result = resultStream.toByteArray();
+        byte[] result = resultStream.toTrimmedByteArray();
 
-        resultStream.erase();
+        // only zero out if plaintext at risk.
+        if (cipher == decryptor)
+        {
+            resultStream.erase();
+        }
 
-        // reset AAD data if provided
         if (associatedData != null)
         {
             aadStream.update(associatedData);
@@ -1037,12 +1050,12 @@ class BaseCipher
     }
 
     protected int engineDoFinal(
-        byte[]  input,
-        int     inputOffset,
-        int     inputLen,
-        byte[]  output,
-        int     outputOffset)
-        throws IllegalBlockSizeException, BadPaddingException, ShortBufferException
+            byte[] input,
+            int inputOffset,
+            int inputLen,
+            byte[] output,
+            int outputOffset)
+            throws IllegalBlockSizeException, BadPaddingException, ShortBufferException
     {
         if (outputOffset + engineGetOutputSize(inputLen) > output.length)
         {
@@ -1051,19 +1064,23 @@ class BaseCipher
 
         try
         {
-            resultStream.setWrappedMode(output, outputOffset);
+            resultStream.setBuffer(output, outputOffset);
 
-            processingStream.update(input, inputOffset, inputLen);
+            if (inputLen != 0)
+            {
+                processingStream.update(input, inputOffset, inputLen);
+            }
 
             processingStream.close();
 
-            // reset AAD data if provided
+            int size = resultStream.size();
+
             if (associatedData != null)
             {
                 aadStream.update(associatedData);
             }
 
-            return resultStream.size();
+            return size;
         }
         catch (IOException e)
         {
@@ -1073,15 +1090,11 @@ class BaseCipher
             }
             throw new BadPaddingException(e.getMessage());
         }
-        finally
-        {
-            resultStream.clearWrappedMode();
-        }
     }
 
     protected byte[] engineWrap(
-        Key     key)
-    throws IllegalBlockSizeException, InvalidKeyException
+            Key key)
+            throws IllegalBlockSizeException, InvalidKeyException
     {
         byte[] encoded = key.getEncoded();
         if (encoded == null)
@@ -1100,15 +1113,15 @@ class BaseCipher
     }
 
     protected Key engineUnwrap(
-        byte[]  wrappedKey,
-        String  wrappedKeyAlgorithm,
-        int     wrappedKeyType)
-    throws InvalidKeyException, NoSuchAlgorithmException
+            byte[] wrappedKey,
+            String wrappedKeyAlgorithm,
+            int wrappedKeyType)
+            throws InvalidKeyException, NoSuchAlgorithmException
     {
         byte[] encoded;
         try
         {
-                encoded = engineDoFinal(wrappedKey, 0, wrappedKey.length);
+            encoded = engineDoFinal(wrappedKey, 0, wrappedKey.length);
         }
         catch (BadPaddingException e)
         {

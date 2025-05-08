@@ -30,7 +30,6 @@ public class CertificateRepMessageBuilder
             this.caCerts[i] = new CMPCertificate(caCerts[i].toASN1Structure());
         }
     }
-
     public CertificateRepMessageBuilder addCertificateResponse(CertificateResponse response)
     {
         responses.add(response.toASN1Structure());

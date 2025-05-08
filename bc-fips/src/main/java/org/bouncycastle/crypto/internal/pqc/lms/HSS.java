@@ -17,7 +17,7 @@ class HSS
         LMSPrivateKeyParameters[] keys = new LMSPrivateKeyParameters[parameters.getDepth()];
         LMSSignature[] sig = new LMSSignature[parameters.getDepth() - 1];
 
-        byte[] rootSeed = new byte[32];
+        byte[] rootSeed = new byte[parameters.getLmsParameters()[0].getLMSigParam().getM()];
         parameters.getRandom().nextBytes(rootSeed);
 
         byte[] I = new byte[16];
@@ -54,7 +54,7 @@ class HSS
                     1 << parameters.getLmsParameters()[t].getLMSigParam().getH(),
                     zero);
             }
-            hssKeyMaxIndex *= 1 << parameters.getLmsParameters()[t].getLMSigParam().getH();
+            hssKeyMaxIndex *= 1L << parameters.getLmsParameters()[t].getLMSigParam().getH();
         }
 
         // if this has happened we're trying to generate a really large key

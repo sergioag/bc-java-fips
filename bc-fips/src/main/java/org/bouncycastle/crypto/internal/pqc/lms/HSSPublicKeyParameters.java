@@ -106,16 +106,9 @@ public class HSSPublicKeyParameters
     }
 
     public LMSContext generateLMSContext(byte[] sigEnc)
+        throws IOException
     {
-        HSSSignature signature;
-        try
-        {
-            signature = HSSSignature.getInstance(sigEnc, getL());
-        }
-        catch (IOException e)
-        {
-            throw new IllegalStateException("cannot parse signature: " + e.getMessage());
-        }
+        HSSSignature signature = HSSSignature.getInstance(sigEnc, getL());
 
         LMSSignedPubKey[] signedPubKeys = signature.getSignedPubKey();
         LMSPublicKeyParameters key = signedPubKeys[signedPubKeys.length - 1].getPublicKey();

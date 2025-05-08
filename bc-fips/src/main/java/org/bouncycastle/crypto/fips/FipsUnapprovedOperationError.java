@@ -21,7 +21,7 @@ public class FipsUnapprovedOperationError
     /**
      * Constructor for an error associated with a specific algorithm.
      *
-     * @param message a message describing the error.
+     * @param message   a message describing the error.
      * @param algorithm the algorithm the failure was for.
      */
     public FipsUnapprovedOperationError(String message, Algorithm algorithm)

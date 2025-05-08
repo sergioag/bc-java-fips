@@ -33,7 +33,7 @@ public final class RC2
      * Raw RC2 algorithm, can be used for creating general purpose RC2 keys.
      */
     public static final GeneralAlgorithm ALGORITHM = new GeneralAlgorithm("RC2");
-    
+
     private static final EngineProvider ENGINE_PROVIDER;
 
     static
@@ -173,7 +173,7 @@ public final class RC2
         implements ParametersWithIV
     {
         private final byte[] iv;
-        private final int    effectiveKeySizeInBits;
+        private final int effectiveKeySizeInBits;
 
         Parameters(GeneralAlgorithm algorithm)
         {
@@ -249,9 +249,9 @@ public final class RC2
         }
 
         public int getEffectiveKeySizeInBits()
-                {
-                    return effectiveKeySizeInBits;
-                }
+        {
+            return effectiveKeySizeInBits;
+        }
     }
 
     /**
@@ -271,7 +271,7 @@ public final class RC2
 
         public KeyGenerator(GeneralParameters parameterSet, int keySizeInBits, SecureRandom random)
         {
-             this((GeneralAlgorithm)parameterSet.getAlgorithm(), keySizeInBits, random);
+            this((GeneralAlgorithm)parameterSet.getAlgorithm(), keySizeInBits, random);
         }
 
         private KeyGenerator(GeneralAlgorithm algorithm, int keySizeInBits, SecureRandom random)
@@ -307,7 +307,7 @@ public final class RC2
         protected BufferedBlockCipher createCipher(boolean forEncryption, SymmetricKey key, Parameters parameters, SecureRandom random)
         {
             KeyParameter keyParameter = createRC2Parameters(key, parameters.getAlgorithm(), parameters.getEffectiveKeySizeInBits());
-            
+
             return CipherUtils.createStandardCipher(forEncryption, keyParameter, ENGINE_PROVIDER, parameters, random);
         }
     }

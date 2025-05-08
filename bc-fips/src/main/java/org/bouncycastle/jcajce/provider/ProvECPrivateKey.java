@@ -4,15 +4,18 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigInteger;
+import java.security.PrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.ECParameterSpec;
 import java.security.spec.ECPrivateKeySpec;
 
 import javax.security.auth.Destroyable;
 
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.crypto.Algorithm;
 import org.bouncycastle.crypto.asymmetric.AsymmetricECPrivateKey;
 import org.bouncycastle.crypto.asymmetric.ECDomainParameters;
+import org.bouncycastle.util.Arrays;
 
 class ProvECPrivateKey
     implements Destroyable, ECPrivateKey, ProvKey<AsymmetricECPrivateKey>
@@ -107,14 +110,14 @@ class ProvECPrivateKey
             return true;
         }
 
-        if (!(o instanceof ProvECPrivateKey))
+        if (o instanceof ProvECPrivateKey)
         {
-            return false;
+            ProvECPrivateKey other = (ProvECPrivateKey)o;
+
+            return this.baseKey.equals(other.baseKey);
         }
 
-        ProvECPrivateKey other = (ProvECPrivateKey)o;
-
-        return this.baseKey.equals(other.baseKey);
+        return false;
     }
 
     public int hashCode()

@@ -23,7 +23,7 @@ public abstract class AsymmetricDSTU4145Key
     implements AsymmetricKey
 {
     private Algorithm algorithm;
-    protected DSTU4145Parameters parameters;
+    private DSTU4145Parameters parameters;
 
     protected final AlgorithmIdentifier dstu4145Identifier;
 

@@ -7,5 +7,6 @@ abstract class VariantKatTest<T>
         throw new SelfTestExecutor.TestFailedException(message);
     }
 
-    abstract void evaluate(T engine) throws Exception;
+    abstract void evaluate(T engine)
+        throws Exception;
 }

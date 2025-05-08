@@ -211,7 +211,10 @@ class SipHashEngine
             r2 = rotateLeft(r2, 32);
         }
 
-        v0 = r0; v1 = r1; v2 = r2; v3 = r3;
+        v0 = r0;
+        v1 = r1;
+        v2 = r2;
+        v3 = r3;
     }
 
     protected static long rotateLeft(long x, int n)

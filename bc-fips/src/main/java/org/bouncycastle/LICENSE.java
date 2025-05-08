@@ -5,7 +5,7 @@ import org.bouncycastle.util.Strings;
 /**
  * The Bouncy Castle License.
  * <p>
- * Copyright (c) 2015 The Legion Of The Bouncy Castle Inc. (https://www.bouncycastle.org)
+ * Copyright (c) 2015-2023 The Legion Of The Bouncy Castle Inc. (https://www.bouncycastle.org)
  * </p><p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
  * and associated documentation files (the "Software"), to deal in the Software without restriction, 
@@ -32,7 +32,7 @@ public final class LICENSE
     }
 
     public static final String licenseText =
-      "Copyright (c) 2015 The Legion of the Bouncy Castle Inc. (https://www.bouncycastle.org) "
+      "Copyright (c) 2015-2023 The Legion of the Bouncy Castle Inc. (https://www.bouncycastle.org) "
       + Strings.lineSeparator()
       + Strings.lineSeparator()
       + "Permission is hereby granted, free of charge, to any person obtaining a copy of this software "
@@ -66,6 +66,7 @@ public final class LICENSE
     public static void main(
         String[]    args)
     {
+        // -DM out.println
         System.out.println(licenseText);
     }
 }

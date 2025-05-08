@@ -99,14 +99,12 @@ class Prov15EdDSAPrivateKey
             return true;
         }
 
-        if (!(o instanceof EdECPrivateKey))
+        if (o instanceof Prov15EdDSAPrivateKey)
         {
-            return false;
+            return this.baseKey.equals(((Prov15EdDSAPrivateKey)o).baseKey);
         }
 
-        EdECPrivateKey other = (EdECPrivateKey)o;
-
-        return Arrays.areEqual(other.getEncoded(), this.getEncoded());
+        return false;
     }
 
     public int hashCode()
@@ -149,7 +147,8 @@ class Prov15EdDSAPrivateKey
     @Override
     public NamedParameterSpec getParams()
     {
-        if (baseKey.getAlgorithm().equals(EdEC.Algorithm.Ed448))
+        NamedParameterSpec z = null;
+        if (baseKey.getAlgorithm().getName().startsWith("Ed448"))
         {
             return NamedParameterSpec.ED448;
         }

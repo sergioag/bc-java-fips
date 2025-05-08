@@ -22,7 +22,7 @@ public class OperationError
      * Constructor for an error associated with a specific algorithm.
      *
      * @param message a message describing the error.
-     * @param cause the throwable that caused this exception to be raised.
+     * @param cause   the throwable that caused this exception to be raised.
      */
     public OperationError(String message, Throwable cause)
     {

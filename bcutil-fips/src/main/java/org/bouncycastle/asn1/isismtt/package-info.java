@@ -1,6 +1,4 @@
 /**
- Classes and object identifiers related to ISISMT -- the Industrial Signature Interoperability Specification.
-*/
+ * Support classes for the ISIS-MTT Project.
+ */
 package org.bouncycastle.asn1.isismtt;
-
-

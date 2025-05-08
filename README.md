@@ -36,6 +36,11 @@ The following is the list of known issues:
   while the original files don't. Unfortunately, this is the result of a behavior of
   maven-compiler-plugin when it detects that module-info.java exists, and it cannot be disabled.
   However, it doesn't seem to cause any harm so far. Any ideas to fix this would be appreciated.
+- The Private-Package header in the manifest for bc-fips project is missing. I've put the
+  supposedly correct value for it in the corresponding pom.xml, but it breaks the build.
+  Thus, I have left it commented and it shouldn't affect anything because all packages are
+  private by default and the Export-Package and Import-Package are generated fine. Any help
+  fixing this would be appreciated.
 
 How to build
 ============
@@ -71,20 +76,20 @@ Versions
 ========
 
 Currently, the following versions are used here:
-- Provider: [bc-fips-2.0.0.jar](https://repo1.maven.org/maven2/org/bouncycastle/bc-fips/2.0.0/bc-fips-2.0.0.jar) ``SHA256SUM=f6a25fd5744e91cc019a9f79733ae757da6648a80946fad9932041ad05695240``
-- Provider source: [bc-fips-2.0.0-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bc-fips/2.0.0/bc-fips-2.0.0-sources.jar) ``SHA256SUM=26cab04f7353d51b77846dff4daa4e4f8fffefe35b4630a78fc533684cd01920``
-- ASN.1 Utility Classes: [bcutil-fips-2.0.3.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcutil-fips/2.0.3/bcutil-fips-2.0.3.jar) ``SHA256SUM=d7ab2fa5ba33594324a2cc26c75fd30e6a13e4d6524cb2027bb8384fd1befa14``
-- ASN.1 Utility Classes source: [bcutil-fips-2.0.3-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcutil-fips/2.0.3/bcutil-fips-2.0.3-sources.jar) ``SHA256SUM=0fef304b276c0572c1266888c2665cdc571548e991cc9f67adb1677075e70ea7``
-- PKIX/CMS/EAC/PKCS/OCSP/TSP/OPENSSL: [bcpkix-fips-2.0.8.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-fips/2.0.8/bcpkix-fips-2.0.8.jar) ``SHA256SUM=34c4cc6b3417cbf133e0ded93fe917dd9dd64dfcba411a1660a4ca3c574d6b0e``
-- PKIX/CMS/EAC/PKCS/OCSP/TSP/OPENSSL source: [bcpkix-fips-2.0.8-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-fips/2.0.8/bcpkix-fips-2.0.8-sources.jar) ``SHA256SUM=5eea798e5b745565ec2732b9a1c76516079c502af92777be456a66ce856a53ad``
-- SMIME: [bcmail-fips-2.0.5.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcmail-fips/2.0.5/bcmail-fips-2.0.5.jar) ``SHA256SUM=df253d5358722fcb1ca7790ec232c7d2a0283af512ab80ea1fad3474d1254455``
-- SMIME source: [bcmail-fips-2.0.5-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcmail-fips/2.0.5/bcmail-fips-2.0.5-sources.jar) ``SHA256SUM=dda01017da1f0c57c8bdffe84edbbf43579fe059b89dfe66430a1a1a341d155b``
-- Jakarta SMIME: [bcjmail-fips-2.0.5.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcjmail-fips/2.0.5/bcjmail-fips-2.0.5.jar) ``SHA256SUM=0c785a7f67769b5bab279ee49d6dd2046995d76315341d9a9e744e1409adc531``
-- Jakarta SMIME source: [bcjmail-fips-2.0.5-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcjmail-fips/2.0.5/bcjmail-fips-2.0.5-sources.jar) ``SHA256SUM=16131f03c976bda42ac967d045e884ca1005d95dc661779f2d47d7199e7368a0``
-- OpenPGP/BCPG: [bcpg-fips-2.0.9.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpg-fips/2.0.9/bcpg-fips-2.0.9.jar) ``SHA256SUM=a9daf4d3c8d484a510b66dc121db1aafa435504f2aef0fa01ef3a020aae5f3ec``
-- OpenPGP/BCPG source: [bcpg-fips-2.0.9-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpg-fips/2.0.9/bcpg-fips-2.0.9-sources.jar) ``SHA256SUM=912a6e17ea91dc191a9cd01e9ae79c3625af3b0fd1aff8f6a9eb720a6d6cf23f``
-- DTLS/TLS API/JSSE Provider: [bctls-fips-2.0.20.jar](https://repo1.maven.org/maven2/org/bouncycastle/bctls-fips/2.0.20/bctls-fips-2.0.20.jar) ``SHA256SUM=5965f713e29fd1ebf680d4b8f6b663f1aa1b17306acb2dcbb35b20862a55cd2f``
-- DTLS/TLS API/JSSE Provider source: [bctls-fips-2.0.20-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bctls-fips/2.0.20/bctls-fips-2.0.20-sources.jar) ``SHA256SUM=f22b29f63cbfb0faf67a4a90ae8ad43e3e72ec32682458b973b6e0a8ac961d12``
+- Provider: [bc-fips-2.1.0.jar](https://repo1.maven.org/maven2/org/bouncycastle/bc-fips/2.1.0/bc-fips-2.1.0.jar) ``SHA256SUM=caa427f52062e07d0fd6c36eb7d0975dc5c3fa1376f1b611a57c6a1f9d1548d7``
+- Provider source: [bc-fips-2.1.0-sources.jar](https://downloads.bouncycastle.org/fips-java/bc-fips-2.1.0-sources.jar) ``SHA256SUM=d848eccdb94579932fe8cc4fa30ed315a0681ed0315acbabe99bcdd12fd95ef5``
+- ASN.1 Utility Classes: [bcutil-fips-2.1.4.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcutil-fips/2.1.4/bcutil-fips-2.1.4.jar) ``SHA256SUM=e169519e6441fb19cabf633d44fcef211506793e5be499ac9215648bd20634e0``
+- ASN.1 Utility Classes source: [bcutil-fips-2.1.4-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcutil-fips/2.1.4/bcutil-fips-2.1.4-sources.jar) ``SHA256SUM=59e04c70af8d33f7da11fe7014c04f9cddaaca7f280aa006a066d8eaabe8965c``
+- PKIX/CMS/EAC/PKCS/OCSP/TSP/OPENSSL: [bcpkix-fips-2.1.9.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-fips/2.1.9/bcpkix-fips-2.1.9.jar) ``SHA256SUM=c31a4aeeda18f98b06deab50f6c5fa972eb87555ef134268be28eed95fadece7``
+- PKIX/CMS/EAC/PKCS/OCSP/TSP/OPENSSL source: [bcpkix-fips-2.1.9-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-fips/2.1.9/bcpkix-fips-2.1.9-sources.jar) ``SHA256SUM=5bb51e017dd76ac9d4e304f0e353016f466921925bc515ba52ebb60955dcab18``
+- SMIME: [bcmail-fips-2.1.6.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcmail-fips/2.1.6/bcmail-fips-2.1.6.jar) ``SHA256SUM=9568345307a8f4bddff50dda1fcbecabe2a011323d2998baa388548a8871e7d8``
+- SMIME source: [bcmail-fips-2.1.6-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcmail-fips/2.1.6/bcmail-fips-2.1.6-sources.jar) ``SHA256SUM=7f837bd9749f6c059ee794a99ec51b313d47d4bdf964555389e5b6323fa975c0``
+- Jakarta SMIME: [bcjmail-fips-2.1.6.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcjmail-fips/2.1.6/bcjmail-fips-2.1.6.jar) ``SHA256SUM=134bd06e17e66f13319b5e90781695d9c2bd586f4ed1dc3fc6f833279a750bc9``
+- Jakarta SMIME source: [bcjmail-fips-2.1.6-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcjmail-fips/2.1.6/bcjmail-fips-2.1.6-sources.jar) ``SHA256SUM=7350bc10ecdb43982abe842266c4c0501672c76e6944d8a877032dc4ef84fa6f``
+- OpenPGP/BCPG: [bcpg-fips-2.1.11.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpg-fips/2.1.11/bcpg-fips-2.1.11.jar) ``SHA256SUM=ea51efee825bd0d61c3d22cff5a127898edc7ca62ba454fbcf4789801031d850``
+- OpenPGP/BCPG source: [bcpg-fips-2.1.11-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpg-fips/2.1.11/bcpg-fips-2.1.11-sources.jar) ``SHA256SUM=24915cdcefbb3b004c5f89143702c0bb02e5298069fda2e87b916ecc40235cbc``
+- DTLS/TLS API/JSSE Provider: [bctls-fips-2.1.20.jar](https://repo1.maven.org/maven2/org/bouncycastle/bctls-fips/2.1.20/bctls-fips-2.1.20.jar) ``SHA256SUM=c058a438442ea46d8abdefc95e581ebf2834e50504bda925a945b1f4ceb48d86``
+- DTLS/TLS API/JSSE Provider source: [bctls-fips-2.1.20-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bctls-fips/2.1.20/bctls-fips-2.1.20-sources.jar) ``SHA256SUM=33d599405cca8e1567f408d0e9df7ec8a774fff4c808467ae5a589db534f025d``
 
 I try to update to new versions as soon as they get published, but there's no
 guarantee of the timing or if it will happen at all. 

@@ -7,23 +7,23 @@ import org.bouncycastle.crypto.internal.params.DhParameters;
 
 class DhParametersGenerator
 {
-    private int             size;
-    private int             certainty;
-    private SecureRandom    random;
+    private int size;
+    private int certainty;
+    private SecureRandom random;
 
     private static final BigInteger TWO = BigInteger.valueOf(2);
 
     /**
      * Initialise the parameters generator.
-     * 
-     * @param size bit length for the prime p
+     *
+     * @param size      bit length for the prime p
      * @param certainty level of certainty for the prime number tests
-     * @param random  a source of randomness
+     * @param random    a source of randomness
      */
     public void init(
-        int             size,
-        int             certainty,
-        SecureRandom    random)
+        int size,
+        int certainty,
+        SecureRandom random)
     {
         this.size = size;
         this.certainty = certainty;

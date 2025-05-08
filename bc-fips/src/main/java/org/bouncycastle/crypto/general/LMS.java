@@ -44,17 +44,17 @@ public class LMS
     public static final GeneralAlgorithm ALGORITHM = new GeneralAlgorithm("LMS");
 
     public static final Parameters SIG = new Parameters(ALGORITHM);
-    
+
     public static final OTSParameters sha256_n32_w1 = new OTSParameters(LMOtsParameters.sha256_n32_w1);
     public static final OTSParameters sha256_n32_w2 = new OTSParameters(LMOtsParameters.sha256_n32_w2);
     public static final OTSParameters sha256_n32_w4 = new OTSParameters(LMOtsParameters.sha256_n32_w4);
     public static final OTSParameters sha256_n32_w8 = new OTSParameters(LMOtsParameters.sha256_n32_w8);
 
     public static final KeyParameters lms_sha256_n32_h5 = new KeyParameters(LMSigParameters.lms_sha256_n32_h5);
-    public static final KeyParameters lms_sha256_n32_h10 = new KeyParameters(LMSigParameters.lms_sha256_n32_h5);
-    public static final KeyParameters lms_sha256_n32_h15 = new KeyParameters(LMSigParameters.lms_sha256_n32_h5);
-    public static final KeyParameters lms_sha256_n32_h20 = new KeyParameters(LMSigParameters.lms_sha256_n32_h5);
-    public static final KeyParameters lms_sha256_n32_h25 = new KeyParameters(LMSigParameters.lms_sha256_n32_h5);
+    public static final KeyParameters lms_sha256_n32_h10 = new KeyParameters(LMSigParameters.lms_sha256_n32_h10);
+    public static final KeyParameters lms_sha256_n32_h15 = new KeyParameters(LMSigParameters.lms_sha256_n32_h15);
+    public static final KeyParameters lms_sha256_n32_h20 = new KeyParameters(LMSigParameters.lms_sha256_n32_h20);
+    public static final KeyParameters lms_sha256_n32_h25 = new KeyParameters(LMSigParameters.lms_sha256_n32_h25);
 
     static
     {
@@ -100,7 +100,7 @@ public class LMS
 
         public KeyParameters using(OTSParameters otsParameters)
         {
-           return new KeyParameters(this.sigParams, otsParameters.otsParameters);
+            return new KeyParameters(this.sigParams, otsParameters.otsParameters);
         }
     }
 
@@ -177,11 +177,6 @@ public class LMS
         }
     }
 
-    public abstract static class KeyCache
-    {
-        abstract protected Object getInternalKey();
-    }
-
     /**
      * Operator factory for creating LMS based signing and verification operators.
      */
@@ -195,7 +190,7 @@ public class LMS
         @Override
         protected OutputSigner<Parameters> doCreateSigner(AsymmetricPrivateKey key, final Parameters parameters)
         {
-            final LMSContextBasedSigner signer = (LMSContextBasedSigner)(new KeyCacheAccessor((AsymmetricLMSPrivateKey)key).getInternalKey());
+            final LMSContextBasedSigner signer = ((AsymmetricLMSPrivateKey)key).getContextBasedSigner();
 
             return new OutputSigner<Parameters>()
             {
@@ -234,7 +229,7 @@ public class LMS
         @Override
         protected OutputVerifier<Parameters> doCreateVerifier(AsymmetricPublicKey key, final Parameters parameters)
         {
-            final LMSContextBasedVerifier verifier = (LMSContextBasedVerifier)(new KeyCacheAccessor((AsymmetricLMSPublicKey)key).getInternalKey());
+            final LMSContextBasedVerifier verifier = ((AsymmetricLMSPublicKey)key).getContextBasedVerifier();
 
             return new OutputVerifier<Parameters>()
             {
@@ -253,7 +248,19 @@ public class LMS
                 public boolean isVerified(byte[] signature)
                     throws InvalidSignatureException
                 {
-                    LMSContext lmsContext = verifier.generateLMSContext(signature);
+                    LMSContext lmsContext;
+                    try
+                    {
+                        lmsContext = verifier.generateLMSContext(signature);
+                    }
+                    catch (InvalidSignatureException e)
+                    {
+                        throw e;
+                    }
+                    catch (IOException e)
+                    {
+                        throw new InvalidSignatureException("exception parsing signature: " + e.getMessage(), e);
+                    }
 
                     bOut.outputTo(lmsContext);
 
@@ -263,13 +270,26 @@ public class LMS
         }
 
         protected OutputValidator<Parameters> doCreateValidator(AsymmetricPublicKey key, final Parameters parameters, final byte[] signature)
+            throws InvalidSignatureException
         {
-            final LMSContextBasedVerifier verifier = (LMSContextBasedVerifier)(new KeyCacheAccessor((AsymmetricLMSPublicKey)key).getInternalKey());
+            final LMSContextBasedVerifier verifier = ((AsymmetricLMSPublicKey)key).getContextBasedVerifier();
+
+            final LMSContext lmsContext;
+            try
+            {
+                lmsContext = verifier.generateLMSContext(signature);
+            }
+            catch (InvalidSignatureException e)
+            {
+                throw e;
+            }
+            catch (IOException e)
+            {
+                throw new InvalidSignatureException("exception parsing signature: " + e.getMessage(), e);
+            }
 
             return new OutputValidator<Parameters>()
             {
-                LMSContext lmsContext = verifier.generateLMSContext(signature);
-
                 final DigestOutputStream dOut = new DigestOutputStream(lmsContext);
 
                 public Parameters getParameters()
@@ -307,7 +327,7 @@ public class LMS
             {
                 return (Digest)FipsRegister.getProvider(FipsSHS.Algorithm.SHAKE128).createEngine();
             }
-            if (digOid.equals(NISTObjectIdentifiers.id_shake256))
+            if (digOid.equals(NISTObjectIdentifiers.id_shake256) || digOid.equals(NISTObjectIdentifiers.id_shake256_len))
             {
                 return (Digest)FipsRegister.getProvider(FipsSHS.Algorithm.SHAKE256).createEngine();
             }
@@ -346,23 +366,6 @@ public class LMS
         void outputTo(Digest digest)
         {
             digest.update(this.buf, 0, this.count);
-        }
-    }
-
-    private static class KeyCacheAccessor
-        extends KeyCache
-    {
-        private final KeyCache key;
-
-        KeyCacheAccessor(KeyCache key)
-        {
-            this.key = key;
-        }
-
-        @Override
-        protected Object getInternalKey()
-        {
-            return key.getInternalKey();
         }
     }
 }

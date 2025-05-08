@@ -177,7 +177,8 @@ class SEEDEngine
     private int[] wKey;
     private boolean forEncryption;
 
-    public void init(boolean forEncryption, CipherParameters params) throws IllegalArgumentException
+    public void init(boolean forEncryption, CipherParameters params)
+        throws IllegalArgumentException
     {
         this.forEncryption = forEncryption;
         wKey = createWorkingKey(((KeyParameter)params).getKey());
@@ -193,7 +194,8 @@ class SEEDEngine
         return BLOCK_SIZE;
     }
 
-    public int processBlock(byte[] in, int inOff, byte[] out, int outOff) throws DataLengthException, IllegalStateException
+    public int processBlock(byte[] in, int inOff, byte[] out, int outOff)
+        throws DataLengthException, IllegalStateException
     {
         if (wKey == null)
         {
@@ -217,20 +219,20 @@ class SEEDEngine
         {
             for (int i = 0; i < 16; i++)
             {
-               long nl = r;
+                long nl = r;
 
-               r = l ^ F(wKey[2 * i], wKey[(2 * i) + 1], r);
-               l = nl;
+                r = l ^ F(wKey[2 * i], wKey[(2 * i) + 1], r);
+                l = nl;
             }
         }
         else
         {
             for (int i = 15; i >= 0; i--)
             {
-               long nl = r;
+                long nl = r;
 
-               r = l ^ F(wKey[2 * i], wKey[(2 * i) + 1], r);
-               l = nl;
+                r = l ^ F(wKey[2 * i], wKey[(2 * i) + 1], r);
+                l = nl;
             }
         }
 
@@ -298,10 +300,10 @@ class SEEDEngine
     }
 
     private long bytesToLong(
-        byte[]  src,
-        int     srcOff)
+        byte[] src,
+        int srcOff)
     {
-        long    word = 0;
+        long word = 0;
 
         for (int i = 0; i <= 7; i++)
         {
@@ -312,9 +314,9 @@ class SEEDEngine
     }
 
     private void longToBytes(
-        byte[]  dest,
-        int     destOff,
-        long    value)
+        byte[] dest,
+        int destOff,
+        long value)
     {
         for (int i = 0; i < 8; i++)
         {

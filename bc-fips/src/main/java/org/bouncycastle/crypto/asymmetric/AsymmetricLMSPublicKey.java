@@ -13,6 +13,7 @@ import org.bouncycastle.crypto.AsymmetricPublicKey;
 import org.bouncycastle.crypto.internal.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.internal.pqc.lms.Composer;
 import org.bouncycastle.crypto.internal.pqc.lms.HSSPublicKeyParameters;
+import org.bouncycastle.crypto.internal.pqc.lms.LMSContextBasedVerifier;
 import org.bouncycastle.crypto.internal.pqc.lms.LMSPublicKeyParameters;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Pack;
@@ -86,12 +87,6 @@ public final class AsymmetricLMSPublicKey
     }
 
     @Override
-    protected Object getInternalKey()
-    {
-        return lwKey;
-    }
-
-    @Override
     public boolean equals(Object o)
     {
         checkApprovedOnlyModeStatus();
@@ -131,30 +126,35 @@ public final class AsymmetricLMSPublicKey
         return result;
     }
 
-    private static AsymmetricKeyParameter getLwKey(final AsymmetricLMSPublicKey pubKey)
-        {
-            return AccessController.doPrivileged(new PrivilegedAction<AsymmetricKeyParameter>()
-            {
-                public AsymmetricKeyParameter run()
-                {
-                    try
-                    {
-                        if (pubKey.getL() == 1)
-                        {
-                            return LMSPublicKeyParameters.getInstance(pubKey.getPublicData());
-                        }
-                        else
-                        {
-                            Composer c = Composer.compose().u32str(pubKey.getL()).bytes(pubKey.getPublicData());
+    public LMSContextBasedVerifier getContextBasedVerifier()
+    {
+        return (LMSContextBasedVerifier)lwKey;
+    }
 
-                            return HSSPublicKeyParameters.getInstance(c.build());
-                        }
-                    }
-                    catch (IOException e)
+    private static AsymmetricKeyParameter getLwKey(final AsymmetricLMSPublicKey pubKey)
+    {
+        return AccessController.doPrivileged(new PrivilegedAction<AsymmetricKeyParameter>()
+        {
+            public AsymmetricKeyParameter run()
+            {
+                try
+                {
+                    if (pubKey.getL() == 1)
                     {
-                        throw new IllegalStateException(e);
+                        return LMSPublicKeyParameters.getInstance(pubKey.getPublicData());
+                    }
+                    else
+                    {
+                        Composer c = Composer.compose().u32str(pubKey.getL()).bytes(pubKey.getPublicData());
+
+                        return HSSPublicKeyParameters.getInstance(c.build());
                     }
                 }
-            });
-        }
+                catch (IOException e)
+                {
+                    throw new IllegalStateException(e);
+                }
+            }
+        });
+    }
 }

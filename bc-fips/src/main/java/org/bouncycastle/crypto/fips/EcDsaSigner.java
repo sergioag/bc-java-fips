@@ -26,7 +26,7 @@ class EcDsaSigner
     private final DsaKCalculator kCalculator;
 
     private EcKeyParameters key;
-    private SecureRandom    random;
+    private SecureRandom random;
 
     /**
      * Default configuration, random K values.
@@ -47,14 +47,14 @@ class EcDsaSigner
     }
 
     public void init(
-        boolean                 forSigning,
-        CipherParameters        param)
+        boolean forSigning,
+        CipherParameters param)
     {
         if (forSigning)
         {
             if (param instanceof ParametersWithRandom)
             {
-                ParametersWithRandom    rParam = (ParametersWithRandom)param;
+                ParametersWithRandom rParam = (ParametersWithRandom)param;
 
                 this.random = rParam.getRandom();
                 this.key = (EcPrivateKeyParameters)rParam.getParameters();
@@ -75,6 +75,7 @@ class EcDsaSigner
     }
 
     // 5.3 pg 28
+
     /**
      * generate a signature for the given message using the key we were
      * initialised with. For conventional DSA the message should be a SHA-1
@@ -122,19 +123,20 @@ class EcDsaSigner
         }
         while (s.equals(ZERO));
 
-        return new BigInteger[]{ r, s };
+        return new BigInteger[]{r, s};
     }
 
     // 5.4 pg 29
+
     /**
      * return true if the value r and s represent a DSA signature for
      * the passed in message (for standard DSA the message should be
      * a SHA-1 hash of the real message to be verified).
      */
     public boolean verifySignature(
-        byte[]      message,
-        BigInteger  r,
-        BigInteger  s)
+        byte[] message,
+        BigInteger r,
+        BigInteger s)
     {
         EcDomainParameters ec = key.getParameters();
         BigInteger n = ec.getN();

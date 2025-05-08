@@ -20,6 +20,7 @@ import org.bouncycastle.util.Pack;
  * The polynomial calculation in this implementation is adapted from the public domain <a
  * href="https://github.com/floodyberry/poly1305-donna">poly1305-donna-unrolled</a> C implementation
  * by Andrew M (@floodyberry).
+ *
  * @see Poly1305KeyGenerator
  */
 class Poly1305Impl
@@ -33,24 +34,36 @@ class Poly1305Impl
 
     // Initialised state
 
-    /** Polynomial key */
+    /**
+     * Polynomial key
+     */
     private int r0, r1, r2, r3, r4;
 
-    /** Precomputed 5 * r[1..4] */
+    /**
+     * Precomputed 5 * r[1..4]
+     */
     private int s1, s2, s3, s4;
 
-    /** Encrypted nonce */
+    /**
+     * Encrypted nonce
+     */
     private int k0, k1, k2, k3;
 
     // Accumulating state
 
-    /** Current block of buffered input */
+    /**
+     * Current block of buffered input
+     */
     private final byte[] currentBlock = new byte[BLOCK_SIZE];
 
-    /** Current offset in input buffer */
+    /**
+     * Current offset in input buffer
+     */
     private int currentBlockOffset = 0;
 
-    /** Polynomial accumulator */
+    /**
+     * Polynomial accumulator
+     */
     private int h0, h1, h2, h3, h4;
 
     /**
@@ -75,11 +88,11 @@ class Poly1305Impl
 
     /**
      * Initialises the Poly1305 MAC.
-     * 
+     *
      * @param params if used with a block cipher, then a {@link ParametersWithIV} containing a 128 bit
-     *        nonce and a {@link KeyParameter} with a 256 bit key complying to the
-     *        {@link Poly1305KeyGenerator Poly1305 key format}, otherwise just the
-     *        {@link KeyParameter}.
+     *               nonce and a {@link KeyParameter} with a 256 bit key complying to the
+     *               {@link Poly1305KeyGenerator Poly1305 key format}, otherwise just the
+     *               {@link KeyParameter}.
      */
     public void init(CipherParameters params)
         throws IllegalArgumentException
@@ -92,7 +105,7 @@ class Poly1305Impl
             {
                 throw new IllegalArgumentException("Poly1305 requires an IV when used with a block cipher");
             }
-            
+
             ParametersWithIV ivParams = (ParametersWithIV)params;
             nonce = ivParams.getIV();
             params = ivParams.getParameters();
@@ -128,11 +141,11 @@ class Poly1305Impl
         int t3 = Pack.littleEndianToInt(key, 12);
 
         // NOTE: The masks perform the key "clamping" implicitly
-        r0 =   t0                       & 0x03FFFFFF;
-        r1 = ((t0 >>> 26) | (t1 <<  6)) & 0x03FFFF03;
+        r0 = t0 & 0x03FFFFFF;
+        r1 = ((t0 >>> 26) | (t1 << 6)) & 0x03FFFF03;
         r2 = ((t1 >>> 20) | (t2 << 12)) & 0x03FFC0FF;
         r3 = ((t2 >>> 14) | (t3 << 18)) & 0x03F03FFF;
-        r4 =  (t3 >>>  8)               & 0x000FFFFF;
+        r4 = (t3 >>> 8) & 0x000FFFFF;
 
         // Precompute multipliers
         s1 = r1 * 5;
@@ -229,19 +242,24 @@ class Poly1305Impl
             h4 += (1 << 24);
         }
 
-        long tp0 = mul32x32_64(h0,r0) + mul32x32_64(h1,s4) + mul32x32_64(h2,s3) + mul32x32_64(h3,s2) + mul32x32_64(h4,s1);
-        long tp1 = mul32x32_64(h0,r1) + mul32x32_64(h1,r0) + mul32x32_64(h2,s4) + mul32x32_64(h3,s3) + mul32x32_64(h4,s2);
-        long tp2 = mul32x32_64(h0,r2) + mul32x32_64(h1,r1) + mul32x32_64(h2,r0) + mul32x32_64(h3,s4) + mul32x32_64(h4,s3);
-        long tp3 = mul32x32_64(h0,r3) + mul32x32_64(h1,r2) + mul32x32_64(h2,r1) + mul32x32_64(h3,r0) + mul32x32_64(h4,s4);
-        long tp4 = mul32x32_64(h0,r4) + mul32x32_64(h1,r3) + mul32x32_64(h2,r2) + mul32x32_64(h3,r1) + mul32x32_64(h4,r0);
+        long tp0 = mul32x32_64(h0, r0) + mul32x32_64(h1, s4) + mul32x32_64(h2, s3) + mul32x32_64(h3, s2) + mul32x32_64(h4, s1);
+        long tp1 = mul32x32_64(h0, r1) + mul32x32_64(h1, r0) + mul32x32_64(h2, s4) + mul32x32_64(h3, s3) + mul32x32_64(h4, s2);
+        long tp2 = mul32x32_64(h0, r2) + mul32x32_64(h1, r1) + mul32x32_64(h2, r0) + mul32x32_64(h3, s4) + mul32x32_64(h4, s3);
+        long tp3 = mul32x32_64(h0, r3) + mul32x32_64(h1, r2) + mul32x32_64(h2, r1) + mul32x32_64(h3, r0) + mul32x32_64(h4, s4);
+        long tp4 = mul32x32_64(h0, r4) + mul32x32_64(h1, r3) + mul32x32_64(h2, r2) + mul32x32_64(h3, r1) + mul32x32_64(h4, r0);
 
-        h0 = (int)tp0 & 0x3ffffff; tp1 += (tp0 >>> 26);
-        h1 = (int)tp1 & 0x3ffffff; tp2 += (tp1 >>> 26);
-        h2 = (int)tp2 & 0x3ffffff; tp3 += (tp2 >>> 26);
-        h3 = (int)tp3 & 0x3ffffff; tp4 += (tp3 >>> 26);
+        h0 = (int)tp0 & 0x3ffffff;
+        tp1 += (tp0 >>> 26);
+        h1 = (int)tp1 & 0x3ffffff;
+        tp2 += (tp1 >>> 26);
+        h2 = (int)tp2 & 0x3ffffff;
+        tp3 += (tp2 >>> 26);
+        h3 = (int)tp3 & 0x3ffffff;
+        tp4 += (tp3 >>> 26);
         h4 = (int)tp4 & 0x3ffffff;
         h0 += (int)(tp4 >>> 26) * 5;
-        h1 += (h0 >>> 26); h0 &= 0x3ffffff;
+        h1 += (h0 >>> 26);
+        h0 &= 0x3ffffff;
     }
 
     public int doFinal(final byte[] out, final int outOff)
@@ -259,18 +277,32 @@ class Poly1305Impl
             processBlock();
         }
 
-        h1 += (h0 >>> 26); h0 &= 0x3ffffff;
-        h2 += (h1 >>> 26); h1 &= 0x3ffffff;
-        h3 += (h2 >>> 26); h2 &= 0x3ffffff;
-        h4 += (h3 >>> 26); h3 &= 0x3ffffff;
-        h0 += (h4 >>> 26) * 5; h4 &= 0x3ffffff;
-        h1 += (h0 >>> 26); h0 &= 0x3ffffff;
+        h1 += (h0 >>> 26);
+        h0 &= 0x3ffffff;
+        h2 += (h1 >>> 26);
+        h1 &= 0x3ffffff;
+        h3 += (h2 >>> 26);
+        h2 &= 0x3ffffff;
+        h4 += (h3 >>> 26);
+        h3 &= 0x3ffffff;
+        h0 += (h4 >>> 26) * 5;
+        h4 &= 0x3ffffff;
+        h1 += (h0 >>> 26);
+        h0 &= 0x3ffffff;
 
         int g0, g1, g2, g3, g4, b;
-        g0 = h0 + 5; b = g0 >>> 26; g0 &= 0x3ffffff;
-        g1 = h1 + b; b = g1 >>> 26; g1 &= 0x3ffffff;
-        g2 = h2 + b; b = g2 >>> 26; g2 &= 0x3ffffff;
-        g3 = h3 + b; b = g3 >>> 26; g3 &= 0x3ffffff;
+        g0 = h0 + 5;
+        b = g0 >>> 26;
+        g0 &= 0x3ffffff;
+        g1 = h1 + b;
+        b = g1 >>> 26;
+        g1 &= 0x3ffffff;
+        g2 = h2 + b;
+        b = g2 >>> 26;
+        g2 &= 0x3ffffff;
+        g3 = h3 + b;
+        b = g3 >>> 26;
+        g3 &= 0x3ffffff;
         g4 = h4 + b - (1 << 26);
 
         b = (g4 >>> 31) - 1;
@@ -282,10 +314,10 @@ class Poly1305Impl
         h4 = (h4 & nb) | (g4 & b);
 
         long f0, f1, f2, f3;
-        f0 = (((h0       ) | (h1 << 26)) & 0xffffffffl) + (0xffffffffL & k0);
-        f1 = (((h1 >>> 6 ) | (h2 << 20)) & 0xffffffffl) + (0xffffffffL & k1);
+        f0 = (((h0) | (h1 << 26)) & 0xffffffffl) + (0xffffffffL & k0);
+        f1 = (((h1 >>> 6) | (h2 << 20)) & 0xffffffffl) + (0xffffffffL & k1);
         f2 = (((h2 >>> 12) | (h3 << 14)) & 0xffffffffl) + (0xffffffffL & k2);
-        f3 = (((h3 >>> 18) | (h4 << 8 )) & 0xffffffffl) + (0xffffffffL & k3);
+        f3 = (((h3 >>> 18) | (h4 << 8)) & 0xffffffffl) + (0xffffffffL & k3);
 
         Pack.intToLittleEndian((int)f0, out, outOff);
         f1 += (f0 >>> 32);

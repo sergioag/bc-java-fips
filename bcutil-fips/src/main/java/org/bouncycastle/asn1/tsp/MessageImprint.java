@@ -1,6 +1,6 @@
 package org.bouncycastle.asn1.tsp;
 
-import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -78,11 +78,6 @@ public class MessageImprint
      */
     public ASN1Primitive toASN1Primitive()
     {
-        ASN1EncodableVector v = new ASN1EncodableVector(2);
-
-        v.add(hashAlgorithm);
-        v.add(new DEROctetString(hashedMessage));
-
-        return new DERSequence(v);
+        return new DERSequence(new ASN1Encodable[] {hashAlgorithm, new DEROctetString(hashedMessage)});
     }
 }

@@ -32,10 +32,9 @@ interface DRBG
     /**
      * Populate a passed in array with random data.
      *
-     * @param output output array for generated bits.
-     * @param additionalInput additional input to be added to the DRBG in this step.
+     * @param output              output array for generated bits.
+     * @param additionalInput     additional input to be added to the DRBG in this step.
      * @param predictionResistant true if a reseed should be forced, false otherwise.
-     *
      * @return number of bits generated, -1 if a reseed required.
      */
     int generate(byte[] output, byte[] additionalInput, boolean predictionResistant);
@@ -49,6 +48,7 @@ interface DRBG
 
     /**
      * Return a KAT for the DRBG - used prior to initialisation.
+     *
      * @param algorithm the FipsAlgorithm type
      * @return a self test
      */
@@ -56,6 +56,7 @@ interface DRBG
 
     /**
      * Return a KAT for the DRBG - used prior to reseed.
+     *
      * @param algorithm the FipsAlgorithm type
      * @return a self test
      */

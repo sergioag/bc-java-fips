@@ -21,7 +21,7 @@ interface DsaKCalculator
     /**
      * Non-deterministic initialiser.
      *
-     * @param n the order of the DSA group.
+     * @param n      the order of the DSA group.
      * @param random a source of randomness.
      */
     void init(BigInteger n, SecureRandom random);
@@ -29,8 +29,8 @@ interface DsaKCalculator
     /**
      * Deterministic initialiser.
      *
-     * @param n the order of the DSA group.
-     * @param d the DSA private value.
+     * @param n       the order of the DSA group.
+     * @param d       the DSA private value.
      * @param message the message being signed.
      */
     void init(BigInteger n, BigInteger d, byte[] message);

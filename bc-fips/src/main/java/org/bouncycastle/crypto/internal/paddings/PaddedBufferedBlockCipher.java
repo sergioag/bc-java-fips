@@ -115,7 +115,7 @@ public class PaddedBufferedBlockCipher
         int total       = len + bufOff;
         int leftOver    = total % buf.length;
 
-        if (leftOver == 0)
+        if (!forEncryption && leftOver == 0)
         {
             return Math.max(0, total - buf.length);
         }

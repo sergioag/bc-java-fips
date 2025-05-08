@@ -1,19 +1,28 @@
-/***************************************************************/
-/******    DO NOT EDIT THIS CLASS bc-java SOURCE FILE     ******/
-/***************************************************************/
 package org.bouncycastle.asn1.cmp;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.crmf.CRMFObjectIdentifiers;
+import org.bouncycastle.asn1.misc.MiscObjectIdentifiers;
+import org.bouncycastle.asn1.x509.X509ObjectIdentifiers;
 
 public interface CMPObjectIdentifiers
 {
     // RFC 4210
 
-    /** id-PasswordBasedMac OBJECT IDENTIFIER ::= {1 2 840 113533 7 66 13} */
-    static final ASN1ObjectIdentifier    passwordBasedMac        = new ASN1ObjectIdentifier("1.2.840.113533.7.66.13");
+    /**
+     * id-PasswordBasedMac OBJECT IDENTIFIER ::= {1 2 840 113533 7 66 13}
+     */
+    ASN1ObjectIdentifier passwordBasedMac = CRMFObjectIdentifiers.passwordBasedMac;
 
-    /** id-DHBasedMac OBJECT IDENTIFIER ::= {1 2 840 113533 7 66 30} */
-    static final ASN1ObjectIdentifier    dhBasedMac              = new ASN1ObjectIdentifier("1.2.840.113533.7.66.30");
+    /*
+     * id-KemBasedMac OBJECT IDENTIFIER ::= {1 2 840 113533 7 66 16}
+     */
+    ASN1ObjectIdentifier kemBasedMac = MiscObjectIdentifiers.entrust.branch("66.16");
+
+    /**
+     * id-DHBasedMac OBJECT IDENTIFIER ::= {1 2 840 113533 7 66 30}
+     */
+    ASN1ObjectIdentifier dhBasedMac = MiscObjectIdentifiers.entrust.branch("66.30");
 
     // Example InfoTypeAndValue contents include, but are not limited
     // to, the following (un-comment in this ASN.1 module and use as
@@ -47,7 +56,8 @@ public interface CMPObjectIdentifiers
     //      OrigPKIMessageValue     ::= PKIMessages
     //   id-it-suppLangTags     OBJECT IDENTIFIER ::= {id-it 16}
     //      SuppLangTagsValue       ::= SEQUENCE OF UTF8String
-    //
+    //   id-it-certProfile  OBJECT IDENTIFIER ::= {id-it 21}
+    //      CertProfileValue ::= SEQUENCE SIZE (1..MAX) OF UTF8String
     // where
     //
     //   id-pkix OBJECT IDENTIFIER ::= {
@@ -56,36 +66,108 @@ public interface CMPObjectIdentifiers
     // and
     //   id-it   OBJECT IDENTIFIER ::= {id-pkix 4}
 
-    /** RFC 4120: it-id: PKIX.4 = 1.3.6.1.5.5.7.4 */
+    /** RFC 4120: id-it: PKIX.4 = 1.3.6.1.5.5.7.4 */
+    ASN1ObjectIdentifier id_it = X509ObjectIdentifiers.id_pkix.branch("4");
 
-    /** RFC 4120: 1.3.6.1.5.5.7.4.1 */
-    static final ASN1ObjectIdentifier    it_caProtEncCert        = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.1");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.2 */
-    static final ASN1ObjectIdentifier    it_signKeyPairTypes     = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.2");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.3 */
-    static final ASN1ObjectIdentifier    it_encKeyPairTypes      = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.3");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.4 */
-    static final ASN1ObjectIdentifier    it_preferredSymAlg      = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.4");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.5 */
-    static final ASN1ObjectIdentifier    it_caKeyUpdateInfo      = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.5");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.6 */
-    static final ASN1ObjectIdentifier    it_currentCRL           = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.6");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.7 */
-    static final ASN1ObjectIdentifier    it_unsupportedOIDs      = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.7");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.10 */
-    static final ASN1ObjectIdentifier    it_keyPairParamReq      = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.10");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.11 */
-    static final ASN1ObjectIdentifier    it_keyPairParamRep      = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.11");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.12 */
-    static final ASN1ObjectIdentifier    it_revPassphrase        = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.12");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.13 */
-    static final ASN1ObjectIdentifier    it_implicitConfirm      = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.13");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.14 */
-    static final ASN1ObjectIdentifier    it_confirmWaitTime      = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.14");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.15 */
-    static final ASN1ObjectIdentifier    it_origPKIMessage       = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.15");
-    /** RFC 4120: 1.3.6.1.5.5.7.4.16 */
-    static final ASN1ObjectIdentifier    it_suppLangTags         = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.4.16");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.1
+     */
+    ASN1ObjectIdentifier it_caProtEncCert = id_it.branch("1");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.2
+     */
+    ASN1ObjectIdentifier it_signKeyPairTypes = id_it.branch("2");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.3
+     */
+    ASN1ObjectIdentifier it_encKeyPairTypes = id_it.branch("3");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.4
+     */
+    ASN1ObjectIdentifier it_preferredSymAlg = id_it.branch("4");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.5
+     */
+    ASN1ObjectIdentifier it_caKeyUpdateInfo = id_it.branch("5");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.6
+     */
+    ASN1ObjectIdentifier it_currentCRL = id_it.branch("6");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.7
+     */
+    ASN1ObjectIdentifier it_unsupportedOIDs = id_it.branch("7");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.10
+     */
+    ASN1ObjectIdentifier it_keyPairParamReq = id_it.branch("10");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.11
+     */
+    ASN1ObjectIdentifier it_keyPairParamRep = id_it.branch("11");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.12
+     */
+    ASN1ObjectIdentifier it_revPassphrase = id_it.branch("12");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.13
+     */
+    ASN1ObjectIdentifier it_implicitConfirm = id_it.branch("13");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.14
+     */
+    ASN1ObjectIdentifier it_confirmWaitTime = id_it.branch("14");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.15
+     */
+    ASN1ObjectIdentifier it_origPKIMessage = id_it.branch("15");
+    /**
+     * RFC 4120: 1.3.6.1.5.5.7.4.16
+     */
+    ASN1ObjectIdentifier it_suppLangTags = id_it.branch("16");
+
+    /**
+     * Update 16, RFC 4210
+     * {id-it 17}
+     */
+    ASN1ObjectIdentifier id_it_caCerts = id_it.branch("17");
+
+
+    /**
+     * Update 16, RFC 4210
+     * GenRep:    {id-it 18}, RootCaKeyUpdateContent
+     */
+    ASN1ObjectIdentifier id_it_rootCaKeyUpdate = id_it.branch("18");
+
+
+    /**
+     * Update 16, RFC 4210
+     * {id-it 19}
+     */
+    ASN1ObjectIdentifier id_it_certReqTemplate = id_it.branch("19");
+
+
+    /**
+     * Update 16, RFC 4210
+     * GenMsg:    {id-it 20}, RootCaCertValue
+     */
+    ASN1ObjectIdentifier id_it_rootCaCert = id_it.branch("20");
+
+    /**
+     * Update-16 to RFC 4210
+     * id-it-certProfile  OBJECT IDENTIFIER ::= {id-it 21}
+     */
+    ASN1ObjectIdentifier id_it_certProfile = id_it.branch("21");
+
+    ASN1ObjectIdentifier id_it_crlStatusList = id_it.branch("22");
+
+    ASN1ObjectIdentifier id_it_crls =  id_it.branch("23");
+
+    // TODO Update once OID allocated.
+    /*
+     * id-it-KemCiphertextInfo OBJECT IDENTIFIER ::= { id-it TBD1 }
+     */
+//    ASN1ObjectIdentifier id_it_KemCiphertextInfo = id_it.branch("TBD1");
 
     // RFC 4211
 
@@ -101,36 +183,74 @@ public interface CMPObjectIdentifiers
     // arc for Registration Info in CRMF
     // id-regInfo       OBJECT IDENTIFIER ::= { id-pkip id-regInfo(2) }
 
-    /** RFC 4211: it-pkip: PKIX.5 = 1.3.6.1.5.5.7.5 */
-    static final ASN1ObjectIdentifier    id_pkip                 = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.5");
+    /**
+     * RFC 4211: it-pkip: PKIX.5 = 1.3.6.1.5.5.7.5
+     */
+    ASN1ObjectIdentifier id_pkip = CRMFObjectIdentifiers.id_pkip;
 
-    /** RFC 4211: it-regCtrl: 1.3.6.1.5.5.7.5.1 */
-    static final ASN1ObjectIdentifier    id_regCtrl              = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.5.1");
-    /** RFC 4211: it-regInfo: 1.3.6.1.5.5.7.5.2 */
-    static final ASN1ObjectIdentifier    id_regInfo              = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.5.2");
+    /**
+     * RFC 4211: it-regCtrl: 1.3.6.1.5.5.7.5.1
+     */
+    ASN1ObjectIdentifier id_regCtrl = CRMFObjectIdentifiers.id_regCtrl;
+    /**
+     * RFC 4211: it-regInfo: 1.3.6.1.5.5.7.5.2
+     */
+    ASN1ObjectIdentifier id_regInfo = CRMFObjectIdentifiers.id_regInfo;
 
 
-    /** 1.3.6.1.5.5.7.5.1.1 */
-    static final ASN1ObjectIdentifier    regCtrl_regToken        = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.5.1.1");
-    /** 1.3.6.1.5.5.7.5.1.2 */
-    static final ASN1ObjectIdentifier    regCtrl_authenticator   = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.5.1.2");
-    /** 1.3.6.1.5.5.7.5.1.3 */
-    static final ASN1ObjectIdentifier    regCtrl_pkiPublicationInfo = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.5.1.3");
-    /** 1.3.6.1.5.5.7.5.1.4 */
-    static final ASN1ObjectIdentifier    regCtrl_pkiArchiveOptions  = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.5.1.4");
-    /** 1.3.6.1.5.5.7.5.1.5 */
-    static final ASN1ObjectIdentifier    regCtrl_oldCertID       = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.5.1.5");
-    /** 1.3.6.1.5.5.7.5.1.6 */
-    static final ASN1ObjectIdentifier    regCtrl_protocolEncrKey = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.5.1.6");
+    /**
+     * 1.3.6.1.5.5.7.5.1.1
+     */
+    ASN1ObjectIdentifier regCtrl_regToken = CRMFObjectIdentifiers.id_regCtrl_regToken;
+    /**
+     * 1.3.6.1.5.5.7.5.1.2
+     */
+    ASN1ObjectIdentifier regCtrl_authenticator = CRMFObjectIdentifiers.id_regCtrl_authenticator;
+    /**
+     * 1.3.6.1.5.5.7.5.1.3
+     */
+    ASN1ObjectIdentifier regCtrl_pkiPublicationInfo = CRMFObjectIdentifiers.id_regCtrl_pkiPublicationInfo;
+    /**
+     * 1.3.6.1.5.5.7.5.1.4
+     */
+    ASN1ObjectIdentifier regCtrl_pkiArchiveOptions = CRMFObjectIdentifiers.id_regCtrl_pkiArchiveOptions;
+    /**
+     * 1.3.6.1.5.5.7.5.1.5
+     */
+    ASN1ObjectIdentifier regCtrl_oldCertID = CRMFObjectIdentifiers.id_regCtrl_oldCertID;
+    /**
+     * 1.3.6.1.5.5.7.5.1.6
+     */
+    ASN1ObjectIdentifier regCtrl_protocolEncrKey = CRMFObjectIdentifiers.id_regCtrl_protocolEncrKey;
 
-    /** From RFC4210:
-     * id-regCtrl-altCertTemplate OBJECT IDENTIFIER ::= {id-regCtrl 7}; 1.3.6.1.5.5.7.1.7 */
-    static final ASN1ObjectIdentifier    regCtrl_altCertTemplate = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.5.1.7");
+    /**
+     * From RFC4210:
+     * id-regCtrl-altCertTemplate OBJECT IDENTIFIER ::= {id-regCtrl 7}; 1.3.6.1.5.5.7.1.7
+     */
+    ASN1ObjectIdentifier regCtrl_altCertTemplate = id_regCtrl.branch("7");
 
-    /** RFC 4211: it-regInfo-utf8Pairs: 1.3.6.1.5.5.7.5.2.1 */
-    static final ASN1ObjectIdentifier    regInfo_utf8Pairs       = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.5.2.1");
-    /** RFC 4211: it-regInfo-certReq: 1.3.6.1.5.5.7.5.2.1 */
-    static final ASN1ObjectIdentifier    regInfo_certReq         = new ASN1ObjectIdentifier("1.3.6.1.5.5.7.5.2.2");
+    /**
+     * id-regCtrl-algId OBJECT IDENTIFIER ::= { iso(1)
+     * identified-organization(3) dod(6) internet(1) security(5)
+     * mechanisms(5) pkix(7) pkip(5) regCtrl(1) 11 }
+     */
+    ASN1ObjectIdentifier id_regCtrl_algId = id_regCtrl.branch("11");
+
+    /**
+     * id-regCtrl-rsaKeyLen OBJECT IDENTIFIER ::= { iso(1)
+     * identified-organization(3) dod(6) internet(1) security(5)
+     * mechanisms(5) pkix(7) pkip(5) regCtrl(1) 12 }
+     */
+    ASN1ObjectIdentifier id_regCtrl_rsaKeyLen = id_regCtrl.branch("12");
+
+    /**
+     * RFC 4211: it-regInfo-utf8Pairs: 1.3.6.1.5.5.7.5.2.1
+     */
+    ASN1ObjectIdentifier regInfo_utf8Pairs = CRMFObjectIdentifiers.id_regInfo_utf8Pairs;
+    /**
+     * RFC 4211: it-regInfo-certReq: 1.3.6.1.5.5.7.5.2.1
+     */
+    ASN1ObjectIdentifier regInfo_certReq = CRMFObjectIdentifiers.id_regInfo_certReq;
 
     /**
      * 1.2.840.113549.1.9.16.1.21
@@ -139,26 +259,5 @@ public interface CMPObjectIdentifiers
      * <p>
      * id-ct-encKeyWithID OBJECT IDENTIFIER ::= {id-ct 21}
      */
-    static final ASN1ObjectIdentifier    ct_encKeyWithID         = new ASN1ObjectIdentifier("1.2.840.113549.1.9.16.1.21");
-
-    /**
-     * id-regCtrl-algId OBJECT IDENTIFIER ::= { iso(1)
-     * identified-organization(3) dod(6) internet(1) security(5)
-     * mechanisms(5) pkix(7) pkip(5) regCtrl(1) 11 }
-     */
-    ASN1ObjectIdentifier id_regCtrl_algId = id_pkip.branch("1.11");
-
-    /**
-     * id-regCtrl-rsaKeyLen OBJECT IDENTIFIER ::= { iso(1)
-     * identified-organization(3) dod(6) internet(1) security(5)
-     * mechanisms(5) pkix(7) pkip(5) regCtrl(1) 12 }
-     */
-    ASN1ObjectIdentifier id_regCtrl_rsaKeyLen = id_pkip.branch("1.12");
-
-    // TODO Update once OID allocated.
-    /*
-     * id-KemBasedMac OBJECT IDENTIFIER ::= {1 2 840 113533 7 66 TBD4}
-     */
-//    ASN1ObjectIdentifier id_KemBasedMac = new ASN1ObjectIdentifier("1.2.840.113533.7.66.TBD4");
-
+    ASN1ObjectIdentifier ct_encKeyWithID = CRMFObjectIdentifiers.id_ct_encKeyWithID;
 }

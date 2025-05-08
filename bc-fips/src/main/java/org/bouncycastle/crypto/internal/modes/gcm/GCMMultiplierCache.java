@@ -34,7 +34,7 @@ public class GCMMultiplierCache
 
         return m.getMultiplier();
     }
-    
+
     public synchronized int size()
     {
         return values.size();

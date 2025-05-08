@@ -5,7 +5,7 @@ import org.bouncycastle.crypto.internal.params.KeyParameterImpl;
 class RC2Parameters
     extends KeyParameterImpl
 {
-    private int     bits;
+    private int bits;
 
     public RC2Parameters(
         byte[] key,

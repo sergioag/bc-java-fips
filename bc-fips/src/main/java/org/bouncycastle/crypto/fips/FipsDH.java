@@ -161,7 +161,7 @@ public final class FipsDH
         /**
          * Base constructor for specifying an algorithm ID from an MQV builder.
          *
-         * @param builder        the parameters containing the algorithm the generated keys are for.
+         * @param builder          the parameters containing the algorithm the generated keys are for.
          * @param domainParameters Diffie-Hellman domain parameters any generated keys will be for.
          */
         public KeyGenParameters(MQVAgreementParametersBuilder builder, DHDomainParameters domainParameters)
@@ -172,7 +172,7 @@ public final class FipsDH
         /**
          * Base constructor for specifying an algorithm ID from an Diffie-Hellman Unified builder.
          *
-         * @param builder        the parameters containing the algorithm the generated keys are for.
+         * @param builder          the parameters containing the algorithm the generated keys are for.
          * @param domainParameters Diffie-Hellman domain parameters any generated keys will be for.
          */
         public KeyGenParameters(DHUAgreementParametersBuilder builder, DHDomainParameters domainParameters)
@@ -259,9 +259,9 @@ public final class FipsDH
          * Add a KDF to process the Z value with. The outputSize parameter determines how many bytes
          * will be generated.
          *
-         * @param kdfType            KDF algorithm type to use for parameter creation.
-         * @param iv                 the iv parameter for KDF initialization.
-         * @param outputSize         the size of the output to be generated from the KDF.
+         * @param kdfType    KDF algorithm type to use for parameter creation.
+         * @param iv         the iv parameter for KDF initialization.
+         * @param outputSize the size of the output to be generated from the KDF.
          * @return a new parameter set, the KDF definition.
          */
         public AgreementParameters withKDF(FipsKDF.AgreementKDFParametersBuilder kdfType, byte[] iv, int outputSize)
@@ -412,9 +412,9 @@ public final class FipsDH
          * Add a KDF to process the Z value with. The outputSize parameter determines how many bytes
          * will be generated.
          *
-         * @param kdfType            KDF algorithm type to use for parameter creation.
-         * @param iv                 the iv parameter for KDF initialization.
-         * @param outputSize         the size of the output to be generated from the KDF.
+         * @param kdfType    KDF algorithm type to use for parameter creation.
+         * @param iv         the iv parameter for KDF initialization.
+         * @param outputSize the size of the output to be generated from the KDF.
          * @return a new parameter set, the KDF definition.
          */
         public MQVAgreementParameters withKDF(FipsKDF.AgreementKDFParametersBuilder kdfType, byte[] iv, int outputSize)
@@ -565,9 +565,9 @@ public final class FipsDH
          * Add a KDF to process the Z value with. The outputSize parameter determines how many bytes
          * will be generated.
          *
-         * @param kdfType            KDF algorithm type to use for parameter creation.
-         * @param iv                 the iv parameter for KDF initialization.
-         * @param outputSize         the size of the output to be generated from the KDF.
+         * @param kdfType    KDF algorithm type to use for parameter creation.
+         * @param iv         the iv parameter for KDF initialization.
+         * @param outputSize the size of the output to be generated from the KDF.
          * @return a new parameter set, the KDF definition.
          */
         public DHUAgreementParameters withKDF(FipsKDF.AgreementKDFParametersBuilder kdfType, byte[] iv, int outputSize)
@@ -575,7 +575,7 @@ public final class FipsDH
             return new DHUAgreementParameters(this.ephemeralPublicKey, this.ephemeralPrivateKey, this.otherPartyEphemeralKey, kdfType, iv, outputSize);
         }
     }
-    
+
     /**
      * Parameters for generating Diffie-Hellman domain parameters.
      */
@@ -902,7 +902,7 @@ public final class FipsDH
         {
             AsymmetricDHPrivateKey dhKey = (AsymmetricDHPrivateKey)key;
             DhuPrivateParameters lwDhKey = new DhuPrivateParameters(getLwKey(dhKey), getLwKey(parameters.ephemeralPrivateKey));
-            
+
             final DhuBasicAgreement dh = DHU_PROVIDER.createEngine();
 
             dh.init(lwDhKey);
@@ -922,10 +922,10 @@ public final class FipsDH
                     DhPublicKeyParameters lwDhKey = new DhPublicKeyParameters(dhKey.getY(), getDomainParams(dhKey.getDomainParameters()));
 
                     DhuPublicParameters dhuParams = new DhuPublicParameters(lwDhKey,
-                            new DhPublicKeyParameters(parameters.otherPartyEphemeralKey.getY(), lwDhKey.getParameters()));
+                        new DhPublicKeyParameters(parameters.otherPartyEphemeralKey.getY(), lwDhKey.getParameters()));
 
                     byte[] zBytes = dh.calculateAgreement(dhuParams);
-           
+
                     return FipsKDF.processZBytes(zBytes, parameters);
                 }
             };
@@ -1155,7 +1155,7 @@ public final class FipsDH
                     engine.init(new DhuPrivateParameters((DhPrivateKeyParameters)kp.getPrivate(), (DhPrivateKeyParameters)kp.getPrivate()));
 
                     byte[] calculated = engine.calculateAgreement(new DhuPublicParameters((DhPublicKeyParameters)testSKP.getPublic(), (DhPublicKeyParameters)testEKP.getPublic()));
-           
+
                     if (!Arrays.areEqual(expected, calculated))
                     {
                         fail("KAT DH DHU agreement not verified");
@@ -1193,11 +1193,11 @@ public final class FipsDH
         DhParameters dhParameters = new DhParameters(dhDp.getP(), dhDp.getG(), dhDp.getQ());
         BigInteger x = new BigInteger("80d54802e42ce811d122ce2657c303013fc33c2f08f8ff1a9c4ebfd1", 16);
         BigInteger y = new BigInteger(
-                              "f9a4d8edb52efa7ffd00bc2e632b79c69eba8949f7ba23a6feb2d27278e96cbd7fe158484286c07f91144a268539eeffb306844898"
-                            + "c5efa845070489bcdc756c6858dcb242629f91b2714a33c0efebcb4b0832dba33b12db491dcded86f497094a52a3091a4bdf832d4f"
-                            + "36cb0cd7ab05e24b2adea4d746806d9776cebe45b0938c8a7f323db0497f865e8d992839ce018d54b68c5808a97fb035c83c304690"
-                            + "e6fff83dfd13be0186bdf0531cc416f9189fe87b1c92ce569578e9f55c874c0111a1e155f4dd876069424d38c94beb47f890d082eb"
-                            + "9183a7ce3c6819c420ca91ba969549835314df899fc766ac2acc9d6b9de5b0a9570ca4cfb6187e049fbe6f10", 16);
+            "f9a4d8edb52efa7ffd00bc2e632b79c69eba8949f7ba23a6feb2d27278e96cbd7fe158484286c07f91144a268539eeffb306844898"
+                + "c5efa845070489bcdc756c6858dcb242629f91b2714a33c0efebcb4b0832dba33b12db491dcded86f497094a52a3091a4bdf832d4f"
+                + "36cb0cd7ab05e24b2adea4d746806d9776cebe45b0938c8a7f323db0497f865e8d992839ce018d54b68c5808a97fb035c83c304690"
+                + "e6fff83dfd13be0186bdf0531cc416f9189fe87b1c92ce569578e9f55c874c0111a1e155f4dd876069424d38c94beb47f890d082eb"
+                + "9183a7ce3c6819c420ca91ba969549835314df899fc766ac2acc9d6b9de5b0a9570ca4cfb6187e049fbe6f10", 16);
         return new AsymmetricCipherKeyPair(new DhPublicKeyParameters(y, dhParameters), new DhPrivateKeyParameters(x, dhParameters));
     }
 

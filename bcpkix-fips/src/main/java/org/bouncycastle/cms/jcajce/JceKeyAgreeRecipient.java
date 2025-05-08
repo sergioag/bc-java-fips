@@ -175,7 +175,7 @@ public abstract class JceKeyAgreeRecipient
 
             SubjectPublicKeyInfo pubInfo = new SubjectPublicKeyInfo(
                 getPrivateKeyAlgorithmIdentifier(),
-                ukm.getEphemeralPublicKey().getPublicKey().getBytes());
+                ukm.getEphemeralPublicKey().getPublicKeyData().getBytes());
 
             X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(pubInfo.getEncoded());
             KeyFactory fact = helper.createKeyFactory(keyEncAlg.getAlgorithm());

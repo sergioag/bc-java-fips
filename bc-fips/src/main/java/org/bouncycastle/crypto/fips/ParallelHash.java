@@ -34,8 +34,8 @@ class ParallelHash
      * Base constructor.
      *
      * @param bitLength bit length of the underlying SHAKE function, 128 or 256.
-     * @param S the customization string - available for local use.
-     * @param B the blocksize (in bytes) for hashing.
+     * @param S         the customization string - available for local use.
+     * @param B         the blocksize (in bytes) for hashing.
      */
     public ParallelHash(int bitLength, byte[] S, int B)
     {
@@ -64,6 +64,10 @@ class ParallelHash
         this.outputLength = source.outputLength;
         this.buffer = Arrays.clone(source.buffer);
         this.compressorBuffer = Arrays.clone(source.compressorBuffer);
+
+        this.firstOutput = source.firstOutput;
+        this.nCount = source.nCount;
+        this.bufOff = source.bufOff;
     }
 
     public String getAlgorithmName()
@@ -94,7 +98,7 @@ class ParallelHash
     public void update(byte[] in, int inOff, int len)
         throws DataLengthException, IllegalStateException
     {
-        len = Math.max(0,  len);
+        len = Math.max(0, len);
 
         //
         // fill the current word
@@ -180,7 +184,7 @@ class ParallelHash
         {
             wrapUp(outputLength);
         }
-        
+
         int rv = cshake.doFinal(out, outOff, outLen);
 
         reset();

@@ -37,7 +37,8 @@ final class X25519PrivateKeyParameters
         System.arraycopy(buf, off, data, 0, KEY_SIZE);
     }
 
-    public X25519PrivateKeyParameters(InputStream input) throws IOException
+    public X25519PrivateKeyParameters(InputStream input)
+        throws IOException
     {
         super(true);
 

@@ -21,7 +21,7 @@ class DsaSigner
     private final DsaKCalculator kCalculator;
 
     private DsaKeyParameters key;
-    private SecureRandom    random;
+    private SecureRandom random;
 
     /**
      * Configuration with an alternate, possibly deterministic calculator of K.
@@ -34,14 +34,14 @@ class DsaSigner
     }
 
     public void init(
-        boolean                 forSigning,
-        CipherParameters        param)
+        boolean forSigning,
+        CipherParameters param)
     {
         if (forSigning)
         {
             if (param instanceof ParametersWithRandom)
             {
-                ParametersWithRandom    rParam = (ParametersWithRandom)param;
+                ParametersWithRandom rParam = (ParametersWithRandom)param;
 
                 this.random = rParam.getRandom();
                 this.key = (DsaPrivateKeyParameters)rParam.getParameters();
@@ -68,7 +68,7 @@ class DsaSigner
         byte[] message)
     {
         DsaParameters params = key.getParameters();
-        BigInteger      m = calculateE(params.getQ(), message);
+        BigInteger m = calculateE(params.getQ(), message);
 
         if (kCalculator.isDeterministic())
         {
@@ -79,17 +79,17 @@ class DsaSigner
             kCalculator.init(params.getQ(), random);
         }
 
-        BigInteger  k = kCalculator.nextK();
+        BigInteger k = kCalculator.nextK();
 
         // the randomizer is to conceal timing information related to k and x.
-        BigInteger  r = params.getG().modPow(k.add(getRandomizer(params.getQ(), random)), params.getP()).mod(params.getQ());
+        BigInteger r = params.getG().modPow(k.add(getRandomizer(params.getQ(), random)), params.getP()).mod(params.getQ());
 
         k = k.modInverse(params.getQ()).multiply(
-                    m.add(((DsaPrivateKeyParameters)key).getX().multiply(r)));
+            m.add(((DsaPrivateKeyParameters)key).getX().multiply(r)));
 
-        BigInteger  s = k.mod(params.getQ());
+        BigInteger s = k.mod(params.getQ());
 
-        BigInteger[]  res = new BigInteger[2];
+        BigInteger[] res = new BigInteger[2];
 
         res[0] = r;
         res[1] = s;
@@ -103,13 +103,13 @@ class DsaSigner
      * SHA-1 hash of the real message to be verified.
      */
     public boolean verifySignature(
-        byte[]      message,
-        BigInteger  r,
-        BigInteger  s)
+        byte[] message,
+        BigInteger r,
+        BigInteger s)
     {
-        DsaParameters   params = key.getParameters();
-        BigInteger      m = calculateE(params.getQ(), message);
-        BigInteger      zero = BigInteger.valueOf(0);
+        DsaParameters params = key.getParameters();
+        BigInteger m = calculateE(params.getQ(), message);
+        BigInteger zero = BigInteger.valueOf(0);
 
         if (zero.compareTo(r) >= 0 || params.getQ().compareTo(r) <= 0)
         {
@@ -121,15 +121,15 @@ class DsaSigner
             return false;
         }
 
-        BigInteger  w = s.modInverse(params.getQ());
+        BigInteger w = s.modInverse(params.getQ());
 
-        BigInteger  u1 = m.multiply(w).mod(params.getQ());
-        BigInteger  u2 = r.multiply(w).mod(params.getQ());
+        BigInteger u1 = m.multiply(w).mod(params.getQ());
+        BigInteger u2 = r.multiply(w).mod(params.getQ());
 
         u1 = params.getG().modPow(u1, params.getP());
         u2 = ((DsaPublicKeyParameters)key).getY().modPow(u2, params.getP());
 
-        BigInteger  v = u1.multiply(u2).mod(params.getP()).mod(params.getQ());
+        BigInteger v = u1.multiply(u2).mod(params.getP()).mod(params.getQ());
 
         return v.equals(r);
     }

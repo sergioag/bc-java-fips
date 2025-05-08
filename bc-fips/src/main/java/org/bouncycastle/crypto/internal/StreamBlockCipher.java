@@ -8,7 +8,8 @@ package org.bouncycastle.crypto.internal;
  * a streaming mode which produces
  */
 public abstract class StreamBlockCipher
-    implements BlockCipher, StreamCipher
+    extends DefaultMultiBlockCipher
+    implements StreamCipher
 {
     private final BlockCipher cipher;
 

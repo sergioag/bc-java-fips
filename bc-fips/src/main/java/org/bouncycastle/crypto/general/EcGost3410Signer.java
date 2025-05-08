@@ -24,17 +24,17 @@ class EcGost3410Signer
 {
     EcKeyParameters key;
 
-    SecureRandom    random;
+    SecureRandom random;
 
     public void init(
-        boolean                 forSigning,
+        boolean forSigning,
         CipherParameters param)
     {
         if (forSigning)
         {
             if (param instanceof ParametersWithRandom)
             {
-                ParametersWithRandom    rParam = (ParametersWithRandom)param;
+                ParametersWithRandom rParam = (ParametersWithRandom)param;
 
                 this.random = rParam.getRandom();
                 this.key = (EcPrivateKeyParameters)rParam.getParameters();
@@ -97,7 +97,7 @@ class EcGost3410Signer
         }
         while (s.equals(ECConstants.ZERO));
 
-        return new BigInteger[]{ r, s };
+        return new BigInteger[]{r, s};
     }
 
     /**
@@ -106,9 +106,9 @@ class EcGost3410Signer
      * a GOST3411 hash of the real message to be verified).
      */
     public boolean verifySignature(
-        byte[]      message,
-        BigInteger  r,
-        BigInteger  s)
+        byte[] message,
+        BigInteger r,
+        BigInteger s)
     {
         byte[] mRev = new byte[message.length]; // conversion is little-endian
         for (int i = 0; i != mRev.length; i++)

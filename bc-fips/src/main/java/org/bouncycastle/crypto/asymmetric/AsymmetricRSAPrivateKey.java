@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.security.auth.Destroyable;
-
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.pkcs.RSAPrivateKey;
@@ -20,7 +18,7 @@ import org.bouncycastle.util.BigIntegers;
  */
 public final class AsymmetricRSAPrivateKey
     extends AsymmetricRSAKey
-    implements Destroyable, AsymmetricPrivateKey
+    implements AsymmetricPrivateKey
 {
     private final AtomicBoolean hasBeenDestroyed = new AtomicBoolean(false);
 
@@ -143,9 +141,11 @@ public final class AsymmetricRSAPrivateKey
      */
     public Algorithm getAlgorithm()
     {
+        Algorithm rv = super.getAlgorithm();
+
         KeyUtils.checkDestroyed(this);
 
-        return super.getAlgorithm();
+        return rv;
     }
 
     /**
@@ -201,7 +201,7 @@ public final class AsymmetricRSAPrivateKey
         return fieldValue(qInv);
     }
 
-    public final byte[] getEncoded()
+    public byte[] getEncoded()
     {
         checkApprovedOnlyModeStatus();
 
@@ -217,7 +217,7 @@ public final class AsymmetricRSAPrivateKey
         checkApprovedOnlyModeStatus();
 
         KeyUtils.checkPermission(Permissions.CanOutputPrivateKey);
-
+        
         if (!hasBeenDestroyed.getAndSet(true))
         {
             this.privateExponent = this.publicExponent = null;
@@ -244,6 +244,7 @@ public final class AsymmetricRSAPrivateKey
         {
             return true;
         }
+
         if (!(o instanceof AsymmetricRSAPrivateKey))
         {
             return false;
@@ -253,14 +254,14 @@ public final class AsymmetricRSAPrivateKey
 
         other.checkApprovedOnlyModeStatus();
 
-        return KeyUtils.isFieldEqual(modulus, other.modulus)
-            && KeyUtils.isFieldEqual(privateExponent, other.privateExponent)
-            && KeyUtils.isFieldEqual(publicExponent, other.publicExponent)
-            && KeyUtils.isFieldEqual(p, other.p)
-            && KeyUtils.isFieldEqual(q, other.q)
-            && KeyUtils.isFieldEqual(dp, other.dp)
-            && KeyUtils.isFieldEqual(dq, other.dq)
-            && KeyUtils.isFieldEqual(qInv, other.qInv);
+        return KeyUtils.isFieldEqual(getModulus(), other.getModulus())
+            & KeyUtils.isFieldEqual(getPrivateExponent(), other.getPrivateExponent())
+            & KeyUtils.isFieldEqual(getPublicExponent(), other.getPublicExponent())
+            & KeyUtils.isFieldEqual(getP(), other.getP())
+            & KeyUtils.isFieldEqual(getQ(), other.getQ())
+            & KeyUtils.isFieldEqual(getDP(), other.getDP())
+            & KeyUtils.isFieldEqual(getDQ(), other.getDQ())
+            & KeyUtils.isFieldEqual(getQInv(), other.getQInv());
     }
 
     @Override
@@ -283,17 +284,6 @@ public final class AsymmetricRSAPrivateKey
         result = 31 * result + qInv.hashCode();
         return result;
     }
-
-    /*
-    @Override
-    protected void finalize()
-        throws Throwable
-    {
-        super.finalize();
-
-        destroy();
-    }
-    */
 
     private void checkCanRead()
     {

@@ -14,6 +14,6 @@ public abstract class FipsSymmetricKeyGenerator<T extends SymmetricSecretKey>
     // package protect constructor
     FipsSymmetricKeyGenerator()
     {
-       FipsStatus.isReady();
+        FipsStatus.isReady();
     }
 }

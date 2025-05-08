@@ -10,8 +10,8 @@ import org.bouncycastle.crypto.internal.KeyGenerationParameters;
  */
 class CipherKeyGenerator
 {
-    protected SecureRandom     random;
-    protected int              strength;
+    protected SecureRandom random;
+    protected int strength;
 
     /**
      * initialise the key generator.
@@ -32,7 +32,7 @@ class CipherKeyGenerator
      */
     public byte[] generateKey()
     {
-        byte[]  key = new byte[strength];
+        byte[] key = new byte[strength];
 
         if (random instanceof FipsSecureRandom)
         {

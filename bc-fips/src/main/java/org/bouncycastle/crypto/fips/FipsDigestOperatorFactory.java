@@ -13,7 +13,7 @@ public abstract class FipsDigestOperatorFactory<T extends FipsParameters>
     // package protect constructor
     FipsDigestOperatorFactory()
     {
-         FipsStatus.isReady();
+        FipsStatus.isReady();
     }
 
     public abstract FipsOutputDigestCalculator<T> createOutputDigestCalculator(final T parameter);

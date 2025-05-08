@@ -11,7 +11,7 @@ public class FipsSelfTestFailedError
     /**
      * Base constructor.
      *
-     * @param message a message describing the error.
+     * @param message   a message describing the error.
      * @param algorithm the algorithm the failure was for.
      */
     public FipsSelfTestFailedError(String message, Algorithm algorithm)

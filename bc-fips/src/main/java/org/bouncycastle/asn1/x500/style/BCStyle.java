@@ -46,6 +46,7 @@ public class BCStyle
 
     /**
      * device serial number name - StringType(SIZE(1..64))
+     *
      * @deprecated use SERIALNUMBER or SURNAME
      */
     public static final ASN1ObjectIdentifier SN = new ASN1ObjectIdentifier("2.5.4.5").intern();
@@ -181,8 +182,8 @@ public class BCStyle
     public static final ASN1ObjectIdentifier E = EmailAddress;
 
     /*
-    * others...
-    */
+     * others...
+     */
     public static final ASN1ObjectIdentifier DC = new ASN1ObjectIdentifier("0.9.2342.19200300.100.1.25");
 
     /**
@@ -293,8 +294,9 @@ public class BCStyle
     }
 
     protected ASN1Encodable encodeStringValue(ASN1ObjectIdentifier oid,
-    		String value) {
-    	if (oid.equals(EmailAddress) || oid.equals(DC))
+                                              String value)
+    {
+        if (oid.equals(EmailAddress) || oid.equals(DC))
         {
             return new DERIA5String(value);
         }
@@ -307,8 +309,8 @@ public class BCStyle
         {
             return new DERPrintableString(value);
         }
-    	
-    	return super.encodeStringValue(oid, value);
+
+        return super.encodeStringValue(oid, value);
     }
 
     public String oidToDisplayName(ASN1ObjectIdentifier oid)

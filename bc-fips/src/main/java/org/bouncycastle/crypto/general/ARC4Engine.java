@@ -19,29 +19,29 @@ class ARC4Engine
      * during encryption and decryption
      */
 
-    private byte[]      engineState = null;
-    private int         x = 0;
-    private int         y = 0;
-    private byte[]      workingKey = null;
+    private byte[] engineState = null;
+    private int x = 0;
+    private int y = 0;
+    private byte[] workingKey = null;
 
     /**
      * initialise a RC4 cipher.
      *
      * @param forEncryption whether or not we are for encryption.
-     * @param params the parameters required to set up the cipher.
-     * @exception IllegalArgumentException if the params argument is
-     * inappropriate.
+     * @param params        the parameters required to set up the cipher.
+     * @throws IllegalArgumentException if the params argument is
+     *                                  inappropriate.
      */
     public void init(
-        boolean             forEncryption, 
+        boolean forEncryption,
         CipherParameters params
-   )
+    )
     {
         if (params instanceof KeyParameter)
         {
-            /* 
+            /*
              * RC4 encryption and decryption is completely
-             * symmetrical, so the 'forEncryption' is 
+             * symmetrical, so the 'forEncryption' is
              * irrelevant.
              */
             workingKey = ((KeyParameter)params).getKey();
@@ -74,11 +74,11 @@ class ARC4Engine
     }
 
     public int processBytes(
-        byte[]     in, 
-        int     inOff, 
-        int     len, 
-        byte[]     out, 
-        int     outOff)
+        byte[] in,
+        int inOff,
+        int len,
+        byte[] out,
+        int outOff)
     {
         if ((inOff + len) > in.length)
         {
@@ -90,7 +90,7 @@ class ARC4Engine
             throw new OutputLengthException("output buffer too short");
         }
 
-        for (int i = 0; i < len ; i++)
+        for (int i = 0; i < len; i++)
         {
             x = (x + 1) & 0xff;
             y = (engineState[x] + y) & 0xff;
@@ -101,8 +101,8 @@ class ARC4Engine
             engineState[y] = tmp;
 
             // xor
-            out[i+outOff] = (byte)(in[i + inOff]
-                    ^ engineState[(engineState[x] + engineState[y]) & 0xff]);
+            out[i + outOff] = (byte)(in[i + inOff]
+                ^ engineState[(engineState[x] + engineState[y]) & 0xff]);
         }
 
         return len;
@@ -118,7 +118,7 @@ class ARC4Engine
     private void setKey(byte[] keyBytes)
     {
         workingKey = keyBytes;
-        
+
         x = 0;
         y = 0;
 
@@ -128,22 +128,22 @@ class ARC4Engine
         }
 
         // reset the state of the engine
-        for (int i=0; i < STATE_LENGTH; i++)
+        for (int i = 0; i < STATE_LENGTH; i++)
         {
             engineState[i] = (byte)i;
         }
-        
+
         int i1 = 0;
         int i2 = 0;
 
-        for (int i=0; i < STATE_LENGTH; i++)
+        for (int i = 0; i < STATE_LENGTH; i++)
         {
             i2 = ((keyBytes[i1] & 0xff) + engineState[i] + i2) & 0xff;
             // do the byte-swap inline
             byte tmp = engineState[i];
             engineState[i] = engineState[i2];
             engineState[i2] = tmp;
-            i1 = (i1+1) % keyBytes.length; 
+            i1 = (i1 + 1) % keyBytes.length;
         }
     }
 }

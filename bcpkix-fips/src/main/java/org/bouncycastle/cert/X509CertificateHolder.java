@@ -315,45 +315,45 @@ public class X509CertificateHolder
      * @return true if the signature is valid, false otherwise.
      * @throws CertException if the signature cannot be processed or is inappropriate.
      */
-//    public boolean isAlternativeSignatureValid(ContentVerifierProvider verifierProvider)
-//        throws CertException
-//    {
-//        TBSCertificate tbsCert = x509Certificate.getTBSCertificate();
-//        AltSignatureAlgorithm altSigAlg = AltSignatureAlgorithm.fromExtensions(tbsCert.getExtensions());
-//        AltSignatureValue altSigValue = AltSignatureValue.fromExtensions(tbsCert.getExtensions());
-//
-//        ContentVerifier verifier;
-//
-//        try
-//        {
-//            verifier = verifierProvider.get(AlgorithmIdentifier.getInstance(altSigAlg.toASN1Primitive()));
-//
-//            OutputStream sOut = verifier.getOutputStream();
-//
-//            ASN1Sequence tbsSeq = ASN1Sequence.getInstance(tbsCert.toASN1Primitive());
-//            ASN1EncodableVector v = new ASN1EncodableVector();
-//
-//            for (int i = 0; i != tbsSeq.size() - 1; i++)
-//            {
-//                if (i != 2) // signature field - must be ver 3 so version always present
-//                {
-//                    v.add(tbsSeq.getObjectAt(i));
-//                }
-//            }
-//
-//            v.add(CertUtils.trimExtensions(3, tbsCert.getExtensions()));
-//
-//            new DERSequence(v).encodeTo(sOut, ASN1Encoding.DER);
-//
-//            sOut.close();
-//        }
-//        catch (Exception e)
-//        {
-//            throw new CertException("unable to process signature: " + e.getMessage(), e);
-//        }
-//
-//        return verifier.verify(altSigValue.getSignature().getOctets());
-//    }
+    public boolean isAlternativeSignatureValid(ContentVerifierProvider verifierProvider)
+        throws CertException
+    {
+        TBSCertificate tbsCert = x509Certificate.getTBSCertificate();
+        AltSignatureAlgorithm altSigAlg = AltSignatureAlgorithm.fromExtensions(tbsCert.getExtensions());
+        AltSignatureValue altSigValue = AltSignatureValue.fromExtensions(tbsCert.getExtensions());
+
+        ContentVerifier verifier;
+
+        try
+        {
+            verifier = verifierProvider.get(AlgorithmIdentifier.getInstance(altSigAlg.toASN1Primitive()));
+
+            OutputStream sOut = verifier.getOutputStream();
+
+            ASN1Sequence tbsSeq = ASN1Sequence.getInstance(tbsCert.toASN1Primitive());
+            ASN1EncodableVector v = new ASN1EncodableVector();
+
+            for (int i = 0; i != tbsSeq.size() - 1; i++)
+            {
+                if (i != 2) // signature field - must be ver 3 so version always present
+                {
+                    v.add(tbsSeq.getObjectAt(i));
+                }
+            }
+
+            v.add(CertUtils.trimExtensions(3, tbsCert.getExtensions()));
+
+            new DERSequence(v).encodeTo(sOut, ASN1Encoding.DER);
+
+            sOut.close();
+        }
+        catch (Exception e)
+        {
+            throw new CertException("unable to process signature: " + e.getMessage(), e);
+        }
+
+        return verifier.verify(altSigValue.getSignature().getOctets());
+    }
 
     public boolean equals(
         Object o)

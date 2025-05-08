@@ -1,7 +1,5 @@
 package org.bouncycastle.crypto.fips;
 
-
-import org.bouncycastle.crypto.internal.Digest;
 import org.bouncycastle.crypto.internal.Mac;
 import org.bouncycastle.crypto.internal.macs.CMac;
 import org.bouncycastle.crypto.internal.macs.HMac;
@@ -10,11 +8,7 @@ import org.bouncycastle.crypto.internal.params.KeyParameter;
 import org.bouncycastle.crypto.internal.params.KeyParameterImpl;
 
 /**
- * Key Generator for HMAC-based Extract-and-Expand Key Derivation Function (HKDF) implemented
- * according to IETF RFC 5869, May 2010 as specified by H. Krawczyk, IBM
- * Research &amp; P. Eronen, Nokia. It uses a HMac internally to compute de OKM
- * (output keying material) and is likely to have better security properties
- * than KDF's based on just a hash function.
+ * Two-Step KDF implemented according to NIST SP 800-56C.
  */
 class TwoStepKeyGenerator
 {

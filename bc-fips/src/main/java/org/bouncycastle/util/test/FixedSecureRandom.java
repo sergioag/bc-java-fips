@@ -2,6 +2,7 @@ package org.bouncycastle.util.test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.security.Provider;
 import java.security.SecureRandom;
 
@@ -32,8 +33,8 @@ public class FixedSecureRandom
         isClasspathStyle = check2.equals(CLASSPATH);
     }
 
-    private byte[]       _data;
-    private int          _index;
+    private byte[] _data;
+    private int _index;
 
     /**
      * Base class for sources of fixed "Randomness"
@@ -47,6 +48,31 @@ public class FixedSecureRandom
             this.data = data;
         }
     }
+
+    public static class RollingSHA256
+        extends Source
+    {
+        private final MessageDigest md;
+        RollingSHA256(byte[] data)
+        {
+            super(null);
+            try
+            {
+                //
+                // Use any provider we can find, SHA-256 is usually available in the default provider.
+                // !! Not for real world use only for circumstances where you need an unknown amount of
+                // notionally random enough values that are predictable. !!
+                //
+                md = MessageDigest.getInstance("SHA-256");
+                md.update(data);
+            }
+            catch (Exception ex)
+            {
+                throw new RuntimeException(ex.getMessage(),ex);
+            }
+        }
+    }
+
 
     /**
      * Data Source - in this case we just expect requests for byte arrays.
@@ -228,7 +254,7 @@ public class FixedSecureRandom
     public int nextInt()
     {
         int val = 0;
-        
+
         val |= nextValue() << 24;
         val |= nextValue() << 16;
         val |= nextValue() << 8;
@@ -236,7 +262,7 @@ public class FixedSecureRandom
 
         return val;
     }
-    
+
     //
     // classpath's implementation of SecureRandom doesn't currently go back to nextBytes
     // when next is called. We can't override next as it's a final method.
@@ -244,7 +270,7 @@ public class FixedSecureRandom
     public long nextLong()
     {
         long val = 0;
-        
+
         val |= (long)nextValue() << 56;
         val |= (long)nextValue() << 48;
         val |= (long)nextValue() << 40;
@@ -253,7 +279,7 @@ public class FixedSecureRandom
         val |= (long)nextValue() << 16;
         val |= (long)nextValue() << 8;
         val |= (long)nextValue();
-        
+
         return val;
     }
 
@@ -276,7 +302,7 @@ public class FixedSecureRandom
         }
 
         byte[] data = Hex.decode("01020304ffffffff0506070811111111");
-        int    index = 0;
+        int index = 0;
 
         public void nextBytes(byte[] bytes)
         {

@@ -25,7 +25,7 @@ class DhKeyGeneratorHelper
         if (limit != 0)
         {
             int minWeight = limit >>> 2;
-            for (;;)
+            for (; ; )
             {
                 BigInteger x = BigIntegers.createRandomBigInteger(limit, random).setBit(limit - 1);
                 if (WNafUtil.getNafWeight(x) >= minWeight)
@@ -50,7 +50,7 @@ class DhKeyGeneratorHelper
         BigInteger max = q.subtract(BigIntegers.TWO);
 
         int minWeight = max.bitLength() >>> 2;
-        for (;;)
+        for (; ; )
         {
             BigInteger x = BigIntegers.createRandomInRange(min, max, random);
             if (WNafUtil.getNafWeight(x) >= minWeight)

@@ -66,7 +66,7 @@ class HKDFBytesGenerator
      * as input and output buffer.
      *
      * @throws DataLengthException if the total number of bytes generated is larger than the one
-     * specified by RFC 5869 (255 * HashLen)
+     *                             specified by RFC 5869 (255 * HashLen)
      */
     private void expandNext()
         throws DataLengthException

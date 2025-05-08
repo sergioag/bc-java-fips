@@ -5,7 +5,11 @@ import java.security.DrbgParameters;
 import java.security.SecureRandom;
 import java.security.SecureRandomParameters;
 import java.security.SecureRandomSpi;
+import java.util.concurrent.atomic.AtomicReference;
 
+import org.bouncycastle.crypto.EntropySource;
+import org.bouncycastle.crypto.EntropySourceProvider;
+import org.bouncycastle.crypto.SecureRandomProvider;
 import org.bouncycastle.crypto.fips.FipsSecureRandom;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Pack;
@@ -18,83 +22,25 @@ class ProvRandom
 
     public void configure(final BouncyCastleFipsProvider provider)
     {
+        provider.setProperty("SecureRandom.DEFAULT ThreadSafe", "true");
         provider.addAlgorithmImplementation("SecureRandom.DEFAULT", PREFIX + "DefSecureRandom", new EngineCreator()
         {
             public Object createInstance(Object constructorParameter)
             {
-                final SecureRandom random;
-                if (constructorParameter == null)
-                {
-                    random = provider.getDefaultSecureRandom();
-                }
-                else
-                {
-                    final SecureRandom entropySource = provider.getDefaultEntropySource();
-                    DrbgParameters.Instantiation params = (DrbgParameters.Instantiation)constructorParameter;
+                final PooledSecureRandomProvider pooledProv = new PooledSecureRandomProvider(provider, constructorParameter);
 
-                    random = provider.getProviderDefaultRandomBuilder()
-                                        .fromEntropySource(entropySource, true)
-                                        .setSecurityStrength(params.getStrength())
-                                        .setPersonalizationString(params.getPersonalizationString())
-                                        .build(entropySource.generateSeed((params.getStrength() / (2 * 8)) + 1),
-                                            params.getCapability() == DrbgParameters.Capability.PR_AND_RESEED, Strings.toByteArray("Bouncy Castle FIPS Custom Default"));
-                }
-
-                if (random instanceof FipsSecureRandom)
-                {
-                    return new MySecureRandomSpi((FipsSecureRandom)random);
-                }
-                return new SecureRandomSpi()
-                {
-                    @Override
-                    protected void engineSetSeed(byte[] bytes)
-                    {
-                        random.setSeed(bytes);
-                    }
-
-                    @Override
-                    protected void engineNextBytes(byte[] bytes)
-                    {
-                        random.nextBytes(bytes);
-                    }
-
-                    @Override
-                    protected byte[] engineGenerateSeed(int numBytes)
-                    {
-                        return random.generateSeed(numBytes);
-                    }
-                };
+                return new MySecureRandomSpi(pooledProv);
             }
         });
 
+        provider.setProperty("SecureRandom.NONCEANDIV ThreadSafe", "true");
         provider.addAlgorithmImplementation("SecureRandom.NONCEANDIV", PREFIX + "NonceAndIVSecureRandom", new EngineCreator()
         {
             public Object createInstance(Object constructorParameter)
             {
-                final SecureRandom entropySource = provider.getDefaultEntropySource();
-                final FipsSecureRandom random;
+                final PooledNonceSecureRandomProvider pooledProv = new PooledNonceSecureRandomProvider(provider, constructorParameter);
 
-                if (constructorParameter == null)
-                {
-                    random = provider.getProviderDefaultRandomBuilder()
-                        .fromEntropySource(entropySource, true)
-                        .setPersonalizationString(generatePersonalizationString())
-                        .build(entropySource.generateSeed((provider.getProviderDefaultSecurityStrength() / (2 * 8)) + 1),
-                            false, Strings.toByteArray("Bouncy Castle FIPS Provider Nonce/IV"));
-                }
-                else
-                {
-                    DrbgParameters.Instantiation params = (DrbgParameters.Instantiation)constructorParameter;
-
-                    random = provider.getProviderDefaultRandomBuilder()
-                        .fromEntropySource(entropySource, true)
-                        .setSecurityStrength(params.getStrength())
-                        .setPersonalizationString(params.getPersonalizationString())
-                        .build(entropySource.generateSeed((params.getStrength() / (2 * 8)) + 1),
-                            params.getCapability() == DrbgParameters.Capability.PR_AND_RESEED,
-                            Strings.toByteArray("Bouncy Castle FIPS Provider Custom Nonce/IV"));
-                }
-                return new MySecureRandomSpi(random);
+                return new MySecureRandomSpi(pooledProv);
             }
         });
     }
@@ -104,26 +50,151 @@ class ProvRandom
         return Arrays.concatenate(Strings.toByteArray("NonceAndIV"),
             Pack.longToLittleEndian(Thread.currentThread().getId()), Pack.longToLittleEndian(System.currentTimeMillis()));
     }
+    
+    private class PooledSecureRandomProvider
+        implements SecureRandomProvider
+    {
+        private final AtomicReference<SecureRandom>[] providerDefaultRandom = new AtomicReference[BouncyCastleFipsProvider.POOL_SIZE];
+        private final BouncyCastleFipsProvider provider;
+        private final Object constructorParameter;
+
+        PooledSecureRandomProvider(BouncyCastleFipsProvider provider, Object constructorParameter)
+        {
+            this.provider = provider;
+            this.constructorParameter = constructorParameter;
+            for (int i = 0; i != providerDefaultRandom.length; i++)
+            {
+                providerDefaultRandom[i] = new AtomicReference<SecureRandom>();
+            }
+        }
+
+        public SecureRandom get()
+        {
+            // See SP 800-90A R1 8.6.7 for setting of Nonce - at least 1/2 security strength bits
+            int rngIndex = (Thread.currentThread().hashCode() & (BouncyCastleFipsProvider.POOL_SIZE - 1)) % providerDefaultRandom.length;
+            if (providerDefaultRandom[rngIndex].get() == null)
+            {
+                synchronized (providerDefaultRandom)
+                {
+                    if (providerDefaultRandom[rngIndex].get() == null)
+                    {
+                        final SecureRandom random;
+                        if (constructorParameter == null)
+                        {
+                            random = provider.getDefaultSecureRandom();
+                        }
+                        else
+                        {
+                            DrbgParameters.Instantiation params = (DrbgParameters.Instantiation)constructorParameter;
+                            final EntropySourceProvider entropySourceProvider = provider.getEntropySourceProvider();
+                            final EntropySource seedSource = entropySourceProvider.get((params.getStrength() / 2) + 1);
+
+                            random = provider.getProviderDefaultRandomBuilder()
+                                                .fromEntropySource(entropySourceProvider)
+                                                .setSecurityStrength(params.getStrength())
+                                                .setPersonalizationString(params.getPersonalizationString())
+                                                .build(seedSource.getEntropy(),
+                                                    params.getCapability() == DrbgParameters.Capability.PR_AND_RESEED, Strings.toByteArray("Bouncy Castle FIPS Custom Default"));
+                        }
+
+                        providerDefaultRandom[rngIndex].compareAndSet(null, random);
+                    }
+                }
+            }
+
+            return providerDefaultRandom[rngIndex].get();
+        }
+    }
+
+    private class PooledNonceSecureRandomProvider
+        implements SecureRandomProvider
+    {
+        private final AtomicReference<SecureRandom>[] providerDefaultRandom = new AtomicReference[BouncyCastleFipsProvider.POOL_SIZE];
+        private final BouncyCastleFipsProvider provider;
+        private final Object constructorParameter;
+
+        PooledNonceSecureRandomProvider(BouncyCastleFipsProvider provider, Object constructorParameter)
+        {
+            this.provider = provider;
+            this.constructorParameter = constructorParameter;
+            for (int i = 0; i != providerDefaultRandom.length; i++)
+            {
+                providerDefaultRandom[i] = new AtomicReference<SecureRandom>();
+            }
+        }
+
+        public SecureRandom get()
+        {
+            // See SP 800-90A R1 8.6.7 for setting of Nonce - at least 1/2 security strength bits
+            int rngIndex = (Thread.currentThread().hashCode() & (BouncyCastleFipsProvider.POOL_SIZE - 1)) % providerDefaultRandom.length;
+            if (providerDefaultRandom[rngIndex].get() == null)
+            {
+                synchronized (providerDefaultRandom)
+                {
+                    if (providerDefaultRandom[rngIndex].get() == null)
+                    {
+                        final EntropySourceProvider entropySourceProvider = provider.getEntropySourceProvider();
+                        final EntropySource seedSource = entropySourceProvider.get((provider.getProviderDefaultSecurityStrength() / 2) + 1);
+                        final FipsSecureRandom random;
+
+                        if (constructorParameter == null)
+                        {
+                            random = provider.getProviderDefaultRandomBuilder()
+                                .fromEntropySource(entropySourceProvider)
+                                .setPersonalizationString(generatePersonalizationString())
+                                .build(seedSource.getEntropy(), false, Strings.toByteArray("Bouncy Castle FIPS Provider Nonce/IV"));
+                        }
+                        else
+                        {
+                            DrbgParameters.Instantiation params = (DrbgParameters.Instantiation)constructorParameter;
+
+                            random = provider.getProviderDefaultRandomBuilder()
+                                .fromEntropySource(entropySourceProvider)
+                                .setSecurityStrength(params.getStrength())
+                                .setPersonalizationString(params.getPersonalizationString())
+                                .build(seedSource.getEntropy(),
+                                    params.getCapability() == DrbgParameters.Capability.PR_AND_RESEED,
+                                    Strings.toByteArray("Bouncy Castle FIPS Provider Custom Nonce/IV"));
+                        }
+
+                        providerDefaultRandom[rngIndex].compareAndSet(null, random);
+                    }
+                }
+            }
+
+            return providerDefaultRandom[rngIndex].get();
+        }
+    }
 
     private class MySecureRandomSpi
         extends SecureRandomSpi
     {
-        private final FipsSecureRandom baseRandom;
         private final SecureRandomParameters params;
+        private final SecureRandomProvider provider;
 
-        protected MySecureRandomSpi(FipsSecureRandom baseRandom)
+        protected MySecureRandomSpi(SecureRandomProvider provider)
         {
-            this.baseRandom = baseRandom;
-            this.params = DrbgParameters.instantiation(
-                baseRandom.getSecurityStrength(),
-                baseRandom.isPredictionResistant() ? DrbgParameters.Capability.PR_AND_RESEED : DrbgParameters.Capability.RESEED_ONLY,
-                baseRandom.getPersonalizationString());
+            this.provider = provider;
+            SecureRandom baseRandom = provider.get();
+            if (baseRandom instanceof FipsSecureRandom)
+            {
+                FipsSecureRandom fipsRandom = (FipsSecureRandom)baseRandom;
+
+                this.params = DrbgParameters.instantiation(
+                    fipsRandom.getSecurityStrength(),
+                    fipsRandom.isPredictionResistant() ? DrbgParameters.Capability.PR_AND_RESEED : DrbgParameters.Capability.RESEED_ONLY,
+                    fipsRandom.getPersonalizationString());
+            }
+            else
+            {
+                this.params = null;
+            }
         }
 
         @Override
         protected void engineSetSeed(byte[] bytes)
         {
-            baseRandom.setSeed(bytes);
+            this.provider.get().setSeed(bytes);
         }
 
         @Override
@@ -131,6 +202,7 @@ class ProvRandom
         {
             if (params instanceof DrbgParameters.NextBytes)
             {
+                FipsSecureRandom baseRandom = (FipsSecureRandom)provider.get();
                 DrbgParameters.NextBytes p = (DrbgParameters.NextBytes)params;
                 if (p.getStrength() > baseRandom.getSecurityStrength())
                 {
@@ -145,6 +217,10 @@ class ProvRandom
             }
             else
             {
+                if (params == null)
+                {
+                    super.engineNextBytes(bytes, params);
+                }
                 throw new IllegalArgumentException("unrecognized DrbgParameters: " + params.getClass());
             }
         }
@@ -152,13 +228,13 @@ class ProvRandom
         @Override
         protected void engineNextBytes(byte[] bytes)
         {
-            baseRandom.nextBytes(bytes);
+            provider.get().nextBytes(bytes);
         }
 
         @Override
         protected byte[] engineGenerateSeed(int numBytes)
         {
-            return baseRandom.generateSeed(numBytes);
+            return provider.get().generateSeed(numBytes);
         }
 
         @Override
@@ -167,6 +243,7 @@ class ProvRandom
             if (params instanceof DrbgParameters.Reseed)
             {
                 DrbgParameters.Reseed p = (DrbgParameters.Reseed)params;
+                FipsSecureRandom baseRandom = (FipsSecureRandom)provider.get();
 
                 if (p.getPredictionResistance() && !baseRandom.isPredictionResistant())
                 {
@@ -182,7 +259,15 @@ class ProvRandom
                     throw new IllegalArgumentException("unrecognized DrbgParameters: " + params.getClass());
                 }
 
-                baseRandom.reseed();
+                SecureRandom baseRandom = provider.get();
+                if (baseRandom instanceof FipsSecureRandom)
+                {
+                    baseRandom.reseed();
+                }
+                else
+                {
+                    super.engineReseed(params);
+                }
             }
         }
 

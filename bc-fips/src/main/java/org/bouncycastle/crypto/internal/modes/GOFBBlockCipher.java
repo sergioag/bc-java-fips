@@ -15,13 +15,13 @@ import org.bouncycastle.crypto.internal.params.ParametersWithIV;
 public class GOFBBlockCipher
     extends StreamBlockCipher
 {
-    private byte[]          IV;
-    private byte[]          ofbV;
-    private byte[]          ofbOutV;
-    private int             byteCount;
+    private byte[] IV;
+    private byte[] ofbV;
+    private byte[] ofbOutV;
+    private int byteCount;
 
-    private final int             blockSize;
-    private final BlockCipher     cipher;
+    private final int blockSize;
+    private final BlockCipher cipher;
 
     boolean firstStep = true;
     int N3;
@@ -34,7 +34,7 @@ public class GOFBBlockCipher
      * Basic constructor.
      *
      * @param cipher the block cipher to be used as the basis of the
-     * counter mode (must have a 64 bit block size).
+     *               counter mode (must have a 64 bit block size).
      */
     public GOFBBlockCipher(
         BlockCipher cipher)
@@ -60,14 +60,14 @@ public class GOFBBlockCipher
      * An IV which is too short is handled in FIPS compliant fashion.
      *
      * @param encrypting if true the cipher is initialised for
-     *  encryption, if false for decryption.
-     * @param params the key and other data required by the cipher.
-     * @exception IllegalArgumentException if the params argument is
-     * inappropriate.
+     *                   encryption, if false for decryption.
+     * @param params     the key and other data required by the cipher.
+     * @throws IllegalArgumentException if the params argument is
+     *                                  inappropriate.
      */
     public void init(
-        boolean             encrypting, //ignored by this CTR mode
-        CipherParameters    params)
+        boolean encrypting, //ignored by this CTR mode
+        CipherParameters params)
         throws IllegalArgumentException
     {
         firstStep = true;
@@ -138,20 +138,20 @@ public class GOFBBlockCipher
      * Process one block of input from the array in and write it to
      * the out array.
      *
-     * @param in the array containing the input data.
-     * @param inOff offset into the in array the data starts at.
-     * @param out the array the output data will be copied into.
+     * @param in     the array containing the input data.
+     * @param inOff  offset into the in array the data starts at.
+     * @param out    the array the output data will be copied into.
      * @param outOff the offset into the out array the output will start at.
-     * @exception DataLengthException if there isn't enough data in in, or
-     * space in out.
-     * @exception IllegalStateException if the cipher isn't initialised.
      * @return the number of bytes processed and produced.
+     * @throws DataLengthException   if there isn't enough data in in, or
+     *                               space in out.
+     * @throws IllegalStateException if the cipher isn't initialised.
      */
     public int processBlock(
-        byte[]      in,
-        int         inOff,
-        byte[]      out,
-        int         outOff)
+        byte[] in,
+        int inOff,
+        byte[] out,
+        int outOff)
         throws DataLengthException, IllegalStateException
     {
         processBytes(in, inOff, blockSize, out, outOff);
@@ -175,23 +175,23 @@ public class GOFBBlockCipher
 
     //array of bytes to type int
     private int bytesToint(
-        byte[]  in,
-        int     inOff)
+        byte[] in,
+        int inOff)
     {
-        return  ((in[inOff + 3] << 24) & 0xff000000) + ((in[inOff + 2] << 16) & 0xff0000) +
-                ((in[inOff + 1] << 8) & 0xff00) + (in[inOff] & 0xff);
+        return ((in[inOff + 3] << 24) & 0xff000000) + ((in[inOff + 2] << 16) & 0xff0000) +
+            ((in[inOff + 1] << 8) & 0xff00) + (in[inOff] & 0xff);
     }
 
     //int to array of bytes
     private void intTobytes(
-            int     num,
-            byte[]  out,
-            int     outOff)
+        int num,
+        byte[] out,
+        int outOff)
     {
-            out[outOff + 3] = (byte)(num >>> 24);
-            out[outOff + 2] = (byte)(num >>> 16);
-            out[outOff + 1] = (byte)(num >>> 8);
-            out[outOff] =     (byte)num;
+        out[outOff + 3] = (byte)(num >>> 24);
+        out[outOff + 2] = (byte)(num >>> 16);
+        out[outOff + 1] = (byte)(num >>> 8);
+        out[outOff] = (byte)num;
     }
 
     protected byte calculateByte(byte b)

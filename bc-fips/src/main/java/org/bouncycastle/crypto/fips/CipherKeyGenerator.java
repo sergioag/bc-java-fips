@@ -10,7 +10,7 @@ import org.bouncycastle.crypto.internal.KeyGenerationParameters;
 class CipherKeyGenerator
 {
     protected SecureRandom random;
-    protected int          strength;
+    protected int strength;
 
     /**
      * initialise the key generator.

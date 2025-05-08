@@ -68,6 +68,12 @@ abstract class AsymmetricAlgorithmProvider
         provider.addKeyInfoConverter(oid, keyFactory);
     }
 
+    protected void registerKeyFactoryOid(BouncyCastleFipsProvider provider, ASN1ObjectIdentifier oid, String name, AsymmetricKeyInfoConverter keyFactory)
+    {
+        provider.addAlias("KeyFactory", name, oid);
+        provider.addKeyInfoConverter(oid, keyFactory);
+    }
+
     protected void registerOidAlgorithmParameters(BouncyCastleFipsProvider provider, ASN1ObjectIdentifier oid, String name)
     {
         provider.addAlias("AlgorithmParameterGenerator", name, oid);

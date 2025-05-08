@@ -5,7 +5,7 @@ import org.bouncycastle.crypto.internal.params.KeyParameterImpl;
 class GOST28147Parameters
     extends KeyParameterImpl
 {
-    private final byte[]  sBox;
+    private final byte[] sBox;
 
     public GOST28147Parameters(
         byte[] key,

@@ -306,7 +306,7 @@ public final class SEED
 
         public KeyGenerator(GeneralParameters parameterSet, SecureRandom random)
         {
-             this((GeneralAlgorithm)parameterSet.getAlgorithm(), random);
+            this((GeneralAlgorithm)parameterSet.getAlgorithm(), random);
         }
 
         private KeyGenerator(GeneralAlgorithm algorithm, SecureRandom random)

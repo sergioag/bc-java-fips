@@ -26,7 +26,7 @@ public class LMSKeyPairGenerator
         byte[] I = new byte[16];
         source.nextBytes(I);
 
-        byte[] rootSecret = new byte[32];
+        byte[] rootSecret = new byte[param.getParameters().getLMSigParam().getM()];
         source.nextBytes(rootSecret);
 
         LMSPrivateKeyParameters privKey = LMS.generateKeys(param.getParameters().getLMSigParam(), param.getParameters().getLMOTSParam(), 0, I, rootSecret);

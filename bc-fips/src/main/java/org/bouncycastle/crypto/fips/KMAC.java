@@ -108,7 +108,7 @@ class KMAC
 
             cshake.update(encOut, 0, encOut.length);
         }
-        
+
         int rv = cshake.doFinal(out, outOff, getMacSize());
 
         reset();
@@ -129,7 +129,7 @@ class KMAC
 
             cshake.update(encOut, 0, encOut.length);
         }
-        
+
         int rv = cshake.doFinal(out, outOff, outLen);
 
         reset();

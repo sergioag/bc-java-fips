@@ -11,13 +11,12 @@ import org.bouncycastle.util.Memoable;
 /**
  * Implementation of WhirlpoolDigest, based on Java source published by Barreto
  * and Rijmen.
- *  
  */
 final class WhirlpoolDigest
     implements ExtendedDigest, Memoable
 {
     private static final int BYTE_LENGTH = 64;
-    
+
     private static final int DIGEST_LENGTH_BYTES = 512 / 8;
     private static final int ROUNDS = 10;
     private static final int REDUCTION_POLYNOMIAL = 0x011d; // 2^8 + 2^4 + 2^3 + 2 + 1;
@@ -40,7 +39,7 @@ final class WhirlpoolDigest
         0x2a, 0xbb, 0xc1, 0x53, 0xdc, 0x0b, 0x9d, 0x6c, 0x31, 0x74, 0xf6, 0x46, 0xac, 0x89, 0x14, 0xe1,
         0x16, 0x3a, 0x69, 0x09, 0x70, 0xb6, 0xd0, 0xed, 0xcc, 0x42, 0x98, 0xa4, 0x28, 0x5c, 0xf8, 0x86
     };
-    
+
     private static final long[] C0 = new long[256];
     private static final long[] C1 = new long[256];
     private static final long[] C2 = new long[256];
@@ -51,7 +50,7 @@ final class WhirlpoolDigest
     private static final long[] C7 = new long[256];
 
     private final long[] _rc = new long[ROUNDS + 1];
-        
+
     public WhirlpoolDigest()
     {
         for (int i = 0; i < 256; i++)
@@ -62,7 +61,7 @@ final class WhirlpoolDigest
             int v5 = v4 ^ v1;
             int v8 = maskWithReductionPolynomial(v4 << 1);
             int v9 = v8 ^ v1;
-            
+
             C0[i] = packIntoLong(v1, v1, v4, v1, v8, v5, v2, v9);
             C1[i] = packIntoLong(v9, v1, v1, v4, v1, v8, v5, v2);
             C2[i] = packIntoLong(v2, v9, v1, v1, v4, v1, v8, v5);
@@ -71,36 +70,36 @@ final class WhirlpoolDigest
             C5[i] = packIntoLong(v1, v8, v5, v2, v9, v1, v1, v4);
             C6[i] = packIntoLong(v4, v1, v8, v5, v2, v9, v1, v1);
             C7[i] = packIntoLong(v1, v4, v1, v8, v5, v2, v9, v1);
-            
+
         }
-        
+
         _rc[0] = 0L;
         for (int r = 1; r <= ROUNDS; r++)
         {
             int i = 8 * (r - 1);
-            _rc[r] =    (C0[i    ] & 0xff00000000000000L) ^ 
-                        (C1[i + 1] & 0x00ff000000000000L) ^ 
-                        (C2[i + 2] & 0x0000ff0000000000L) ^
-                        (C3[i + 3] & 0x000000ff00000000L) ^ 
-                        (C4[i + 4] & 0x00000000ff000000L) ^
-                        (C5[i + 5] & 0x0000000000ff0000L) ^
-                        (C6[i + 6] & 0x000000000000ff00L) ^ 
-                        (C7[i + 7] & 0x00000000000000ffL);
+            _rc[r] = (C0[i] & 0xff00000000000000L) ^
+                (C1[i + 1] & 0x00ff000000000000L) ^
+                (C2[i + 2] & 0x0000ff0000000000L) ^
+                (C3[i + 3] & 0x000000ff00000000L) ^
+                (C4[i + 4] & 0x00000000ff000000L) ^
+                (C5[i + 5] & 0x0000000000ff0000L) ^
+                (C6[i + 6] & 0x000000000000ff00L) ^
+                (C7[i + 7] & 0x00000000000000ffL);
         }
-        
+
     }
 
     private long packIntoLong(int b7, int b6, int b5, int b4, int b3, int b2, int b1, int b0)
     {
-        return 
-                    ((long)b7 << 56) ^
-                    ((long)b6 << 48) ^
-                    ((long)b5 << 40) ^
-                    ((long)b4 << 32) ^
-                    ((long)b3 << 24) ^
-                    ((long)b2 << 16) ^
-                    ((long)b1 <<  8) ^
-                    b0;
+        return
+            ((long)b7 << 56) ^
+                ((long)b6 << 48) ^
+                ((long)b5 << 40) ^
+                ((long)b4 << 32) ^
+                ((long)b3 << 24) ^
+                ((long)b2 << 16) ^
+                ((long)b1 << 8) ^
+                b0;
     }
 
     /*
@@ -116,22 +115,21 @@ final class WhirlpoolDigest
         }
         return rv;
     }
-        
+
     // --------------------------------------------------------------------------------------//
-    
+
     // -- buffer information --
     private static final int BITCOUNT_ARRAY_SIZE = 32;
-    private byte[]  _buffer    = new byte[64];
-    private int     _bufferPos = 0;
-    private short[] _bitCount  = new short[BITCOUNT_ARRAY_SIZE];
-    
+    private byte[] _buffer = new byte[64];
+    private int _bufferPos = 0;
+    private short[] _bitCount = new short[BITCOUNT_ARRAY_SIZE];
+
     // -- internal hash state --
-    private long[] _hash  = new long[8];
+    private long[] _hash = new long[8];
     private long[] _K = new long[8]; // the round key
     private long[] _L = new long[8];
     private long[] _block = new long[8]; // mu (buffer)
     private long[] _state = new long[8]; // the current "cipher" state
-    
 
 
     /**
@@ -163,10 +161,10 @@ final class WhirlpoolDigest
             convertLongToByteArray(_hash[i], out, outOff + (i * 8));
         }
 
-        reset();        
+        reset();
         return getDigestSize();
     }
-    
+
     /**
      * reset the chaining variables
      */
@@ -199,14 +197,14 @@ final class WhirlpoolDigest
     private long bytesToLongFromBuffer(byte[] buffer, int startPos)
     {
         long rv = (((buffer[startPos + 0] & 0xffL) << 56) |
-                   ((buffer[startPos + 1] & 0xffL) << 48) |
-                   ((buffer[startPos + 2] & 0xffL) << 40) |
-                   ((buffer[startPos + 3] & 0xffL) << 32) |
-                   ((buffer[startPos + 4] & 0xffL) << 24) |
-                   ((buffer[startPos + 5] & 0xffL) << 16) |
-                   ((buffer[startPos + 6] & 0xffL) <<  8) |
-                   ((buffer[startPos + 7]) & 0xffL));
-        
+            ((buffer[startPos + 1] & 0xffL) << 48) |
+            ((buffer[startPos + 2] & 0xffL) << 40) |
+            ((buffer[startPos + 3] & 0xffL) << 32) |
+            ((buffer[startPos + 4] & 0xffL) << 24) |
+            ((buffer[startPos + 5] & 0xffL) << 16) |
+            ((buffer[startPos + 6] & 0xffL) << 8) |
+            ((buffer[startPos + 7]) & 0xffL));
+
         return rv;
     }
 
@@ -222,7 +220,7 @@ final class WhirlpoolDigest
     {
         // buffer contents have been transferred to the _block[] array via
         // processFilledBuffer
-        
+
         // compute and apply K^0
         for (int i = 0; i < 8; i++)
         {
@@ -241,19 +239,19 @@ final class WhirlpoolDigest
                 _L[i] ^= C3[(int)(_K[(i - 3) & 7] >>> 32) & 0xff];
                 _L[i] ^= C4[(int)(_K[(i - 4) & 7] >>> 24) & 0xff];
                 _L[i] ^= C5[(int)(_K[(i - 5) & 7] >>> 16) & 0xff];
-                _L[i] ^= C6[(int)(_K[(i - 6) & 7] >>>  8) & 0xff];
+                _L[i] ^= C6[(int)(_K[(i - 6) & 7] >>> 8) & 0xff];
                 _L[i] ^= C7[(int)(_K[(i - 7) & 7]) & 0xff];
             }
 
             System.arraycopy(_L, 0, _K, 0, _K.length);
-            
+
             _K[0] ^= _rc[round];
-            
+
             // apply the round transformation
             for (int i = 0; i < 8; i++)
             {
                 _L[i] = _K[i];
-                
+
                 _L[i] ^= C0[(int)(_state[(i - 0) & 7] >>> 56) & 0xff];
                 _L[i] ^= C1[(int)(_state[(i - 1) & 7] >>> 48) & 0xff];
                 _L[i] ^= C2[(int)(_state[(i - 2) & 7] >>> 40) & 0xff];
@@ -263,17 +261,17 @@ final class WhirlpoolDigest
                 _L[i] ^= C6[(int)(_state[(i - 6) & 7] >>> 8) & 0xff];
                 _L[i] ^= C7[(int)(_state[(i - 7) & 7]) & 0xff];
             }
-            
+
             // save the current state
             System.arraycopy(_L, 0, _state, 0, _state.length);
         }
-        
+
         // apply Miuaguchi-Preneel compression
         for (int i = 0; i < 8; i++)
         {
             _hash[i] ^= _state[i] ^ _block[i];
         }
-        
+
     }
 
     public void update(byte in)
@@ -281,7 +279,7 @@ final class WhirlpoolDigest
         _buffer[_bufferPos] = in;
 
         ++_bufferPos;
-        
+
         if (_bufferPos == _buffer.length)
         {
             processFilledBuffer(_buffer, 0);
@@ -294,16 +292,17 @@ final class WhirlpoolDigest
      * increment() can be implemented in this way using 2 arrays or
      * by having some temporary variables that are used to set the
      * value provided by EIGHT[i] and carry within the loop.
-     * 
+     *
      * not having done any timing, this seems likely to be faster
      * at the slight expense of 32*(sizeof short) bytes
      */
     private static final short[] EIGHT = new short[BITCOUNT_ARRAY_SIZE];
-    static 
+
+    static
     {
         EIGHT[BITCOUNT_ARRAY_SIZE - 1] = 8;
     }
-    
+
     private void increment()
     {
         int carry = 0;
@@ -314,8 +313,8 @@ final class WhirlpoolDigest
             carry = sum >>> 8;
             _bitCount[i] = (short)(sum & 0xff);
         }
-    }    
-    
+    }
+
     public void update(byte[] in, int inOff, int len)
     {
         while (len > 0)
@@ -324,9 +323,9 @@ final class WhirlpoolDigest
             ++inOff;
             --len;
         }
-        
+
     }
-    
+
     private void finish()
     {
         /*
@@ -334,8 +333,8 @@ final class WhirlpoolDigest
          * object creation of 32 bytes rather than providing a _stopCounting
          * boolean which was the alternative I could think of.
          */
-        byte[] bitLength = copyBitLength(); 
-        
+        byte[] bitLength = copyBitLength();
+
         _buffer[_bufferPos++] |= 0x80;
 
         if (_bufferPos == _buffer.length)
@@ -344,9 +343,9 @@ final class WhirlpoolDigest
         }
 
         /*
-         * Final block contains 
+         * Final block contains
          * [ ... data .... ][0][0][0][ length ]
-         * 
+         *
          * if [ length ] cannot fit.  Need to create a new block.
          */
         if (_bufferPos > 32)
@@ -356,16 +355,16 @@ final class WhirlpoolDigest
                 update((byte)0);
             }
         }
-        
+
         while (_bufferPos <= 32)
         {
             update((byte)0);
         }
-        
+
         // copy the length information to the final 32 bytes of the
         // 64 byte block....
         System.arraycopy(bitLength, 0, _buffer, 32, bitLength.length);
-        
+
         processFilledBuffer(_buffer, 0);
     }
 
@@ -377,8 +376,8 @@ final class WhirlpoolDigest
             rv[i] = (byte)(_bitCount[i] & 0xff);
         }
         return rv;
-    }    
-    
+    }
+
     public int getByteLength()
     {
         return BYTE_LENGTH;

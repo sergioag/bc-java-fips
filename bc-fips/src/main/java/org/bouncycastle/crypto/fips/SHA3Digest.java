@@ -28,7 +28,8 @@ class SHA3Digest
         super(checkBitLength(bitLength));
     }
 
-    public SHA3Digest(SHA3Digest source) {
+    public SHA3Digest(SHA3Digest source)
+    {
         super(source);
     }
 
@@ -39,9 +40,9 @@ class SHA3Digest
 
     public int doFinal(byte[] out, int outOff)
     {
-        absorb(new byte[]{ 0x02 }, 0, 2);
-        
-        return super.doFinal(out,  outOff);
+        absorb(new byte[]{0x02}, 0, 2);
+
+        return super.doFinal(out, outOff);
     }
 
     /*

@@ -24,12 +24,12 @@ class DsaParametersGenerator
     private static final BigInteger ONE = BigInteger.valueOf(1);
     private static final BigInteger TWO = BigInteger.valueOf(2);
 
-    private Digest          digest;
-    private int             L, N;
-    private int             certainty;
-    private int             iterations;
-    private SecureRandom    random;
-    private int             usageIndex;
+    private Digest digest;
+    private int L, N;
+    private int certainty;
+    private int iterations;
+    private SecureRandom random;
+    private int usageIndex;
 
     public DsaParametersGenerator(Digest digest)
     {
@@ -39,10 +39,10 @@ class DsaParametersGenerator
     /**
      * Initialise the key generator for DSA 2.
      * <p>
-     *     Use this init method if you need to generate parameters for DSA 2 keys.
+     * Use this init method if you need to generate parameters for DSA 2 keys.
      * </p>
      *
-     * @param params  DSA 2 key generation parameters.
+     * @param params DSA 2 key generation parameters.
      */
     public void init(
         DsaParameterGenerationParameters params)
@@ -95,7 +95,7 @@ class DsaParametersGenerator
         BigInteger e = p.subtract(ONE).divide(q);
         BigInteger pSub2 = p.subtract(TWO);
 
-        for (;;)
+        for (; ; )
         {
             BigInteger h = BigIntegers.createRandomInRange(TWO, pSub2, r);
             BigInteger g = h.modPow(e, p);
@@ -134,7 +134,7 @@ class DsaParametersGenerator
 
         byte[] w = new byte[L / 8];
         byte[] output = new byte[d.getDigestSize()];
-        for (;;)
+        for (; ; )
         {
 // 5. Get an arbitrary sequence of seedlen bits as the domain_parameter_seed.
             random.nextBytes(seed);
@@ -205,7 +205,7 @@ class DsaParametersGenerator
                         BigInteger g = calculateGenerator_FIPS186_3_Verifiable(d, p, q, seed, usageIndex);
                         if (g != null)
                         {
-                           return new DsaParameters(p, q, g, new DsaValidationParameters(seed, counter, usageIndex));
+                            return new DsaParameters(p, q, g, new DsaValidationParameters(seed, counter, usageIndex));
                         }
                     }
 
@@ -232,13 +232,13 @@ class DsaParametersGenerator
     }
 
     static BigInteger calculateGenerator_FIPS186_3_Unverifiable(BigInteger p, BigInteger q,
-        SecureRandom r)
+                                                                SecureRandom r)
     {
         return calculateGenerator_FIPS186_2(p, q, r);
     }
 
     static BigInteger calculateGenerator_FIPS186_3_Verifiable(Digest d, BigInteger p, BigInteger q,
-        byte[] seed, int index)
+                                                              byte[] seed, int index)
     {
         if ((index & 0xff) != index)
         {

@@ -197,7 +197,7 @@ public class TimeStampTokenGenerator
 
             if (OIWObjectIdentifiers.idSHA1.equals(digestAlgOid))
             {
-                final ESSCertID essCertID = new ESSCertID(certHash.getOctets(), issuerSerial);
+                final ESSCertID essCertID = new ESSCertID(certHash, issuerSerial);
 
                 this.signerInfoGen = new SignerInfoGenerator(signerInfoGen, new CMSAttributeTableGenerator()
                 {
@@ -220,7 +220,7 @@ public class TimeStampTokenGenerator
             {
                 digestAlgID = new AlgorithmIdentifier(digestAlgOid);
 
-                final ESSCertIDv2 essCertIDv2 = new ESSCertIDv2(digestAlgID, certHash.getOctets(), issuerSerial);
+                final ESSCertIDv2 essCertIDv2 = new ESSCertIDv2(digestAlgID, certHash, issuerSerial);
 
                 this.signerInfoGen = new SignerInfoGenerator(signerInfoGen, new CMSAttributeTableGenerator()
                 {

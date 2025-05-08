@@ -3,9 +3,12 @@
 /***************************************************************/
 package org.bouncycastle.crypto.internal.pqc.lms;
 
+import java.io.IOException;
+
 public interface LMSContextBasedVerifier
 {
-    LMSContext generateLMSContext(byte[] signature);
+    LMSContext generateLMSContext(byte[] signature)
+        throws IOException;
 
     boolean verify(LMSContext context);
 }

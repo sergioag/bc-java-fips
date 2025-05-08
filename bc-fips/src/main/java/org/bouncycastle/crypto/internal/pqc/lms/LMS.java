@@ -3,6 +3,8 @@
 /***************************************************************/
 package org.bouncycastle.crypto.internal.pqc.lms;
 
+import java.io.IOException;
+
 import org.bouncycastle.crypto.internal.Digest;
 
 class LMS
@@ -83,9 +85,10 @@ class LMS
     }
 
     public static boolean verifySignature(LMSPublicKeyParameters publicKey, byte[] S, byte[] message)
+        throws IOException
     {
         LMSContext context = publicKey.generateLMSContext(S);
-
+        
         LmsUtils.byteArray(message, context);
 
         return verifySignature(publicKey, context);
@@ -93,8 +96,6 @@ class LMS
 
     public static boolean verifySignature(LMSPublicKeyParameters publicKey, LMSContext context)
     {
-
-
         LMSSignature S = (LMSSignature)context.getSignature();
         LMSigParameters lmsParameter = S.getParameter();
         int h = lmsParameter.getH();
@@ -106,7 +107,7 @@ class LMS
 
         // tmp = H(I || u32str(node_num) || u16str(D_LEAF) || Kc)
         byte[] I = publicKey.getI();
-        Digest H = LmsDigestUtil.getDigest(lmsParameter.getDigestOID());
+        Digest H = LmsDigestUtil.getDigest(lmsParameter);
         byte[] tmp = new byte[H.getDigestSize()];
 
         H.update(I, 0, I.length);
@@ -140,6 +141,12 @@ class LMS
             }
             node_num = node_num / 2;
             i++;
+            // these two can get out of sync with an invalid signature, we'll
+            // try and fail gracefully
+            if (i == path.length && node_num > 1)
+            {
+                return false;
+            }
         }
         byte[] Tc = tmp;
         return publicKey.matchesT1(Tc);

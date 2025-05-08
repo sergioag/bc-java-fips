@@ -295,16 +295,16 @@ public class HSSPrivateKeyParameters
             LMSPrivateKeyParameters intermediateKey = keys[i - 1];
 
             byte[] childI = new byte[16];
-            byte[] childSeed = new byte[32];
+            byte[] childSeed = new byte[intermediateKey.getOtsParameters().getN()];
             SeedDerive derive = new SeedDerive(
                 intermediateKey.getI(),
                 intermediateKey.getMasterSecret(),
-                LmsDigestUtil.getDigest(intermediateKey.getOtsParameters().getDigestOID()));
+                LmsDigestUtil.getDigest(intermediateKey.getOtsParameters()));
             derive.setQ((int)qTreePath[i - 1]);
             derive.setJ(~1);
 
             derive.deriveSeed(childSeed, true);
-            byte[] postImage = new byte[32];
+            byte[] postImage = new byte[intermediateKey.getOtsParameters().getN()];
             derive.deriveSeed(postImage, false);
             System.arraycopy(postImage, 0, childI, 0, childI.length);
 
@@ -373,11 +373,13 @@ public class HSSPrivateKeyParameters
     void replaceConsumedKey(int d)
     {
 
-        SeedDerive deriver = keys.get(d - 1).getCurrentOTSKey().getDerivationFunction();
+        LMOtsPrivateKey currentOTSKey = keys.get(d - 1).getCurrentOTSKey();
+        int n = currentOTSKey.getParameter().getN();
+        SeedDerive deriver = currentOTSKey.getDerivationFunction();
         deriver.setJ(~1);
-        byte[] childRootSeed = new byte[32];
+        byte[] childRootSeed = new byte[n];
         deriver.deriveSeed(childRootSeed, true);
-        byte[] postImage = new byte[32];
+        byte[] postImage = new byte[n];
         deriver.deriveSeed(postImage, false);
         byte[] childI = new byte[16];
         System.arraycopy(postImage, 0, childI, 0, childI.length);

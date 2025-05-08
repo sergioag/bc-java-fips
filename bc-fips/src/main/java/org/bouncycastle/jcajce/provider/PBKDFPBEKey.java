@@ -30,11 +30,9 @@ class PBKDFPBEKey
 
     public String getAlgorithm()
     {
-        String rv = super.getAlgorithm();
-
         KeyUtil.checkDestroyed(this);
 
-        return rv;
+        return super.getAlgorithm();
     }
 
     public String getFormat()
@@ -46,38 +44,30 @@ class PBKDFPBEKey
 
     public byte[] getEncoded()
     {
-        byte[] encoded = super.getEncoded();
-
         KeyUtil.checkDestroyed(this);
 
-        return encoded;
+        return super.getEncoded();
     }
 
     public char[] getPassword()
     {
-        char[] rv = Arrays.clone(password);
-
         KeyUtil.checkDestroyed(this);
 
-        return rv;
+        return password;
     }
 
     public byte[] getSalt()
     {
-        byte[] clone = Arrays.clone(salt);
-
         KeyUtil.checkDestroyed(this);
 
-        return clone;
+        return Arrays.clone(salt);
     }
 
     public int getIterationCount()
     {
-        int rv = this.iterationCount;
-
         KeyUtil.checkDestroyed(this);
 
-        return rv;
+        return iterationCount;
     }
 
     public void destroy()

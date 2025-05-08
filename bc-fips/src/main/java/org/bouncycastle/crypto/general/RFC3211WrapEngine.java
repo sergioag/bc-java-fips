@@ -18,10 +18,10 @@ import org.bouncycastle.util.Arrays;
 class RFC3211WrapEngine
     implements Wrapper
 {
-    private CBCBlockCipher   engine;
+    private CBCBlockCipher engine;
     private ParametersWithIV param;
-    private boolean          forWrapping;
-    private SecureRandom     rand;
+    private boolean forWrapping;
+    private SecureRandom rand;
 
     public RFC3211WrapEngine(BlockCipher engine)
     {
@@ -29,7 +29,7 @@ class RFC3211WrapEngine
     }
 
     public void init(
-        boolean          forWrapping,
+        boolean forWrapping,
         CipherParameters param)
     {
         this.forWrapping = forWrapping;
@@ -63,9 +63,9 @@ class RFC3211WrapEngine
     }
 
     public byte[] wrap(
-        byte[]  in,
-        int     inOff,
-        int     inLen)
+        byte[] in,
+        int inOff,
+        int inLen)
     {
         if (!forWrapping)
         {
@@ -76,7 +76,7 @@ class RFC3211WrapEngine
         {
             throw new IllegalArgumentException("input must be from 0 to 255 bytes");
         }
-        
+
         engine.init(true, param);
 
         int blockSize = engine.getBlockSize();
@@ -118,9 +118,9 @@ class RFC3211WrapEngine
     }
 
     public byte[] unwrap(
-        byte[]  in,
-        int     inOff,
-        int     inLen)
+        byte[] in,
+        int inOff,
+        int inLen)
         throws InvalidCipherTextException
     {
         if (forWrapping)
@@ -134,18 +134,18 @@ class RFC3211WrapEngine
         {
             throw new InvalidCipherTextException("input too short");
         }
-        
+
         byte[] cekBlock = new byte[inLen];
         byte[] iv = new byte[blockSize];
 
         System.arraycopy(in, inOff, cekBlock, 0, inLen);
         System.arraycopy(in, inOff, iv, 0, iv.length);
-        
+
         engine.init(false, new ParametersWithIV(param.getParameters(), iv));
 
         for (int i = blockSize; i < cekBlock.length; i += blockSize)
         {
-            engine.processBlock(cekBlock, i, cekBlock, i);    
+            engine.processBlock(cekBlock, i, cekBlock, i);
         }
 
         System.arraycopy(cekBlock, cekBlock.length - iv.length, iv, 0, iv.length);
@@ -184,7 +184,7 @@ class RFC3211WrapEngine
         }
 
         Arrays.clear(cekBlock);
-        
+
         if (nonEqual != 0 | invalidLength)
         {
             throw new InvalidCipherTextException("wrapped key corrupted");

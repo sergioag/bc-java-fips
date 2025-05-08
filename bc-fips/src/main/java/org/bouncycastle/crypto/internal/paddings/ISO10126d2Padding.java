@@ -1,10 +1,8 @@
-/***************************************************************/
-/******    DO NOT EDIT THIS CLASS bc-java SOURCE FILE     ******/
-/***************************************************************/
 package org.bouncycastle.crypto.internal.paddings;
 
 import java.security.SecureRandom;
 
+import org.bouncycastle.crypto.CryptoServicesRegistrar;
 import org.bouncycastle.crypto.internal.InvalidCipherTextException;
 
 /**
@@ -23,14 +21,7 @@ public class ISO10126d2Padding
     public void init(SecureRandom random)
         throws IllegalArgumentException
     {
-        if (random != null)
-        {
-            this.random = random;
-        }
-        else
-        {
-            throw new IllegalArgumentException("No random provided where one required.");
-        }
+        this.random = CryptoServicesRegistrar.getSecureRandom(random);
     }
 
     /**
@@ -70,9 +61,11 @@ public class ISO10126d2Padding
     public int padCount(byte[] in)
         throws InvalidCipherTextException
     {
-        int count = in[in.length - 1] & 0xff;
+        int count = in[in.length - 1] & 0xFF;
+        int position = in.length - count;
 
-        if (count > in.length)
+        int failed = (position | (count - 1)) >> 31;
+        if (failed != 0)
         {
             throw new InvalidCipherTextException("pad block corrupted");
         }

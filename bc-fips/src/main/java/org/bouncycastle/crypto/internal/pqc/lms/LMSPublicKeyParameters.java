@@ -165,15 +165,9 @@ public class LMSPublicKeyParameters
     }
 
     public LMSContext generateLMSContext(byte[] signature)
+        throws IOException
     {
-        try
-        {
-            return generateOtsContext(LMSSignature.getInstance(signature));
-        }
-        catch (IOException e)
-        {
-            throw new IllegalStateException("cannot parse signature: " + e.getMessage());
-        }
+        return generateOtsContext(LMSSignature.getInstance(signature));
     }
 
     LMSContext generateOtsContext(LMSSignature S)

@@ -1,9 +1,7 @@
-/***************************************************************/
-/******    DO NOT EDIT THIS CLASS bc-java SOURCE FILE     ******/
-/***************************************************************/
 package org.bouncycastle.asn1.crmf;
 
-import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1BitString;
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
@@ -21,7 +19,7 @@ public class PKMACValue
     extends ASN1Object
 {
     private AlgorithmIdentifier  algId;
-    private DERBitString        value;
+    private ASN1BitString        value;
 
     private PKMACValue(ASN1Sequence seq)
     {
@@ -80,7 +78,7 @@ public class PKMACValue
         return algId;
     }
 
-    public DERBitString getValue()
+    public ASN1BitString getValue()
     {
         return value;
     }
@@ -97,11 +95,6 @@ public class PKMACValue
      */
     public ASN1Primitive toASN1Primitive()
     {
-        ASN1EncodableVector v = new ASN1EncodableVector();
-
-        v.add(algId);
-        v.add(value);
-
-        return new DERSequence(v);
+        return new DERSequence(new ASN1Encodable[] {algId, value});
     }
 }

@@ -103,7 +103,7 @@ class HMacDsaKCalculator
     {
         byte[] t = new byte[((n.bitLength() + 7) / 8)];
 
-        for (;;)
+        for (; ; )
         {
             int tOff = 0;
 

@@ -56,13 +56,7 @@ import org.bouncycastle.util.Strings;
 class BaseSingleBlockCipher
     extends CipherSpi
 {
-    private static final Class TlsRsaPremasterSecretParameterSpec = AccessController.doPrivileged(new PrivilegedAction<Class>()
-    {
-        public Class run()
-        {
-            return lookup("sun.security.internal.spec.TlsRsaPremasterSecretParameterSpec");
-        }
-    });
+    private static final Class TlsRsaPremasterSecretParameterSpec = null;
 
     static class Builder
     {

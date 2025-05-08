@@ -21,16 +21,16 @@ import org.bouncycastle.util.Arrays;
 class PKCS5S1ParametersGenerator<T extends Parameters>
     extends PBEParametersGenerator<T>
 {
-    private Digest  digest;
+    private Digest digest;
 
     /**
-     * Construct a PKCS 5 Scheme 1 Parameters generator. 
+     * Construct a PKCS 5 Scheme 1 Parameters generator.
      *
      * @param digest the digest to be used as the source of derived keys.
      */
     public PKCS5S1ParametersGenerator(
         T parameters,
-        Digest  digest)
+        Digest digest)
     {
         super(parameters);
         this.digest = digest;
@@ -62,7 +62,7 @@ class PKCS5S1ParametersGenerator<T extends Parameters>
      *
      * @param keySize the size of the key we want (in bits)
      * @return a KeyParameter object.
-     * @exception IllegalArgumentException if the key length larger than the base hash size.
+     * @throws IllegalArgumentException if the key length larger than the base hash size.
      */
     public CipherParameters generateDerivedParameters(
         int keySize)
@@ -72,10 +72,10 @@ class PKCS5S1ParametersGenerator<T extends Parameters>
         if (keySize > digest.getDigestSize())
         {
             throw new IllegalArgumentException(
-                   "Can't generate a derived key " + keySize + " bytes long.");
+                "Can't generate a derived key " + keySize + " bytes long.");
         }
 
-        byte[]  dKey = generateDerivedKey();
+        byte[] dKey = generateDerivedKey();
 
         return new KeyParameterImpl(Arrays.copyOfRange(dKey, 0, keySize));
     }
@@ -86,13 +86,13 @@ class PKCS5S1ParametersGenerator<T extends Parameters>
      * with.
      *
      * @param keySize the size of the key we want (in bits)
-     * @param ivSize the size of the iv we want (in bits)
+     * @param ivSize  the size of the iv we want (in bits)
      * @return a ParametersWithIV object.
-     * @exception IllegalArgumentException if keySize + ivSize is larger than the base hash size.
+     * @throws IllegalArgumentException if keySize + ivSize is larger than the base hash size.
      */
     public CipherParameters generateDerivedParameters(
-        int     keySize,
-        int     ivSize)
+        int keySize,
+        int ivSize)
     {
         keySize = keySize / 8;
         ivSize = ivSize / 8;
@@ -100,10 +100,10 @@ class PKCS5S1ParametersGenerator<T extends Parameters>
         if ((keySize + ivSize) > digest.getDigestSize())
         {
             throw new IllegalArgumentException(
-                   "Can't generate a derived key " + (keySize + ivSize) + " bytes long.");
+                "Can't generate a derived key " + (keySize + ivSize) + " bytes long.");
         }
 
-        byte[]  dKey = generateDerivedKey();
+        byte[] dKey = generateDerivedKey();
 
         return new ParametersWithIV(new KeyParameterImpl(Arrays.copyOfRange(dKey, 0, keySize)), dKey, keySize, ivSize);
     }
@@ -114,7 +114,7 @@ class PKCS5S1ParametersGenerator<T extends Parameters>
      *
      * @param keySize the size of the key we want (in bits)
      * @return a KeyParameter object.
-     * @exception IllegalArgumentException if the key length larger than the base hash size.
+     * @throws IllegalArgumentException if the key length larger than the base hash size.
      */
     public CipherParameters generateDerivedMacParameters(
         int keySize)

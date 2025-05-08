@@ -3,13 +3,15 @@ package org.bouncycastle.crypto.internal.io;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.bouncycastle.crypto.CipherOutputStream;
 import org.bouncycastle.crypto.CryptoServicesRegistrar;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.StreamException;
 import org.bouncycastle.crypto.internal.BufferedBlockCipher;
 import org.bouncycastle.crypto.internal.StreamCipher;
-import org.bouncycastle.crypto.internal.modes.AEADBlockCipher;
 import org.bouncycastle.crypto.internal.modes.AEADCipher;
+import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.io.WrappedByteArrayOutputStream;
 
 /**
  * A CipherOutputStream is composed of an OutputStream and a cipher so that write() methods process
@@ -24,59 +26,23 @@ import org.bouncycastle.crypto.internal.modes.AEADCipher;
  * Note: this class does not close the underlying stream on a close.
  * </p>
  */
-public class CipherOutputStreamImpl
+public abstract class CipherOutputStreamImpl
     extends org.bouncycastle.crypto.CipherOutputStream
 {
-    private final String algorithmName;
-    private final boolean isApprovedMode;
+    protected final String algorithmName;
+    protected final boolean isApprovedMode;
 
-    private OutputStream out;
-    private BufferedBlockCipher bufferedBlockCipher;
-    private StreamCipher streamCipher;
-    private AEADCipher aeadBlockCipher;
+    protected OutputStream out;
 
-    private final byte[] oneByte = new byte[1];
-    private byte[] buf;
+    protected final byte[] oneByte = new byte[1];
 
-    private static final int INPUT_LEN = 4 * 1024;
+    private static final int INPUT_LEN = 32 * 1024;
 
-    /**
-     * Constructs a CipherOutputStream from an OutputStream and a
-     * BufferedBlockCipher;.
-     */
-    public CipherOutputStreamImpl(
-        OutputStream out,
-        BufferedBlockCipher cipher)
+    protected CipherOutputStreamImpl(String algorithmName, OutputStream out)
     {
+        this.algorithmName = algorithmName;
         this.isApprovedMode = CryptoServicesRegistrar.isInApprovedOnlyMode();
-        this.algorithmName = cipher.getUnderlyingCipher().getAlgorithmName();
         this.out = out;
-        this.bufferedBlockCipher = cipher;
-    }
-
-    /**
-     * Constructs a CipherOutputStream from an OutputStream and a
-     * BufferedBlockCipher;.
-     */
-    public CipherOutputStreamImpl(
-        OutputStream out,
-        StreamCipher cipher)
-    {
-        this.isApprovedMode = CryptoServicesRegistrar.isInApprovedOnlyMode();
-        this.algorithmName = cipher.getAlgorithmName();
-        this.out = out;
-        this.streamCipher = cipher;
-    }
-
-    /**
-     * Constructs a CipherOutputStream from an OutputStream and a AEADBlockCipher;.
-     */
-    public CipherOutputStreamImpl(OutputStream out, AEADCipher cipher)
-    {
-        this.isApprovedMode = CryptoServicesRegistrar.isInApprovedOnlyMode();
-        this.algorithmName = cipher.getAlgorithmName();
-        this.out = out;
-        this.aeadBlockCipher = cipher;
     }
 
     /**
@@ -95,6 +61,7 @@ public class CipherOutputStreamImpl
 
         write(oneByte, 0, 1);
     }
+
 
     /**
      * Writes <code>b.length</code> bytes from the specified byte array
@@ -117,114 +84,6 @@ public class CipherOutputStreamImpl
     }
 
     /**
-     * Writes <code>len</code> bytes from the specified byte array
-     * starting at offset <code>off</code> to this output stream.
-     *
-     * @param b   the data.
-     * @param off the start offset in the data.
-     * @param len the number of bytes to write.
-     * @throws java.io.IOException if an I/O error occurs.
-     */
-    public void write(
-        byte[] b,
-        int off,
-        int len)
-        throws IOException
-    {
-        Utils.approvedModeCheck(isApprovedMode, algorithmName);
-
-        if (bufferedBlockCipher != null)
-        {
-            while (len > 0)
-            {
-                ensureCapacity(INPUT_LEN, false);
-
-                int outLen = bufferedBlockCipher.processBytes(b, off, len < INPUT_LEN ? len : INPUT_LEN, buf, 0);
-
-                if (outLen != 0)
-                {
-                    out.write(buf, 0, outLen);
-                }
-
-                off += INPUT_LEN;
-                len -= INPUT_LEN;
-            }
-        }
-        else if (aeadBlockCipher != null)
-        {
-            while (len > 0)
-            {
-                ensureCapacity(INPUT_LEN, false);
-
-                int outLen = aeadBlockCipher.processBytes(b, off, len < INPUT_LEN ? len : INPUT_LEN, buf, 0);
-
-                if (outLen != 0)
-                {
-                    out.write(buf, 0, outLen);
-                }
-
-                off += INPUT_LEN;
-                len -= INPUT_LEN;
-            }
-        }
-        else
-        {
-            while (len > 0)
-            {
-                ensureCapacity(INPUT_LEN, false);
-
-                int outLen = streamCipher.processBytes(b, off, len < INPUT_LEN ? len : INPUT_LEN, buf, 0);
-
-                if (outLen != 0)
-                {
-                    out.write(buf, 0, outLen);
-                }
-
-                off += INPUT_LEN;
-                len -= INPUT_LEN;
-            }
-        }
-    }
-
-    /**
-     * Ensure the ciphertext buffer has space sufficient to accept an upcoming output.
-     *
-     * @param updateSize the size of the pending update.
-     * @param finalOutput <code>true</code> iff this the cipher is to be finalised.
-     */
-    private void ensureCapacity(int updateSize, boolean finalOutput)
-    {
-        int bufLen = updateSize;
-        if (finalOutput)
-        {
-            if (bufferedBlockCipher != null)
-            {
-                bufLen = bufferedBlockCipher.getOutputSize(updateSize);
-            }
-            else if (aeadBlockCipher != null)
-            {
-                bufLen = aeadBlockCipher.getOutputSize(updateSize);
-            }
-        }
-        else
-        {
-            if (bufferedBlockCipher != null)
-            {
-                bufLen = bufferedBlockCipher.getUpdateOutputSize(updateSize);
-            }
-            else if (aeadBlockCipher != null)
-            {
-                bufLen = aeadBlockCipher.getUpdateOutputSize(updateSize);
-            }
-        }
-
-        if ((buf == null) || (buf.length < bufLen))
-        {
-            buf = new byte[bufLen];
-        }
-    }
-
-    /**
      * Flushes this output stream by forcing any buffered output bytes
      * that have already been processed by the encapsulated cipher object
      * to be written out.
@@ -243,33 +102,337 @@ public class CipherOutputStreamImpl
         out.flush();
     }
 
-    /**
-     * Closes this output stream and releases any system resources
-     * associated with this stream.
-     * <p>
-     * This method invokes the <code>doFinal</code> method of the encapsulated
-     * cipher object, which causes any bytes buffered by the encapsulated
-     * cipher to be processed. The result is written out by calling the
-     * <code>flush</code> method of this output stream.
-     * <p>
-     * This method resets the encapsulated cipher object to its initial state
-     * and does not call <code>close</code> method of the underlying output
-     * stream.
-     *
-     * @throws java.io.IOException if an I/O error occurs.
-     * @throws InvalidCipherTextException if the data written to this stream was invalid cipher text
-     * (e.g. the cipher is an AEAD cipher and the ciphertext tag check fails).
-     */
-    public void close()
-        throws IOException
+    public static CipherOutputStream getInstance(OutputStream out, StreamCipher cipher)
     {
-        Utils.approvedModeCheck(isApprovedMode, algorithmName);
-
-        ensureCapacity(0, true);
-        IOException error = null;
-        try
+        if (out instanceof WrappedByteArrayOutputStream)
         {
-            if (bufferedBlockCipher != null)
+            return new DirectStreamCipherOutputStream((WrappedByteArrayOutputStream)out, cipher);
+        }
+
+        return new StreamCipherOutputStream(out, cipher);
+    }
+
+    private static class StreamCipherOutputStream
+        extends CipherOutputStreamImpl
+    {
+        private final StreamCipher streamCipher;
+        private final byte[] buf;
+
+        /**
+         * Constructs a CipherOutputStream from an OutputStream and a
+         * BufferedBlockCipher;.
+         */
+        public StreamCipherOutputStream(
+            OutputStream out,
+            StreamCipher cipher)
+        {
+            super(cipher.getAlgorithmName(), out);
+            this.streamCipher = cipher;
+
+            this.buf = new byte[INPUT_LEN];
+        }
+
+        /**
+         * Writes <code>len</code> bytes from the specified byte array
+         * starting at offset <code>off</code> to this output stream.
+         *
+         * @param b   the data.
+         * @param off the start offset in the data.
+         * @param len the number of bytes to write.
+         * @throws java.io.IOException if an I/O error occurs.
+         */
+        public void write(
+            byte[] b,
+            int off,
+            int len)
+            throws IOException
+        {
+            Utils.approvedModeCheck(isApprovedMode, algorithmName);
+
+            while (len > 0)
+            {
+                int outLen = streamCipher.processBytes(b, off, len < INPUT_LEN ? len : INPUT_LEN, buf, 0);
+
+                if (outLen != 0)
+                {
+                    out.write(buf, 0, outLen);
+                }
+
+                off += INPUT_LEN;
+                len -= INPUT_LEN;
+            }
+        }
+
+        /**
+         * Closes this output stream and releases any system resources
+         * associated with this stream.
+         * <p>
+         * This method invokes the <code>doFinal</code> method of the encapsulated
+         * cipher object, which causes any bytes buffered by the encapsulated
+         * cipher to be processed. The result is written out by calling the
+         * <code>flush</code> method of this output stream.
+         * <p>
+         * This method resets the encapsulated cipher object to its initial state
+         * and does not call <code>close</code> method of the underlying output
+         * stream.
+         *
+         * @throws java.io.IOException        if an I/O error occurs.
+         * @throws InvalidCipherTextException if the data written to this stream was invalid cipher text
+         *                                    (e.g. the cipher is an AEAD cipher and the ciphertext tag check fails).
+         */
+        public void close()
+            throws IOException
+        {
+            Utils.approvedModeCheck(isApprovedMode, algorithmName);
+
+            IOException error = null;
+            try
+            {
+                streamCipher.reset();
+            }
+            catch (IllegalStateException e)
+            {
+                error = new StreamException(e.getMessage(), e.getCause());
+            }
+            catch (Exception e)
+            {
+                error = new StreamIOException("Error closing stream: ", e);
+            }
+            finally
+            {
+                Arrays.clear(buf);
+            }
+
+            try
+            {
+                flush();
+            }
+            catch (IOException e)
+            {
+                // Invalid ciphertext takes precedence over close error
+                if (error == null)
+                {
+                    error = e;
+                }
+            }
+            if (error != null)
+            {
+                throw error;
+            }
+        }
+    }
+
+    private static class DirectStreamCipherOutputStream
+        extends CipherOutputStreamImpl
+    {
+        private StreamCipher streamCipher;
+        private final WrappedByteArrayOutputStream directOut;
+
+        /**
+         * Constructs a CipherOutputStream from an OutputStream and a
+         * BufferedBlockCipher;.
+         */
+        public DirectStreamCipherOutputStream(
+            WrappedByteArrayOutputStream out,
+            StreamCipher cipher)
+        {
+            super(cipher.getAlgorithmName(), out);
+            this.directOut = out;
+            this.streamCipher = cipher;
+        }
+
+        /**
+         * Writes <code>len</code> bytes from the specified byte array
+         * starting at offset <code>off</code> to this output stream.
+         *
+         * @param b   the data.
+         * @param off the start offset in the data.
+         * @param len the number of bytes to write.
+         * @throws java.io.IOException if an I/O error occurs.
+         */
+        public void write(
+            byte[] b,
+            int off,
+            int len)
+            throws IOException
+        {
+            Utils.approvedModeCheck(isApprovedMode, algorithmName);
+
+            int outLen = streamCipher.processBytes(b, off, len, directOut.getBuffer(), directOut.getOffset());
+            directOut.moveOffset(outLen);
+        }
+
+        /**
+         * Closes this output stream and releases any system resources
+         * associated with this stream.
+         * <p>
+         * This method invokes the <code>doFinal</code> method of the encapsulated
+         * cipher object, which causes any bytes buffered by the encapsulated
+         * cipher to be processed. The result is written out by calling the
+         * <code>flush</code> method of this output stream.
+         * <p>
+         * This method resets the encapsulated cipher object to its initial state
+         * and does not call <code>close</code> method of the underlying output
+         * stream.
+         *
+         * @throws java.io.IOException        if an I/O error occurs.
+         * @throws InvalidCipherTextException if the data written to this stream was invalid cipher text
+         *                                    (e.g. the cipher is an AEAD cipher and the ciphertext tag check fails).
+         */
+        public void close()
+            throws IOException
+        {
+            Utils.approvedModeCheck(isApprovedMode, algorithmName);
+
+            IOException error = null;
+            try
+            {
+                streamCipher.reset();
+            }
+            catch (IllegalStateException e)
+            {
+                error = new StreamException(e.getMessage(), e.getCause());
+            }
+            catch (Exception e)
+            {
+                error = new StreamIOException("Error closing stream: ", e);
+            }
+
+            try
+            {
+                flush();
+            }
+            catch (IOException e)
+            {
+                // Invalid ciphertext takes precedence over close error
+                if (error == null)
+                {
+                    error = e;
+                }
+            }
+            if (error != null)
+            {
+                throw error;
+            }
+        }
+    }
+
+    public static CipherOutputStream getInstance(OutputStream out, BufferedBlockCipher cipher)
+    {
+        if (out instanceof WrappedByteArrayOutputStream)
+        {
+            return new DirectBufferedCipherOutputStream((WrappedByteArrayOutputStream)out, cipher);
+        }
+
+        return new BufferedCipherOutputStream(out, cipher);
+    }
+
+    private static class BufferedCipherOutputStream
+        extends CipherOutputStreamImpl
+    {
+        private final BufferedBlockCipher bufferedBlockCipher;
+        private byte[] buf;
+
+        /**
+         * Constructs a CipherOutputStream from an OutputStream and a
+         * BufferedBlockCipher;.
+         */
+        public BufferedCipherOutputStream(
+            OutputStream out,
+            BufferedBlockCipher cipher)
+        {
+            super(cipher.getUnderlyingCipher().getAlgorithmName(), out);
+
+            this.bufferedBlockCipher = cipher;
+        }
+
+        /**
+         * Writes <code>len</code> bytes from the specified byte array
+         * starting at offset <code>off</code> to this output stream.
+         *
+         * @param b   the data.
+         * @param off the start offset in the data.
+         * @param len the number of bytes to write.
+         * @throws java.io.IOException if an I/O error occurs.
+         */
+        public void write(
+            byte[] b,
+            int off,
+            int len)
+            throws IOException
+        {
+            Utils.approvedModeCheck(isApprovedMode, algorithmName);
+
+            while (len > 0)
+            {
+                ensureCapacity(INPUT_LEN, false);
+
+                int outLen = bufferedBlockCipher.processBytes(b, off, len < INPUT_LEN ? len : INPUT_LEN, buf, 0);
+
+                if (outLen != 0)
+                {
+                    out.write(buf, 0, outLen);
+                }
+
+                off += INPUT_LEN;
+                len -= INPUT_LEN;
+            }
+        }
+
+        /**
+         * Ensure the ciphertext buffer has space sufficient to accept an upcoming output.
+         *
+         * @param updateSize  the size of the pending update.
+         * @param finalOutput <code>true</code> iff this the cipher is to be finalised.
+         */
+        private void ensureCapacity(int updateSize, boolean finalOutput)
+        {
+            int bufLen;
+            if (finalOutput)
+            {
+                bufLen = bufferedBlockCipher.getOutputSize(updateSize);
+            }
+            else
+            {
+                bufLen = bufferedBlockCipher.getUpdateOutputSize(updateSize);
+            }
+
+            if (buf == null)
+            {
+                buf = new byte[bufLen];
+            }
+            else if (buf.length < bufLen)
+            {
+                Arrays.clear(buf);
+                buf = new byte[bufLen];
+            }
+        }
+
+        /**
+         * Closes this output stream and releases any system resources
+         * associated with this stream.
+         * <p>
+         * This method invokes the <code>doFinal</code> method of the encapsulated
+         * cipher object, which causes any bytes buffered by the encapsulated
+         * cipher to be processed. The result is written out by calling the
+         * <code>flush</code> method of this output stream.
+         * <p>
+         * This method resets the encapsulated cipher object to its initial state
+         * and does not call <code>close</code> method of the underlying output
+         * stream.
+         *
+         * @throws java.io.IOException        if an I/O error occurs.
+         * @throws InvalidCipherTextException if the data written to this stream was invalid cipher text
+         *                                    (e.g. the cipher is an AEAD cipher and the ciphertext tag check fails).
+         */
+        public void close()
+            throws IOException
+        {
+            Utils.approvedModeCheck(isApprovedMode, algorithmName);
+
+            ensureCapacity(0, true);
+            IOException error = null;
+            try
             {
                 int outLen = bufferedBlockCipher.doFinal(buf, 0);
 
@@ -278,7 +441,259 @@ public class CipherOutputStreamImpl
                     out.write(buf, 0, outLen);
                 }
             }
-            else if (aeadBlockCipher != null)
+            catch (org.bouncycastle.crypto.internal.InvalidCipherTextException e)
+            {
+                error = new InvalidCipherTextException("Error finalising cipher data: " + e.getMessage(), e);
+            }
+            catch (IllegalStateException e)
+            {
+                error = new StreamException(e.getMessage(), e.getCause());
+            }
+            catch (Exception e)
+            {
+                error = new StreamIOException("Error closing stream: ", e);
+            }
+            finally
+            {
+                if (buf != null)
+                {
+                    Arrays.clear(buf);
+                }
+            }
+
+            try
+            {
+                flush();
+            }
+            catch (IOException e)
+            {
+                // Invalid ciphertext takes precedence over close error
+                if (error == null)
+                {
+                    error = e;
+                }
+            }
+            if (error != null)
+            {
+                throw error;
+            }
+        }
+    }
+
+    private static class DirectBufferedCipherOutputStream
+        extends CipherOutputStreamImpl
+    {
+        private final BufferedBlockCipher bufferedBlockCipher;
+        private final WrappedByteArrayOutputStream directOut;
+
+        /**
+         * Constructs a CipherOutputStream from an OutputStream and a
+         * BufferedBlockCipher;.
+         */
+        public DirectBufferedCipherOutputStream(
+            WrappedByteArrayOutputStream out,
+            BufferedBlockCipher cipher)
+        {
+            super(cipher.getUnderlyingCipher().getAlgorithmName(), out);
+
+            this.directOut = out;
+            this.bufferedBlockCipher = cipher;
+        }
+
+        /**
+         * Writes <code>len</code> bytes from the specified byte array
+         * starting at offset <code>off</code> to this output stream.
+         *
+         * @param b   the data.
+         * @param off the start offset in the data.
+         * @param len the number of bytes to write.
+         * @throws java.io.IOException if an I/O error occurs.
+         */
+        public void write(
+            byte[] b,
+            int off,
+            int len)
+            throws IOException
+        {
+            Utils.approvedModeCheck(isApprovedMode, algorithmName);
+
+            int outLen = bufferedBlockCipher.processBytes(b, off, len, directOut.getBuffer(), directOut.getOffset());
+            directOut.moveOffset(outLen);
+        }
+
+        /**
+         * Closes this output stream and releases any system resources
+         * associated with this stream.
+         * <p>
+         * This method invokes the <code>doFinal</code> method of the encapsulated
+         * cipher object, which causes any bytes buffered by the encapsulated
+         * cipher to be processed. The result is written out by calling the
+         * <code>flush</code> method of this output stream.
+         * <p>
+         * This method resets the encapsulated cipher object to its initial state
+         * and does not call <code>close</code> method of the underlying output
+         * stream.
+         *
+         * @throws java.io.IOException        if an I/O error occurs.
+         * @throws InvalidCipherTextException if the data written to this stream was invalid cipher text
+         *                                    (e.g. the cipher is an AEAD cipher and the ciphertext tag check fails).
+         */
+        public void close()
+            throws IOException
+        {
+            Utils.approvedModeCheck(isApprovedMode, algorithmName);
+
+            IOException error = null;
+            try
+            {
+                int outLen = bufferedBlockCipher.doFinal(directOut.getBuffer(), directOut.getOffset());
+                directOut.moveOffset(outLen);
+            }
+            catch (org.bouncycastle.crypto.internal.InvalidCipherTextException e)
+            {
+                error = new InvalidCipherTextException("Error finalising cipher data: " + e.getMessage(), e);
+            }
+            catch (IllegalStateException e)
+            {
+                error = new StreamException(e.getMessage(), e.getCause());
+            }
+            catch (Exception e)
+            {
+                error = new StreamIOException("Error closing stream: ", e);
+            }
+
+            try
+            {
+                flush();
+            }
+            catch (IOException e)
+            {
+                // Invalid ciphertext takes precedence over close error
+                if (error == null)
+                {
+                    error = e;
+                }
+            }
+            if (error != null)
+            {
+                throw error;
+            }
+        }
+    }
+
+    public static CipherOutputStream getInstance(OutputStream out, AEADCipher cipher)
+    {
+        if (out instanceof WrappedByteArrayOutputStream)
+        {
+            return new DirectAEADOutputStream((WrappedByteArrayOutputStream)out, cipher);
+        }
+
+        return new AEADOutputStream(out, cipher);
+    }
+
+    private static class AEADOutputStream
+        extends CipherOutputStreamImpl
+    {
+        private final AEADCipher aeadBlockCipher;
+        private byte[] buf;
+
+        /**
+         * Constructs a CipherOutputStream from an OutputStream and a AEADBlockCipher;.
+         */
+        public AEADOutputStream(OutputStream out, AEADCipher cipher)
+        {
+            super(cipher.getAlgorithmName(), out);
+
+            this.aeadBlockCipher = cipher;
+        }
+
+        /**
+         * Writes <code>len</code> bytes from the specified byte array
+         * starting at offset <code>off</code> to this output stream.
+         *
+         * @param b   the data.
+         * @param off the start offset in the data.
+         * @param len the number of bytes to write.
+         * @throws java.io.IOException if an I/O error occurs.
+         */
+        public void write(
+            byte[] b,
+            int off,
+            int len)
+            throws IOException
+        {
+            Utils.approvedModeCheck(isApprovedMode, algorithmName);
+
+            while (len > 0)
+            {
+                ensureCapacity(INPUT_LEN, false);
+
+                int outLen = aeadBlockCipher.processBytes(b, off, len < INPUT_LEN ? len : INPUT_LEN, buf, 0);
+
+                if (outLen != 0)
+                {
+                    out.write(buf, 0, outLen);
+                }
+
+                off += INPUT_LEN;
+                len -= INPUT_LEN;
+            }
+        }
+
+        /**
+         * Ensure the ciphertext buffer has space sufficient to accept an upcoming output.
+         *
+         * @param updateSize  the size of the pending update.
+         * @param finalOutput <code>true</code> iff this the cipher is to be finalised.
+         */
+        private void ensureCapacity(int updateSize, boolean finalOutput)
+        {
+            int bufLen;
+            if (finalOutput)
+            {
+                bufLen = aeadBlockCipher.getOutputSize(updateSize);
+            }
+            else
+            {
+                bufLen = aeadBlockCipher.getUpdateOutputSize(updateSize);
+            }
+
+            if (buf == null)
+            {
+                buf = new byte[bufLen];
+            }
+            else if (buf.length < bufLen)
+            {
+                Arrays.clear(buf);
+                buf = new byte[bufLen];
+            }
+        }
+
+        /**
+         * Closes this output stream and releases any system resources
+         * associated with this stream.
+         * <p>
+         * This method invokes the <code>doFinal</code> method of the encapsulated
+         * cipher object, which causes any bytes buffered by the encapsulated
+         * cipher to be processed. The result is written out by calling the
+         * <code>flush</code> method of this output stream.
+         * <p>
+         * This method resets the encapsulated cipher object to its initial state
+         * and does not call <code>close</code> method of the underlying output
+         * stream.
+         *
+         * @throws java.io.IOException        if an I/O error occurs.
+         * @throws InvalidCipherTextException if the data written to this stream was invalid cipher text
+         *                                    (e.g. the cipher is an AEAD cipher and the ciphertext tag check fails).
+         */
+        public void close()
+            throws IOException
+        {
+            Utils.approvedModeCheck(isApprovedMode, algorithmName);
+
+            ensureCapacity(0, true);
+            IOException error = null;
+            try
             {
                 int outLen = aeadBlockCipher.doFinal(buf, 0);
 
@@ -287,39 +702,140 @@ public class CipherOutputStreamImpl
                     out.write(buf, 0, outLen);
                 }
             }
-            else if (streamCipher != null)
+            catch (org.bouncycastle.crypto.internal.InvalidCipherTextException e)
             {
-                streamCipher.reset();
+                error = new InvalidCipherTextException("Error finalising cipher data: " + e.getMessage(), e);
+            }
+            catch (IllegalStateException e)
+            {
+                error = new StreamException(e.getMessage(), e.getCause());
+            }
+            catch (Exception e)
+            {
+                error = new StreamIOException("Error closing stream: ", e);
+            }
+            finally
+            {
+                if (buf != null)
+                {
+                    Arrays.clear(buf);
+                }
+            }
+
+            try
+            {
+                flush();
+            }
+            catch (IOException e)
+            {
+                // Invalid ciphertext takes precedence over close error
+                if (error == null)
+                {
+                    error = e;
+                }
+            }
+            if (error != null)
+            {
+                throw error;
             }
         }
-        catch (org.bouncycastle.crypto.internal.InvalidCipherTextException e)
+    }
+
+    private static class DirectAEADOutputStream
+        extends CipherOutputStreamImpl
+    {
+        private final AEADCipher aeadBlockCipher;
+        private final WrappedByteArrayOutputStream directOut;
+
+        /**
+         * Constructs a CipherOutputStream from an OutputStream and a AEADBlockCipher;.
+         */
+        public DirectAEADOutputStream(WrappedByteArrayOutputStream out, AEADCipher cipher)
         {
-            error = new InvalidCipherTextException("Error finalising cipher data: " + e.getMessage(), e);
-        }
-        catch (IllegalStateException e)
-        {
-            error = new StreamException(e.getMessage(), e.getCause());
-        }
-        catch (Exception e)
-        {
-            error = new StreamIOException("Error closing stream: ", e);
+            super(cipher.getAlgorithmName(), out);
+
+            this.directOut = out;
+            this.aeadBlockCipher = cipher;
         }
 
-        try
+        /**
+         * Writes <code>len</code> bytes from the specified byte array
+         * starting at offset <code>off</code> to this output stream.
+         *
+         * @param b   the data.
+         * @param off the start offset in the data.
+         * @param len the number of bytes to write.
+         * @throws java.io.IOException if an I/O error occurs.
+         */
+        public void write(
+            byte[] b,
+            int off,
+            int len)
+            throws IOException
         {
-            flush();
+            Utils.approvedModeCheck(isApprovedMode, algorithmName);
+
+            int outLen = aeadBlockCipher.processBytes(b, off, len, directOut.getBuffer(), directOut.getOffset());
+            directOut.moveOffset(outLen);
         }
-        catch (IOException e)
+
+        /**
+         * Closes this output stream and releases any system resources
+         * associated with this stream.
+         * <p>
+         * This method invokes the <code>doFinal</code> method of the encapsulated
+         * cipher object, which causes any bytes buffered by the encapsulated
+         * cipher to be processed. The result is written out by calling the
+         * <code>flush</code> method of this output stream.
+         * <p>
+         * This method resets the encapsulated cipher object to its initial state
+         * and does not call <code>close</code> method of the underlying output
+         * stream.
+         *
+         * @throws java.io.IOException        if an I/O error occurs.
+         * @throws InvalidCipherTextException if the data written to this stream was invalid cipher text
+         *                                    (e.g. the cipher is an AEAD cipher and the ciphertext tag check fails).
+         */
+        public void close()
+            throws IOException
         {
-            // Invalid ciphertext takes precedence over close error
-            if (error == null)
+            Utils.approvedModeCheck(isApprovedMode, algorithmName);
+
+            IOException error = null;
+            try
             {
-                error = e;
+                int outLen = aeadBlockCipher.doFinal(directOut.getBuffer(), directOut.getOffset());
+                directOut.moveOffset(outLen);
             }
-        }
-        if (error != null)
-        {
-            throw error;
+            catch (org.bouncycastle.crypto.internal.InvalidCipherTextException e)
+            {
+                error = new InvalidCipherTextException("Error finalising cipher data: " + e.getMessage(), e);
+            }
+            catch (IllegalStateException e)
+            {
+                error = new StreamException(e.getMessage(), e.getCause());
+            }
+            catch (Exception e)
+            {
+                error = new StreamIOException("Error closing stream: ", e);
+            }
+
+            try
+            {
+                flush();
+            }
+            catch (IOException e)
+            {
+                // Invalid ciphertext takes precedence over close error
+                if (error == null)
+                {
+                    error = e;
+                }
+            }
+            if (error != null)
+            {
+                throw error;
+            }
         }
     }
 }

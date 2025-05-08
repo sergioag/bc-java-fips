@@ -3,6 +3,7 @@ package org.bouncycastle.jcajce.provider;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.security.PrivateKey;
 
 import javax.security.auth.Destroyable;
 
@@ -94,14 +95,12 @@ class ProvXDHPrivateKey
             return true;
         }
 
-        if (!(o instanceof ProvXDHPrivateKey))
+        if (o instanceof ProvXDHPrivateKey)
         {
-            return false;
+            return this.baseKey.equals(((ProvXDHPrivateKey)o).baseKey);
         }
 
-        ProvXDHPrivateKey other = (ProvXDHPrivateKey)o;
-
-        return Arrays.areEqual(other.getEncoded(), this.getEncoded());
+        return false;
     }
 
     public int hashCode()

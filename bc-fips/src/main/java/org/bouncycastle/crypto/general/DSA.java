@@ -108,11 +108,11 @@ public final class DSA
         private final DSADomainParameters domainParameters;
 
         /**
-          * Key Generation parameters for a specific algorithm set.
-          *
-          * @param parameters parameter set representing the algorithm involved.
-          * @param domainParameters the DSA domain parameters.
-          */
+         * Key Generation parameters for a specific algorithm set.
+         *
+         * @param parameters       parameter set representing the algorithm involved.
+         * @param domainParameters the DSA domain parameters.
+         */
         public KeyGenParameters(Parameters parameters, DSADomainParameters domainParameters)
         {
             super(parameters.getAlgorithm());

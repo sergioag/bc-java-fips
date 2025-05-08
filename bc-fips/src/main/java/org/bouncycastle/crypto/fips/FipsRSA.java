@@ -59,7 +59,7 @@ public final class FipsRSA
 
     public static final FipsAlgorithm ALGORITHM = new FipsAlgorithm("RSA");
 
-    static final FipsEngineProvider<AsymmetricBlockCipher> ENGINE_PROVIDER;
+    static final EngineProvider ENGINE_PROVIDER;
 
     private FipsRSA()
     {
@@ -684,16 +684,16 @@ public final class FipsRSA
                 }
                 else
                 {
-                    signer = new RsaDigestSigner(ENGINE_PROVIDER.createEngine(), FipsSHS.createDigest(parameters.getDigestAlgorithm()));
+                    signer = new RsaDigestSigner(ENGINE_PROVIDER.createEngine(false), FipsSHS.createDigest(parameters.getDigestAlgorithm()));
                 }
             }
             else if (parameters instanceof PSSSignatureParameters)
             {
-                signer = getPSSSigner((PSSSignatureParameters)parameters);
+                signer = getPSSSigner(false, (PSSSignatureParameters)parameters);
             }
             else
             {
-                signer = new X931Signer(new RsaBlindedEngine(), FipsSHS.createDigest(parameters.getDigestAlgorithm()));
+                signer = new X931Signer(new RsaBlindedEngine(RsaCoreEngine.getEngine()), FipsSHS.createDigest(parameters.getDigestAlgorithm()));
             }
 
             AsymmetricRSAPublicKey k = (AsymmetricRSAPublicKey)key;
@@ -717,7 +717,7 @@ public final class FipsRSA
                 }
             }
 
-            RsaKeyParameters publicKeyParameters = new RsaKeyParameters(false, k.getModulus(), k.getPublicExponent());
+            final RsaKeyParameters publicKeyParameters = new RsaKeyParameters(false, k.getModulus(), k.getPublicExponent());
 
             signer.init(false, publicKeyParameters);
 
@@ -739,6 +739,11 @@ public final class FipsRSA
                 public boolean isVerified(byte[] signature)
                     throws InvalidSignatureException
                 {
+                    if (signature.length > (publicKeyParameters.getModulus().bitLength() + 7) / 8)
+                    {
+                        throw new InvalidSignatureException("signature value out of range");
+                    }
+
                     try
                     {
                         return signer.verifySignature(signature);
@@ -752,6 +757,7 @@ public final class FipsRSA
         }
 
         public FipsOutputValidator<T> createValidator(AsymmetricPublicKey key, final T parameters, final byte[] signature)
+            throws InvalidSignatureException
         {
             final Signer signer;
             if (parameters instanceof PKCS1v15SignatureParameters)
@@ -762,16 +768,16 @@ public final class FipsRSA
                 }
                 else
                 {
-                    signer = new RsaDigestSigner(ENGINE_PROVIDER.createEngine(), FipsSHS.createDigest(parameters.getDigestAlgorithm()));
+                    signer = new RsaDigestSigner(ENGINE_PROVIDER.createEngine(false), FipsSHS.createDigest(parameters.getDigestAlgorithm()));
                 }
             }
             else if (parameters instanceof PSSSignatureParameters)
             {
-                signer = getPSSSigner((PSSSignatureParameters)parameters);
+                signer = getPSSSigner(false, (PSSSignatureParameters)parameters);
             }
             else
             {
-                signer = new X931Signer(new RsaBlindedEngine(), FipsSHS.createDigest(parameters.getDigestAlgorithm()));
+                signer = new X931Signer(ENGINE_PROVIDER.createEngine(false), FipsSHS.createDigest(parameters.getDigestAlgorithm()));
             }
 
             AsymmetricRSAPublicKey k = (AsymmetricRSAPublicKey)key;
@@ -798,6 +804,11 @@ public final class FipsRSA
             RsaKeyParameters publicKeyParameters = new RsaKeyParameters(false, k.getModulus(), k.getPublicExponent());
 
             signer.init(false, publicKeyParameters);
+
+            if (signature.length > (publicKeyParameters.getModulus().bitLength() + 7) / 8)
+            {
+                throw new InvalidSignatureException("signature value out of range");
+            }
 
             return new FipsOutputValidator<T>()
             {
@@ -850,22 +861,24 @@ public final class FipsRSA
                     }
                     else
                     {
-                        Utils.checkDigestAlgorithm(LOG, parameters.getDigestAlgorithm(), "org.bouncycastle.rsa.allow_sha1_sig");
+                        Utils.checkDigestAlgorithm(LOG, parameters.getDigestAlgorithm(),"org.bouncycastle.rsa.allow_sha1_sig");
 
-                        signer = new RsaDigestSigner(ENGINE_PROVIDER.createEngine(), FipsSHS.createDigest(parameters.getDigestAlgorithm()));
+                        signer = new RsaDigestSigner(ENGINE_PROVIDER.createEngine(true), FipsSHS.createDigest(parameters.getDigestAlgorithm()));
                     }
                 }
                 else if (parameters instanceof PSSSignatureParameters)
                 {
                     Utils.checkDigestAlgorithm(LOG, parameters.getDigestAlgorithm(),"org.bouncycastle.rsa.allow_sha1_sig");
 
-                    signer = getPSSSigner((PSSSignatureParameters)parameters);
+                    signer = getPSSSigner(true, (PSSSignatureParameters)parameters);
                 }
                 else
                 {
-                    Utils.checkDigestAlgorithm(LOG, parameters.getDigestAlgorithm(), "org.bouncycastle.rsa.allow_sha1_sig");
-
-                    signer = new X931Signer(ENGINE_PROVIDER.createEngine(), FipsSHS.createDigest(parameters.getDigestAlgorithm()));
+                    if (CryptoServicesRegistrar.isInApprovedOnlyMode())
+                    {
+                        throw new FipsUnapprovedOperationError("X9.31 is not approved for signature generation");
+                    }
+                    signer = new X931Signer(ENGINE_PROVIDER.createEngine(true), FipsSHS.createDigest(parameters.getDigestAlgorithm()));
                 }
             }
 
@@ -923,17 +936,17 @@ public final class FipsRSA
         }
     }
 
-    private static Signer getPSSSigner(PSSSignatureParameters pssParams)
+    private static Signer getPSSSigner(boolean forSigning, PSSSignatureParameters pssParams)
     {
         byte[] fixedSalt = pssParams.getSalt();
 
         if (fixedSalt != null)
         {
-            return new PSSSigner(new RsaBlindedEngine(), FipsSHS.createDigest(pssParams.getDigestAlgorithm()), FipsSHS.createDigest(pssParams.getMGFDigest()), fixedSalt, pssParams.getTrailer());
+            return new PSSSigner(ENGINE_PROVIDER.createEngine(forSigning), FipsSHS.createDigest(pssParams.getDigestAlgorithm()), FipsSHS.createDigest(pssParams.getMGFDigest()), fixedSalt, pssParams.getTrailer());
         }
         else
         {
-            return new PSSSigner(new RsaBlindedEngine(), FipsSHS.createDigest(pssParams.getDigestAlgorithm()), FipsSHS.createDigest(pssParams.getMGFDigest()), pssParams.getSaltLength(), pssParams.getTrailer());
+            return new PSSSigner(ENGINE_PROVIDER.createEngine(forSigning), FipsSHS.createDigest(pssParams.getDigestAlgorithm()), FipsSHS.createDigest(pssParams.getMGFDigest()), pssParams.getSaltLength(), pssParams.getTrailer());
         }
     }
 
@@ -972,7 +985,6 @@ public final class FipsRSA
                     throw new IllegalKeyException("Attempt to encrypt/decrypt with RSA modulus already used for sign/verify.");
                 }
                 // FSM_TRANS:5.RSA.4.1,"RSA KEY USAGE CHECK", "CONDITIONAL TEST", "RSA key usage check successful"
-
                 this.key = key;
                 this.parameters = parameters;
 
@@ -980,6 +992,7 @@ public final class FipsRSA
                 {
                     if (CryptoServicesRegistrar.isInApprovedOnlyMode())
                     {
+                        validateKeySize(key, parameters.getAlgorithm());
                         if (parameters.getAlgorithm().equals(ALGORITHM_PKCS1v1_5))
                         {
                             if (!Properties.isOverrideSet("org.bouncycastle.rsa.allow_pkcs15_enc"))
@@ -1210,6 +1223,7 @@ public final class FipsRSA
             if (CryptoServicesRegistrar.isInApprovedOnlyMode())
             {
                 Utils.validateRandom(random, parameters.getAlgorithm(), "Attempt to create generator with unapproved RNG");
+                validateKeySize((AsymmetricRSAPublicKey)key, parameters.getAlgorithm());
             }
 
             return new GeneratorImpl((AsymmetricRSAPublicKey)key, parameters, random);
@@ -1223,7 +1237,6 @@ public final class FipsRSA
             }
 
             final AsymmetricRSAPrivateKey privKey = (AsymmetricRSAPrivateKey)key;
-
             return new ExtractorImpl(privKey, parameters, random);
         }
     }
@@ -1411,7 +1424,7 @@ public final class FipsRSA
 
     private static AsymmetricBlockCipher createCipher(boolean forEncryption, AsymmetricRSAKey key, WrapParameters parameters, SecureRandom random)
     {
-        AsymmetricBlockCipher engine = ENGINE_PROVIDER.createEngine();
+        AsymmetricBlockCipher engine = ENGINE_PROVIDER.createEngine(!forEncryption);
 
         CipherParameters params;
 
@@ -1496,7 +1509,7 @@ public final class FipsRSA
             {
                 final byte[] data = Hex.decode("576a1f885e3420128c8a656097ba7d8bb4c6f1b1853348cf2ba976971dbdbefc");
 
-                RsaBlindedEngine rsaEngine = new RsaBlindedEngine();
+                RsaBlindedEngine rsaEngine = new RsaBlindedEngine(RsaCoreEngine.getEngine());
 
                 rsaEngine.init(true, kp.getPublic());
 
@@ -1760,7 +1773,7 @@ public final class FipsRSA
 
         public AsymmetricBlockCipher createEngine()
         {
-            return SelfTestExecutor.validate(ALGORITHM, new RsaBlindedEngine(), new VariantKatTest<RsaBlindedEngine>()
+            return SelfTestExecutor.validate(ALGORITHM, new RsaBlindedEngine(RsaCoreEngine.getEngine()), new VariantKatTest<RsaBlindedEngine>()
             {
                 @Override
                 void evaluate(RsaBlindedEngine rsaEngine)
@@ -1800,6 +1813,61 @@ public final class FipsRSA
                     if (!Arrays.areEqual(edgeInput, data))
                     {
                         fail("Self test failed: input does not match decrypted output");
+                    }
+                }
+            });
+        }
+
+        public AsymmetricBlockCipher createEngine(boolean forDecryption)
+        {
+            return SelfTestExecutor.validate(ALGORITHM, new RsaBlindedEngine(RsaCoreEngine.getEngine()), new VariantKatTest<RsaBlindedEngine>()
+            {
+                @Override
+                void evaluate(RsaBlindedEngine rsaEngine)
+                    throws Exception
+                {
+                    RsaKeyParameters privParameters = new RsaPrivateCrtKeyParameters(mod, pubExp, privExp, p, q, pExp, qExp, crtCoef);
+
+                    if (forDecryption)
+                    {
+                        byte[] data = edgeOutput;
+
+                        rsaEngine.init(false, new ParametersWithRandom(privParameters, Utils.testRandom));
+
+                        try
+                        {
+                            data = rsaEngine.processBlock(data, 0, data.length);
+                        }
+                        catch (Exception e)
+                        {
+                            fail("Self test failed: exception " + e.toString());
+                        }
+
+                        if (!Arrays.areEqual(edgeInput, data))
+                        {
+                            fail("Self test failed: input does not match decrypted output");
+                        }
+                    }
+                    else
+                    {
+                        RsaKeyParameters pubParameters = new RsaKeyParameters(false, mod, pubExp);
+                        byte[] data = edgeInput;
+
+                        rsaEngine.init(true, new ParametersWithRandom(pubParameters, Utils.testRandom));
+
+                        try
+                        {
+                            data = rsaEngine.processBlock(data, 0, data.length);
+                        }
+                        catch (Exception e)
+                        {
+                            fail("Self test failed: exception " + e.toString());
+                        }
+
+                        if (!Arrays.areEqual(edgeOutput, data))
+                        {
+                            fail("Self test failed: input does not match decrypted output");
+                        }
                     }
                 }
             });
@@ -1859,6 +1927,15 @@ public final class FipsRSA
         public void reset()
         {
             bOut = new ByteArrayOutputStream();
+        }
+    }
+
+    private static void validateKeySize(AsymmetricRSAKey key, FipsAlgorithm algorithm)
+    {
+        int bitLength = key.getModulus().bitLength();
+        if (bitLength < 2048)
+        {
+            throw new FipsUnapprovedOperationError("Attempt to use RSA key size outside of accepted range - requested keySize " + bitLength + " bits", algorithm);
         }
     }
 }

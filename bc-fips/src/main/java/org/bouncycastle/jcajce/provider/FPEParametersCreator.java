@@ -24,7 +24,7 @@ class FPEParametersCreator<T extends ParametersWithIV>
     {
         if (spec instanceof FPEParameterSpec)
         {
-            return baseParameters.withRadix(((FPEParameterSpec)spec).getRadix()).withTweak(((FPEParameterSpec)spec).getTweak())
+            return baseParameters.withRadixConverter(((FPEParameterSpec)spec).getRadixConverter()).withTweak(((FPEParameterSpec)spec).getTweak())
                                     .withUsingInverseFunction(((FPEParameterSpec)spec).isUsingInverseFunction());
         }
 

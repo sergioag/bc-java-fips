@@ -50,7 +50,14 @@ class DSAOutputSigner<T extends Parameters>
     {
         if (!ready)
         {
-            throw new OperatorNotReadyException("Signer requires a SecureRandom to be attached before use");
+            if (parameter.getAlgorithm().equals(FipsEC.DDSA.getAlgorithm()))
+            {
+                initializer.initialize(dsa, null);
+            }
+            else
+            {
+                throw new OperatorNotReadyException("Signer requires a SecureRandom to be attached before use");
+            }
         }
 
         return new DigestOutputStream(digest);

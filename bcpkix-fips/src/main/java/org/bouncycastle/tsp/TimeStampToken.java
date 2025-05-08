@@ -13,11 +13,9 @@ import org.bouncycastle.asn1.ess.ESSCertID;
 import org.bouncycastle.asn1.ess.ESSCertIDv2;
 import org.bouncycastle.asn1.ess.SigningCertificate;
 import org.bouncycastle.asn1.ess.SigningCertificateV2;
-import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.tsp.TSTInfo;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.Certificate;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.asn1.x509.IssuerSerial;
@@ -67,13 +65,6 @@ public class TimeStampToken
         }
     }
 
-    private static ESSCertIDv2 from(ESSCertID essCertID)
-    {
-        AlgorithmIdentifier hashAlgorithm = new AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1);
-
-        return new ESSCertIDv2(hashAlgorithm, essCertID.getCertHash(), essCertID.getIssuerSerial());
-    }
-
     public TimeStampToken(CMSSignedData signedData)
         throws TSPException, IOException
     {
@@ -110,7 +101,7 @@ public class TimeStampToken
             {
                 SigningCertificate signCert = SigningCertificate.getInstance(attr.getAttrValues().getObjectAt(0));
 
-                this.certID = from(signCert.getCerts()[0]);
+                this.certID = ESSCertIDv2.from(ESSCertID.getInstance(signCert.getCerts()[0]));
             }
             else
             {

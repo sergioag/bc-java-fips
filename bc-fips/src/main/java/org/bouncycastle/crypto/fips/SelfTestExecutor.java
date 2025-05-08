@@ -50,7 +50,7 @@ class SelfTestExecutor
         {
             if (!algorithm.equals(test.getAlgorithm()))
             {
-                 throw new TestFailedException("Inconsistent algorithm tag for " + algorithm);
+                throw new TestFailedException("Inconsistent algorithm tag for " + algorithm);
             }
 
             test.evaluate();

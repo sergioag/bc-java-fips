@@ -31,4 +31,6 @@ public interface BufferedBlockCipher
                     throws DataLengthException, IllegalStateException, InvalidCipherTextException;
 
     void reset();
+
+
 }

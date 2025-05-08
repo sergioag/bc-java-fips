@@ -26,8 +26,8 @@ public class BouncyCastleJsseProvider
 
     private static final String JSSE_CONFIG_PROPERTY = "org.bouncycastle.jsse.config";
 
-    private static final double PROVIDER_VERSION = 2.0020;
-    private static final String PROVIDER_INFO = "Bouncy Castle JSSE Provider Version 2.0.20";
+    private static final double PROVIDER_VERSION = 2.0120;
+    private static final String PROVIDER_INFO = "Bouncy Castle JSSE Provider Version 2.1.20";
 
     private final Map<String, BcJsseService> serviceMap = new ConcurrentHashMap<String, BcJsseService>();
     private final Map<String, EngineCreator> creatorMap = new HashMap<String, EngineCreator>();

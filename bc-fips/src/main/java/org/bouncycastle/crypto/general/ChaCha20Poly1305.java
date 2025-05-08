@@ -18,15 +18,15 @@ class ChaCha20Poly1305
 {
     private static final class State
     {
-        static final int UNINITIALIZED  = 0;
-        static final int ENC_INIT       = 1;
-        static final int ENC_AAD        = 2;
-        static final int ENC_DATA       = 3;
-        static final int ENC_FINAL      = 4;
-        static final int DEC_INIT       = 5;
-        static final int DEC_AAD        = 6;
-        static final int DEC_DATA       = 7;
-        static final int DEC_FINAL      = 8;
+        static final int UNINITIALIZED = 0;
+        static final int ENC_INIT = 1;
+        static final int ENC_AAD = 2;
+        static final int ENC_DATA = 3;
+        static final int ENC_FINAL = 4;
+        static final int DEC_INIT = 5;
+        static final int DEC_AAD = 6;
+        static final int DEC_DATA = 7;
+        static final int DEC_FINAL = 8;
     }
 
     private static final int BUF_SIZE = 64;
@@ -78,7 +78,8 @@ class ChaCha20Poly1305
         return "ChaCha20Poly1305";
     }
 
-    public void init(boolean forEncryption, CipherParameters params) throws IllegalArgumentException
+    public void init(boolean forEncryption, CipherParameters params)
+        throws IllegalArgumentException
     {
         KeyParameter initKeyParam;
         byte[] initNonce;
@@ -237,7 +238,8 @@ class ChaCha20Poly1305
         }
     }
 
-    public int processByte(byte in, byte[] out, int outOff) throws DataLengthException
+    public int processByte(byte in, byte[] out, int outOff)
+        throws DataLengthException
     {
         checkData();
 
@@ -275,7 +277,8 @@ class ChaCha20Poly1305
         }
     }
 
-    public int processBytes(byte[] in, int inOff, int len, byte[] out, int outOff) throws DataLengthException
+    public int processBytes(byte[] in, int inOff, int len, byte[] out, int outOff)
+        throws DataLengthException
     {
         if (null == in)
         {
@@ -284,7 +287,7 @@ class ChaCha20Poly1305
         /*
          * The BC provider can pass null when it expects no output (e.g. based on a
          * getUpdateOutputSize call).
-         * 
+         *
          * See https://github.com/bcgit/bc-java/issues/674
          */
         if (null == out)
@@ -372,7 +375,8 @@ class ChaCha20Poly1305
         return resultLen;
     }
 
-    public int doFinal(byte[] out, int outOff) throws IllegalStateException, InvalidCipherTextException
+    public int doFinal(byte[] out, int outOff)
+        throws IllegalStateException, InvalidCipherTextException
     {
         if (null == out)
         {

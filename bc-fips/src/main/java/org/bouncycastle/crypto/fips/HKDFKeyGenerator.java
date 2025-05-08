@@ -2,7 +2,6 @@ package org.bouncycastle.crypto.fips;
 
 
 import org.bouncycastle.crypto.internal.Digest;
-import org.bouncycastle.crypto.internal.Mac;
 import org.bouncycastle.crypto.internal.macs.HMac;
 import org.bouncycastle.crypto.internal.params.HKDFKeyParameters;
 import org.bouncycastle.crypto.internal.params.KeyParameter;

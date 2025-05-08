@@ -19,13 +19,13 @@ import org.bouncycastle.crypto.internal.params.DhPublicKeyParameters;
 class DhBasicAgreement
     implements BasicAgreement
 {
-    private DhPrivateKeyParameters  key;
-    private DhParameters            dhParams;
+    private DhPrivateKeyParameters key;
+    private DhParameters dhParams;
 
     public void init(
-        CipherParameters    param)
+        CipherParameters param)
     {
-        DhPrivateKeyParameters  kParam = (DhPrivateKeyParameters)param;
+        DhPrivateKeyParameters kParam = (DhPrivateKeyParameters)param;
 
         this.key = kParam;
         this.dhParams = key.getParameters();
@@ -38,12 +38,12 @@ class DhBasicAgreement
 
     /**
      * given a short term public key from a given party calculate the next
-     * message in the agreement sequence. 
+     * message in the agreement sequence.
      */
     public BigInteger calculateAgreement(
-        CipherParameters   pubKey)
+        CipherParameters pubKey)
     {
-        DhPublicKeyParameters   pub = (DhPublicKeyParameters)pubKey;
+        DhPublicKeyParameters pub = (DhPublicKeyParameters)pubKey;
         DhParameters pubParams = pub.getParameters();
 
         if (!pubParams.getG().equals(dhParams.getG()) || !pubParams.getP().equals(dhParams.getP()))

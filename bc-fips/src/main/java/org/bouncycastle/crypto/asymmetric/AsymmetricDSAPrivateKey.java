@@ -77,9 +77,11 @@ public final class AsymmetricDSAPrivateKey
      */
     public final DSADomainParameters getDomainParameters()
     {
+        DSADomainParameters domainParameters = super.getDomainParameters();
+
         KeyUtils.checkDestroyed(this);
 
-        return super.getDomainParameters();
+        return domainParameters;
     }
 
     public final byte[] getEncoded()
@@ -89,7 +91,7 @@ public final class AsymmetricDSAPrivateKey
         return KeyUtils.getEncodedPrivateKeyInfo(new AlgorithmIdentifier(X9ObjectIdentifiers.id_dsa, new DSAParameter(dsaDomainParameters.getP(), dsaDomainParameters.getQ(), dsaDomainParameters.getG())), new ASN1Integer(getX()));
     }
 
-    public BigInteger getX()
+    public final BigInteger getX()
     {
         checkApprovedOnlyModeStatus();
 
@@ -136,17 +138,6 @@ public final class AsymmetricDSAPrivateKey
         return result;
     }
 
-    /*
-    @Override
-    protected void finalize()
-        throws Throwable
-    {
-        //destroy();
-
-        super.finalize();
-    }
-     */
-
     @Override
     public boolean equals(Object o)
     {
@@ -164,8 +155,11 @@ public final class AsymmetricDSAPrivateKey
 
         other.checkApprovedOnlyModeStatus();
 
-        return this.hashCode == other.hashCode
-            && KeyUtils.isFieldEqual(this.x, other.x)
-            && KeyUtils.isFieldEqual(this.domainParameters, other.domainParameters);
+        if (this.isDestroyed() || other.isDestroyed())
+        {
+            return false;
+        }
+
+        return x.equals(other.x) && this.getDomainParameters().equals(other.getDomainParameters());
     }
 }

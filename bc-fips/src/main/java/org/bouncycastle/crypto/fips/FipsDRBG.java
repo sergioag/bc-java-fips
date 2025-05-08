@@ -1,5 +1,6 @@
 package org.bouncycastle.crypto.fips;
 
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -138,6 +139,32 @@ public final class FipsDRBG
         // FSM_TRANS:5.DRBG.0.3, "DRBG KAT", "SOFT ERROR", "DRBG KAT self-test failed"
     }
 
+    public static EntropySourceProvider getDefaultEntropySourceProvider()
+    {
+        if (NativeLoader.hasNativeService(FipsNativeServices.DRBG) || NativeLoader.hasNativeService(FipsNativeServices.NRBG))
+        {
+            return new EntropySourceProvider()
+            {
+                @Override
+                public EntropySource get(int bitsRequired)
+                {
+                    return new NativeEntropySource(bitsRequired);
+                }
+            };
+        }
+        else
+        {
+            try
+            {
+                return new BasicEntropySourceProvider(SecureRandom.getInstanceStrong(), true);
+            }
+            catch (NoSuchAlgorithmException e)
+            {
+                throw new FipsOperationError("no system SecureRandom: " + e.getMessage(), e);
+            }
+        }
+    }
+
     public static class Base
         extends FipsParameters
     {
@@ -147,19 +174,17 @@ public final class FipsDRBG
         }
 
         /**
-         * Return a builder using an EntropySourceProvider based on the default SecureRandom with
-         * predictionResistant set to false.
+         * Return a builder using an EntropySourceProvider based on SecureRandom.getInstanceStrong().
          * <p>
-         * Any SecureRandom created from a builder constructed like this will make use of input passed to SecureRandom.setSeed() if
-         * the default SecureRandom does for its generateSeed() call.
+         * Any SecureRandom created from a builder constructed like this will ignore SecureRandom.setSeed() as
+         * the underlying seed generator will.
          * </p>
+         *
          * @return a new Builder instance.
          */
         public Builder fromDefaultEntropy()
         {
-            SecureRandom entropySource = new SecureRandom();
-
-            return new Builder(getAlgorithm(), entropySource, new BasicEntropySourceProvider(entropySource, false));
+            return new Builder(getAlgorithm(), null, getDefaultEntropySourceProvider());
         }
 
         /**
@@ -170,7 +195,7 @@ public final class FipsDRBG
          * the passed in SecureRandom does for its generateSeed() call.
          * </p>
          *
-         * @param entropySource a source of entropy.
+         * @param entropySource       a source of entropy.
          * @param predictionResistant true if this entropySource is prediction resistant, false otherwise.
          * @return a new Builder instance.
          */
@@ -277,7 +302,7 @@ public final class FipsDRBG
          */
         public FipsSecureRandom build(byte[] nonce, boolean predictionResistant, byte[] additionalInput)
         {
-           return build(algorithm, nonce, predictionResistant, additionalInput);
+            return build(algorithm, nonce, predictionResistant, additionalInput);
         }
 
         private FipsSecureRandom build(FipsAlgorithm algorithm, byte[] nonce, boolean predictionResistant, byte[] additionalInput)
@@ -448,8 +473,8 @@ public final class FipsDRBG
      * Return a basic DRBG created using the passed in Base and personalizationString with
      * a system defined nonce and configured with prediction resistance set to false.
      *
-     * @param usage an algorithm object signifying the use of the DRBG.
-     * @param drbgBase the base to construct the DRBG from.
+     * @param usage                 an algorithm object signifying the use of the DRBG.
+     * @param drbgBase              the base to construct the DRBG from.
      * @param personalizationString the personalizationString to use.
      * @return an appropriate FipsSecureRandom
      */
@@ -465,7 +490,7 @@ public final class FipsDRBG
         if (!FipsStatus.isReady())
         {
             return drbgBase.fromEntropySource(new KATEntropyProvider())
-                                    .build(null, false, personalizationString);
+                .build(null, false, personalizationString);
         }
 
         DRBGKey key = new DRBGKey(usage, drbgBase.getAlgorithm(), personalizationString);

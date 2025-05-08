@@ -31,6 +31,10 @@ public class HybridValueParameterSpec
      */
     public HybridValueParameterSpec(byte[] t, AlgorithmParameterSpec baseSpec)
     {
+        if (baseSpec instanceof HybridValueParameterSpec)
+        {
+            throw new IllegalArgumentException("HybridValueParameterSpec cannot contain itself");
+        }
         this.t = t;
         this.baseSpec = baseSpec;
     }

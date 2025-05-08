@@ -67,14 +67,14 @@ public class AltSignatureAlgorithm
         this.algorithm = algorithm;
     }
 
-    public AltSignatureAlgorithm(ASN1ObjectIdentifier algorithm)
-    {
-        this(algorithm, null);
-    }
-
     public AltSignatureAlgorithm(ASN1ObjectIdentifier algorithm, ASN1Encodable parameters)
     {
         this.algorithm = new AlgorithmIdentifier(algorithm, parameters);
+    }
+
+    public AltSignatureAlgorithm(ASN1ObjectIdentifier algorithm)
+    {
+        this(algorithm, null);
     }
 
     public AlgorithmIdentifier getAlgorithm()

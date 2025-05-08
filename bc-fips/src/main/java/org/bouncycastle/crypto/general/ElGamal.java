@@ -95,7 +95,8 @@ public final class ElGamal
     /**
      * Marker interface for parameters that can also be used for key wrapping.
      */
-    public interface WrapParameters extends org.bouncycastle.crypto.Parameters
+    public interface WrapParameters
+        extends org.bouncycastle.crypto.Parameters
     {
 
     }
@@ -104,7 +105,8 @@ public final class ElGamal
      * Parameters for use with PKCS#1 v1.5 formatted key wrapping/unwrapping and encryption/decryption.
      */
     public static final class PKCS1v15Parameters
-        extends Parameters implements WrapParameters
+        extends Parameters
+        implements WrapParameters
     {
         PKCS1v15Parameters()
         {
@@ -116,7 +118,8 @@ public final class ElGamal
      * Parameters for use with OAEP formatted key wrapping/unwrapping and encryption/decryption.
      */
     public static final class OAEPParameters
-        extends Parameters implements WrapParameters
+        extends Parameters
+        implements WrapParameters
     {
         private final DigestAlgorithm digestAlgorithm;
         private final DigestAlgorithm mgfDigestAlgorithm;
@@ -139,7 +142,7 @@ public final class ElGamal
         /**
          * Specify the digest algorithm to use. This also sets the MGF digest.
          *
-         * @param digestAlgorithm  a digest algorithm.
+         * @param digestAlgorithm a digest algorithm.
          * @return a new parameter set.
          */
         public OAEPParameters withDigest(DigestAlgorithm digestAlgorithm)
@@ -150,7 +153,7 @@ public final class ElGamal
         /**
          * Specify the digest algorithm to use for the MGF.
          *
-         * @param mgfDigestAlgorithm  a digest algorithm for the MGF.
+         * @param mgfDigestAlgorithm a digest algorithm for the MGF.
          * @return a new parameter set.
          */
         public OAEPParameters withMGFDigest(DigestAlgorithm mgfDigestAlgorithm)
@@ -207,7 +210,7 @@ public final class ElGamal
         /**
          * Constructor for specifying the ElGamal algorithm explicitly.
          *
-         * @param parameters the particular parameter set to generate keys for.
+         * @param parameters       the particular parameter set to generate keys for.
          * @param domainParameters DH domain parameters representing the curve any generated keys will be for.
          */
         public KeyGenParameters(Parameters parameters, DHDomainParameters domainParameters)

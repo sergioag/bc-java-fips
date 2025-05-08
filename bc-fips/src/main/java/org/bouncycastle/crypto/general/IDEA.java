@@ -243,7 +243,7 @@ public final class IDEA
 
         public KeyGenerator(GeneralParameters parameterSet, int keySizeInBits, SecureRandom random)
         {
-             this((GeneralAlgorithm)parameterSet.getAlgorithm(), keySizeInBits, random);
+            this((GeneralAlgorithm)parameterSet.getAlgorithm(), keySizeInBits, random);
         }
 
         private KeyGenerator(GeneralAlgorithm algorithm, int keySizeInBits, SecureRandom random)

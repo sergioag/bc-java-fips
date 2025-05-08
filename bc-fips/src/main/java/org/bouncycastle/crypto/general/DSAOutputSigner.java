@@ -58,7 +58,14 @@ class DSAOutputSigner<T extends Parameters>
     {
         if (!ready)
         {
-            throw new OperatorNotReadyException("Signer requires a SecureRandom to be attached before use");
+            if (parameter.getAlgorithm().equals(EC.DDSA.getAlgorithm()))
+            {
+                initializer.initialize(dsa, null);
+            }
+            else
+            {
+                throw new OperatorNotReadyException("Signer requires a SecureRandom to be attached before use");
+            }
         }
 
         return new DigestOutputStream(digest);
@@ -97,11 +104,11 @@ class DSAOutputSigner<T extends Parameters>
     {
         if (dsa instanceof EcGost3410Signer || dsa instanceof Gost3410Signer)
         {
-            byte[]          sigBytes;
-            int             sigMid;
-            byte[]          r = rs[0].toByteArray();
-            byte[]          s = rs[1].toByteArray();
-  
+            byte[] sigBytes;
+            int sigMid;
+            byte[] r = rs[0].toByteArray();
+            byte[] s = rs[1].toByteArray();
+
             if (r.length > 34 || s.length > 34)
             {
                 sigBytes = new byte[128];

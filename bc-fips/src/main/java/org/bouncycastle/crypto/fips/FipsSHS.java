@@ -358,26 +358,26 @@ public final class FipsSHS
         });
 
         // FSM_STATE:3.SHS.0,"SECURE HASH GENERATE VERIFY KAT", "The module is performing Secure Hash generate and verify KAT self-tests"
-        // FSM_TRANS:3.SHS.0.0, "POWER ON SELF-TEST",	"SECURE HASH GENERATE VERIFY KAT",	"Invoke Secure Hash Generate/Verify KAT self-test"
+        // FSM_TRANS:3.SHS.0.0, "POWER ON SELF-TEST",    "SECURE HASH GENERATE VERIFY KAT",    "Invoke Secure Hash Generate/Verify KAT self-test"
         digests.get(Algorithm.SHA1).createEngine();        // As per IG 10.3.A for SHA-3 see XOF test
         digests.get(Algorithm.SHA256).createEngine();
         digests.get(Algorithm.SHA512).createEngine();
-        // FSM_TRANS:3.SHS.0.1, "SECURE HASH GENERATE VERIFY KAT", "POWER ON SELF-TEST",	"Secure Hash Generate/Verify KAT self-test successful completion"
+        // FSM_TRANS:3.SHS.0.1, "SECURE HASH GENERATE VERIFY KAT", "POWER ON SELF-TEST",    "Secure Hash Generate/Verify KAT self-test successful completion"
 
         // FSM_STATE:3.SHS.1,"HMAC GENERATE VERIFY KAT", "The module is performing HMAC generate and verify KAT self-tests"
         // FSM_TRANS:3.SHS.1.0,"POWER ON SELF-TEST", "HMAC GENERATE VERIFY KAT", "Invoke HMAC Generate/Verify KAT self-test"
         hMacs.get(Algorithm.SHA256_HMAC).createEngine();   // As per IG 10.3.A
-        // FSM_TRANS:3.SHS.1.1, "HMAC GENERATE VERIFY KAT", "POWER ON SELF-TEST",	"HMAC Generate/Verify KAT self-test successful completion"
+        // FSM_TRANS:3.SHS.1.1, "HMAC GENERATE VERIFY KAT", "POWER ON SELF-TEST",    "HMAC Generate/Verify KAT self-test successful completion"
 
         // FSM_STATE:3.SHS.2,"XOF GENERATE VERIFY KAT", "The module is performing Extendable Output Function generate and verify KAT self-tests"
         // FSM_TRANS:3.SHS.2.0,"POWER ON SELF-TEST", "XOF GENERATE VERIFY KAT", "Invoke XOF Generate/Verify KAT self-test"
         makeValidatedXof(new Parameters(Algorithm.SHAKE256));  // As per IG 10.3.A
-        // FSM_TRANS:3.SHS.2.1, "XOF GENERATE VERIFY KAT", "POWER ON SELF-TEST",	"XOF Generate/Verify KAT self-test successful completion"
+        // FSM_TRANS:3.SHS.2.1, "XOF GENERATE VERIFY KAT", "POWER ON SELF-TEST",    "XOF Generate/Verify KAT self-test successful completion"
 
         // FSM_STATE:3.SHS.3,"cSHAKE GENERATE VERIFY KAT", "The module is performing Extendable Output Function generate and verify KAT self-tests"
         // FSM_TRANS:3.SHS.3.0,"POWER ON SELF-TEST", "cSHAKE GENERATE VERIFY KAT", "Invoke XOF Generate/Verify KAT self-test"
         makeValidatedXof(new CSHAKEParameters(Algorithm.cSHAKE128));  // As per IG 10.3.A
-        // FSM_TRANS:3.SHS.3.1, "cSHAKE GENERATE VERIFY KAT", "POWER ON SELF-TEST",	"XOF Generate/Verify KAT self-test successful completion"
+        // FSM_TRANS:3.SHS.3.1, "cSHAKE GENERATE VERIFY KAT", "POWER ON SELF-TEST",    "XOF Generate/Verify KAT self-test successful completion"
 
         for (Map.Entry<FipsAlgorithm, FipsEngineProvider<ExtendedDigest>> algorithm : digests.entrySet())
         {
@@ -564,6 +564,7 @@ public final class FipsSHS
 
         /**
          * Return the customization string for this parameter set.
+         *
          * @return the customization string.
          */
         public byte[] getCustomizationString()
@@ -617,6 +618,7 @@ public final class FipsSHS
 
         /**
          * Return the hash size for this parameter set.
+         *
          * @return the hash size in bits.
          */
         public int getDigestSizeInBits()
@@ -626,6 +628,7 @@ public final class FipsSHS
 
         /**
          * Return the customization string for this parameter set.
+         *
          * @return the customization string.
          */
         public byte[] getCustomizationString()
@@ -681,6 +684,7 @@ public final class FipsSHS
 
         /**
          * Return the hash size for this parameter set.
+         *
          * @return the hash size in bits.
          */
         public int getDigestSizeInBits()
@@ -690,6 +694,7 @@ public final class FipsSHS
 
         /**
          * Return the customization string for this parameter set.
+         *
          * @return the customization string.
          */
         public byte[] getCustomizationString()
@@ -843,7 +848,7 @@ public final class FipsSHS
     }
 
     private static class LocalXofMac
-       implements Mac
+        implements Mac
     {
         private final Mac xof;
         private final int macSizeInBits;
@@ -1062,6 +1067,11 @@ public final class FipsSHS
         {
             return new LocalFipsOutputDigestCalculator<T>(parameter, digest, cloner);
         }
+
+        public String toString()
+        {
+            return "LocalFipsOutputDigestCalculator(" + digest.toString() + ")";
+        }
     }
 
     static DigestCloner<ExtendedDigest> createCloner(FipsAlgorithm algorithm)
@@ -1101,6 +1111,11 @@ public final class FipsSHS
                 {
                     if (original != null)
                     {
+                        if (original instanceof SHA256NativeDigest)
+                        {
+                            return new SHA256NativeDigest((SHA256NativeDigest) original);
+                        }
+
                         return new SHA256Digest((SHA256Digest)original);
                     }
 
@@ -1309,6 +1324,10 @@ public final class FipsSHS
         case SHA224:
             return new SHA224Digest();
         case SHA256:
+            if (!FipsStatus.isBooting() && NativeLoader.hasNativeService(FipsNativeServices.SHA2))
+            {
+                return new SHA256NativeDigest();
+            }
             return new SHA256Digest();
         case SHA384:
             return new SHA384Digest();
@@ -1427,7 +1446,14 @@ public final class FipsSHS
             mac = new HMac(new SHA224Digest());
             break;
         case SHA256_HMAC:
-            mac = new HMac(new SHA256Digest());
+            if (NativeLoader.hasNativeService(FipsNativeServices.SHA2))
+            {
+                mac = new HMac(new SHA256NativeDigest());
+            }
+            else
+            {
+                mac = new HMac(new SHA256Digest());
+            }
             break;
         case SHA384_HMAC:
             mac = new HMac(new SHA384Digest());

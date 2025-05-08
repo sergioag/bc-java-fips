@@ -81,6 +81,7 @@ public final class X931PRNG
          * Any SecureRandom created from a builder constructed like this will make use of input passed to SecureRandom.setSeed() if
          * the default SecureRandom does for its generateSeed() call.
          * </p>
+         *
          * @return a new Builder instance.
          */
         public Builder fromDefaultEntropy()
@@ -164,14 +165,14 @@ public final class X931PRNG
          * Construct a X9.31 secure random generator using the passed in engine and key. If predictionResistant is true the
          * generator will be reseeded on each request.
          *
-         * @param key the block cipher key to initialise algorithm implementation with.
+         * @param key                 the block cipher key to initialise algorithm implementation with.
          * @param predictionResistant true if engine to be reseeded on each use, false otherwise.
          * @return a SecureRandom.
          */
         public GeneralSecureRandom build(SymmetricKey key, boolean predictionResistant)
         {
             BlockCipher engine;
-            int         keySizeInBits;
+            int keySizeInBits;
 
             switch (((Variations)algorithm.basicVariation()))
             {

@@ -99,14 +99,12 @@ class Prov11XDHPrivateKey
             return true;
         }
 
-        if (!(o instanceof XECPrivateKey))
+        if (o instanceof Prov11XDHPrivateKey)
         {
-            return false;
+            return this.baseKey.equals(((Prov11XDHPrivateKey)o).baseKey);
         }
 
-        XECPrivateKey other = (XECPrivateKey)o;
-
-        return Arrays.areEqual(other.getEncoded(), this.getEncoded());
+        return false;
     }
 
     public int hashCode()

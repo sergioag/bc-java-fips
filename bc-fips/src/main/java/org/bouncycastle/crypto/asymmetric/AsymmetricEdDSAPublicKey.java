@@ -2,6 +2,7 @@ package org.bouncycastle.crypto.asymmetric;
 
 import org.bouncycastle.crypto.Algorithm;
 import org.bouncycastle.crypto.AsymmetricPublicKey;
+import org.bouncycastle.crypto.fips.FipsEdEC;
 import org.bouncycastle.crypto.general.EdEC;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
@@ -36,7 +37,7 @@ public final class AsymmetricEdDSAPublicKey
      */
     public AsymmetricEdDSAPublicKey(byte[] encoding)
     {
-        super((encoding[8] == Ed448_type) ? EdEC.Algorithm.Ed448 : EdEC.Algorithm.Ed25519);
+        super((encoding[8] == Ed448_type) ? FipsEdEC.Algorithm.Ed448 : FipsEdEC.Algorithm.Ed25519);
 
         if (encoding[8] == Ed448_type)
         {
@@ -73,7 +74,7 @@ public final class AsymmetricEdDSAPublicKey
 
     public byte[] getEncoded()
     {
-        if (getAlgorithm().equals(EdEC.Algorithm.Ed448))
+        if (getAlgorithm().equals(FipsEdEC.Algorithm.Ed448))
         {
             byte[] encoding = new byte[Ed448Prefix.length + keyData.length];
 

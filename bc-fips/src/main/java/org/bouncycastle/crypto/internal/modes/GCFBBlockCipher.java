@@ -29,8 +29,8 @@ public class GCFBBlockCipher
     private final CFBBlockCipher cfbEngine;
 
     private KeyParameter key;
-    private long         counter = 0;
-    private boolean      forEncryption;
+    private long counter = 0;
+    private boolean forEncryption;
 
     public GCFBBlockCipher(BlockCipher engine)
     {
@@ -83,7 +83,7 @@ public class GCFBBlockCipher
     {
         if (counter > 0 && counter % 1024 == 0)
         {
-            BlockCipher  base = cfbEngine.getUnderlyingCipher();
+            BlockCipher base = cfbEngine.getUnderlyingCipher();
 
             base.init(false, key);
 

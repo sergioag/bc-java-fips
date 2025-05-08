@@ -68,13 +68,14 @@ public abstract class GCMUtil
     {
         int r00 = x[0], r01 = x[1], r02 = x[2], r03 = x[3];
         int r10 = 0, r11 = 0, r12 = 0, r13 = 0;
-        
+
         for (int i = 0; i < 4; ++i)
         {
             int bits = y[i];
             for (int j = 0; j < 32; ++j)
             {
-                int m1 = bits >> 31; bits <<= 1;
+                int m1 = bits >> 31;
+                bits <<= 1;
                 r10 ^= (r00 & m1);
                 r11 ^= (r01 & m1);
                 r12 ^= (r02 & m1);
@@ -161,10 +162,14 @@ public abstract class GCMUtil
         int i = 0;
         do
         {
-            x[i] ^= y[i]; ++i;
-            x[i] ^= y[i]; ++i;
-            x[i] ^= y[i]; ++i;
-            x[i] ^= y[i]; ++i;
+            x[i] ^= y[i];
+            ++i;
+            x[i] ^= y[i];
+            ++i;
+            x[i] ^= y[i];
+            ++i;
+            x[i] ^= y[i];
+            ++i;
         }
         while (i < 16);
     }

@@ -10,7 +10,6 @@ import org.bouncycastle.crypto.general.LMS;
  * Leighton-Micali Hash-Based Signatures (LMS) keys.
  */
 public abstract class AsymmetricLMSKey
-    extends LMS.KeyCache
     implements AsymmetricKey
 {
     private final boolean    approvedModeOnly;

@@ -31,7 +31,7 @@ public abstract class AsymmetricDSAKey
     private final boolean    approvedModeOnly;
 
     private Algorithm algorithm;
-    protected DSADomainParameters domainParameters;
+    private DSADomainParameters domainParameters;
 
     AsymmetricDSAKey(Algorithm algorithm, DSADomainParameters domainParameters)
     {

@@ -1,7 +1,17 @@
 package org.bouncycastle.crypto.util;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 import org.bouncycastle.crypto.EntropySource;
+import org.bouncycastle.crypto.OutputXOFCalculator;
 import org.bouncycastle.crypto.fips.FipsEntropyConfig;
+import org.bouncycastle.crypto.fips.FipsOutputXOFCalculator;
+import org.bouncycastle.crypto.fips.FipsParameters;
+import org.bouncycastle.crypto.fips.FipsSHS;
+import org.bouncycastle.crypto.fips.FipsXOFOperatorFactory;
+import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.encoders.Hex;
 
 /**
  * Utility methods for making use of EntropySources.
@@ -18,6 +28,7 @@ public class EntropyUtil
     public static byte[] generateSeed(EntropySource entropySource, int numBytes)
     {
         byte[] bytes = new byte[numBytes];
+        byte[] xofKey = entropySource.getEntropy();
 
         if (numBytes * 8 <= entropySource.entropySize())
         {
@@ -43,6 +54,28 @@ public class EntropyUtil
                 }
             }
         }
+
+        OutputXOFCalculator calc = new FipsSHS.XOFOperatorFactory().createOutputXOFCalculator(FipsSHS.SHAKE256);
+
+        OutputStream fOut = calc.getFunctionStream();
+
+        try
+        {
+            fOut.write(xofKey);
+            fOut.write(bytes);
+            fOut.close();
+        }
+        catch (IOException e)
+        {
+            throw new IllegalStateException("failure in seed generator");
+        }
+        finally
+        {
+            Arrays.clear(xofKey);
+            Arrays.clear(bytes);
+        }
+
+        calc.getFunctionOutput(bytes, 0, bytes.length);
 
         return bytes;
     }

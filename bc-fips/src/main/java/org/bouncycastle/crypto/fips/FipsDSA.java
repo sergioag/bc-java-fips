@@ -30,7 +30,6 @@ import org.bouncycastle.crypto.internal.params.ParametersWithRandom;
 import org.bouncycastle.crypto.internal.test.ConsistencyTest;
 import org.bouncycastle.math.internal.Primes;
 import org.bouncycastle.util.Arrays;
-import org.bouncycastle.util.Properties;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.test.FixedSecureRandom;
 import org.bouncycastle.util.test.TestRandomBigInteger;
@@ -113,7 +112,7 @@ public final class FipsDSA
      * Parameters for DSA key pair generation.
      */
     public static final class KeyGenParameters
-         extends FipsParameters
+        extends FipsParameters
     {
         private final DSADomainParameters domainParameters;
 
@@ -216,7 +215,7 @@ public final class FipsDSA
         /**
          * Construct just from strength (L) with a default value for N (160 for 1024, 256 for greater).
          *
-         * @param strength desired length of prime P in bits (the effective key size).
+         * @param strength  desired length of prime P in bits (the effective key size).
          * @param certainty certainty level for prime number generation.
          */
         public DomainGenParameters(int strength, int certainty)
@@ -227,8 +226,8 @@ public final class FipsDSA
         /**
          * Construct without a usage index, this will do a random construction of G.
          *
-         * @param L desired length of prime P in bits (the effective key size).
-         * @param N desired length of prime Q in bits.
+         * @param L         desired length of prime P in bits (the effective key size).
+         * @param N         desired length of prime Q in bits.
          * @param certainty certainty level for prime number generation.
          */
         public DomainGenParameters(int L, int N, int certainty)
@@ -239,9 +238,9 @@ public final class FipsDSA
         /**
          * Construct for a specific usage index - this has the effect of using verifiable canonical generation of G.
          *
-         * @param L desired length of prime P in bits (the effective key size).
-         * @param N desired length of prime Q in bits.
-         * @param certainty certainty level for prime number generation.
+         * @param L          desired length of prime P in bits (the effective key size).
+         * @param N          desired length of prime Q in bits.
+         * @param certainty  certainty level for prime number generation.
          * @param usageIndex a valid usage index.
          */
         public DomainGenParameters(int L, int N, int certainty, int usageIndex)
@@ -263,9 +262,9 @@ public final class FipsDSA
         /**
          * Construct for a specific usage index and initial prime values - this has the effect of using verifiable canonical generation of G.
          *
-         * @param p the prime P.
-         * @param q the prime Q.
-         * @param seed seed used in the generation of (p, q).
+         * @param p          the prime P.
+         * @param q          the prime Q.
+         * @param seed       seed used in the generation of (p, q).
          * @param usageIndex a valid usage index.
          */
         public DomainGenParameters(BigInteger p, BigInteger q, byte[] seed, int usageIndex)
@@ -299,7 +298,7 @@ public final class FipsDSA
             this.usageIndex = usageIndex;
         }
     }
-    
+
     /**
      * Domain parameter generator for DSA.
      */
@@ -313,7 +312,7 @@ public final class FipsDSA
          * Default constructor using SHA-256 as the digest.
          *
          * @param parameters domain generation parameters.
-         * @param random a source of randomness for the parameter generation.
+         * @param random     a source of randomness for the parameter generation.
          */
         public DomainParametersGenerator(DomainGenParameters parameters, SecureRandom random)
         {
@@ -324,8 +323,8 @@ public final class FipsDSA
          * Base constructor.
          *
          * @param digestAlgorithm digest to use in prime calculations.
-         * @param parameters domain generation parameters.
-         * @param random a source of randomness for the parameter generation.
+         * @param parameters      domain generation parameters.
+         * @param random          a source of randomness for the parameter generation.
          */
         public DomainParametersGenerator(FipsDigestAlgorithm digestAlgorithm, DomainGenParameters parameters, SecureRandom random)
         {
@@ -393,11 +392,12 @@ public final class FipsDSA
         private final Version version;
         private final FipsDigestAlgorithm digestAlgorithm;
         private final SecureRandom random;
+
         /**
          * Base constructor - for 186-4
          *
          * @param digestAlgorithm digest to use in prime calculations.
-         * @param random source of randomness for prime number testing.
+         * @param random          source of randomness for prime number testing.
          */
         public DomainParametersValidator(FipsDigestAlgorithm digestAlgorithm, SecureRandom random)
         {
@@ -407,9 +407,9 @@ public final class FipsDSA
         /**
          * Base constructor.
          *
-         * @param version the version of DSS the validator is for.
+         * @param version         the version of DSS the validator is for.
          * @param digestAlgorithm digest to use in prime calculations.
-         * @param random source of randomness for prime number testing.
+         * @param random          source of randomness for prime number testing.
          */
         public DomainParametersValidator(Version version, FipsDigestAlgorithm digestAlgorithm, SecureRandom random)
         {
@@ -437,9 +437,9 @@ public final class FipsDSA
         /**
          * Validate P and Q against the passed in seed and counter.
          *
-         * @param p the prime P.
-         * @param q the prime Q.
-         * @param seed the seed P and Q were derived from.
+         * @param p       the prime P.
+         * @param q       the prime Q.
+         * @param seed    the seed P and Q were derived from.
          * @param counter the number of iterations required to derive P.
          * @return true if the P and Q values are the expected ones, false otherwise.
          */
@@ -614,11 +614,11 @@ public final class FipsDSA
          * Do a full validation of g against p and q by including the seed and index
          * associated with g's related parameters.
          *
-         * @param p the prime P.
-         * @param q the prime Q.
-         * @param seed the domain parameter seed used to generate p and q.
+         * @param p     the prime P.
+         * @param q     the prime Q.
+         * @param seed  the domain parameter seed used to generate p and q.
          * @param index the 8 bit usage index for G.
-         * @param g the generator G associated with P and Q.
+         * @param g     the generator G associated with P and Q.
          * @return true if the generator is partially valid, false otherwise.
          */
         public boolean isValidG(BigInteger p, BigInteger q, byte[] seed, int index, BigInteger g)
@@ -712,17 +712,18 @@ public final class FipsDSA
      * DSA key pair generator.
      */
     public static final class KeyPairGenerator
-       extends FipsAsymmetricKeyPairGenerator<KeyGenParameters, AsymmetricDSAPublicKey, AsymmetricDSAPrivateKey>
+        extends FipsAsymmetricKeyPairGenerator<KeyGenParameters, AsymmetricDSAPublicKey, AsymmetricDSAPrivateKey>
     {
         private final DsaKeyPairGenerator engine = new DsaKeyPairGenerator();
         private final DSADomainParameters domainParameters;
         private final DsaKeyGenerationParameters param;
 
         /**
-         * Construct a key pair generator for DSA keys,
+         * Construct a key pair generator for DSA keys.
+         * FIPS 186-5 no longer approves of DSA, hence keypair generation is disabled for FIPS mode.
          *
          * @param keyGenParameters domain parameters and algorithm for the generated key.
-         * @param random a source of randomness for calculating the private value.
+         * @param random           a source of randomness for calculating the private value.
          */
         public KeyPairGenerator(KeyGenParameters keyGenParameters, SecureRandom random)
         {
@@ -730,14 +731,7 @@ public final class FipsDSA
 
             if (CryptoServicesRegistrar.isInApprovedOnlyMode())
             {
-                int effSizeInBits = keyGenParameters.getDomainParameters().getP().bitLength();
-
-                if (effSizeInBits != 2048 && effSizeInBits != 3072)
-                {
-                    throw new FipsUnapprovedOperationError("Attempt to create key pair with unapproved key size [" + effSizeInBits + "]", keyGenParameters.getAlgorithm());
-                }
-
-                Utils.validateKeyPairGenRandom(random, Utils.getAsymmetricSecurityStrength(effSizeInBits), keyGenParameters.getAlgorithm());
+                throw new FipsUnapprovedOperationError("DSA is no longer an approved algorithm for keypair generation");
             }
 
             this.domainParameters = keyGenParameters.getDomainParameters();
@@ -748,12 +742,18 @@ public final class FipsDSA
 
         /**
          * Generate a new DSA key pair.
+         * FIPS 186-5 no longer approves of DSA, hence keypair generation is disabled for FIPS mode.
          *
          * @return a new AsymmetricKeyPair containing a DSA key pair.
          */
         @Override
         public AsymmetricKeyPair<AsymmetricDSAPublicKey, AsymmetricDSAPrivateKey> generateKeyPair()
         {
+            if (CryptoServicesRegistrar.isInApprovedOnlyMode())
+            {
+                throw new FipsUnapprovedOperationError("DSA is no longer an approved algorithm for keypair generation");
+            }
+
             AsymmetricCipherKeyPair kp = engine.generateKeyPair();
 
             DsaPublicKeyParameters pubKey = (DsaPublicKeyParameters)kp.getPublic();
@@ -780,14 +780,22 @@ public final class FipsDSA
         /**
          * Return a generator of DSA signatures. Note this operator needs to be associated with a SecureRandom to be
          * fully initialised.
+         * FIPS 186-5 no longer approves of DSA, hence signing is disabled for FIPS mode.
          *
-         * @param key the key to initialize the signature generator with.
+         * @param key        the key to initialize the signature generator with.
          * @param parameters parameters required to configure the generation.
          * @return an OutputSignerUsingSecureRandom.
          */
         @Override
         public FipsOutputSignerUsingSecureRandom<Parameters> createSigner(AsymmetricPrivateKey key, final Parameters parameters)
         {
+            if (CryptoServicesRegistrar.isInApprovedOnlyMode())
+            {
+                throw new FipsUnapprovedOperationError("DSA is no longer an approved algorithm for signature generation");
+            }
+
+            Utils.checkDigestAlgorithm(LOG, parameters.getDigestAlgorithm(), "org.bouncycastle.dsa.allow_sha1_sig");
+
             DsaSigner dsaSigner = ENGINE_PROVIDER.createEngine();
             Digest digest = (parameters.digestAlgorithm != null) ? FipsSHS.createDigest(parameters.digestAlgorithm) : new NullDigest();
 
@@ -797,29 +805,19 @@ public final class FipsDSA
 
             int effSizeInBits = privateKeyParameters.getParameters().getP().bitLength();
 
-            if (CryptoServicesRegistrar.isInApprovedOnlyMode())
-            {
-                if (effSizeInBits != 2048 && effSizeInBits != 3072)
-                {
-                    throw new FipsUnapprovedOperationError("Attempt to create signer with unapproved keysize [" + effSizeInBits + "]", ALGORITHM);
-                }
-
-                Utils.checkDigestAlgorithm(LOG, parameters.getDigestAlgorithm(), "org.bouncycastle.dsa.allow_sha1_sig");
-            }
-
             return new DSAOutputSigner<Parameters>(dsaSigner, digest, parameters, new DSAOutputSigner.Initializer()
             {
-                  public void initialize(org.bouncycastle.crypto.internal.DSA signer, SecureRandom random)
-                  {
-                       signer.init(true, new ParametersWithRandom(privateKeyParameters, random));
-                  }
+                public void initialize(org.bouncycastle.crypto.internal.DSA signer, SecureRandom random)
+                {
+                    signer.init(true, new ParametersWithRandom(privateKeyParameters, random));
+                }
             });
         }
 
         /**
          * Create a verifier for DSA signatures.
          *
-         * @param key the key to initialize the verifier with.
+         * @param key        the key to initialize the verifier with.
          * @param parameters parameters required to configure the verification.
          * @return an OutputVerifier.
          */
@@ -851,9 +849,9 @@ public final class FipsDSA
         /**
          * Create a validator for DSA signatures.
          *
-         * @param key the key to initialize the verifier with.
+         * @param key        the key to initialize the verifier with.
          * @param parameters parameters required to configure the verification.
-         * @param signature the signature the data is to be validated against.
+         * @param signature  the signature the data is to be validated against.
          * @return an OutputVerifier.
          */
         public FipsOutputValidator<Parameters> createValidator(AsymmetricPublicKey key, final Parameters parameters, byte[] signature)
@@ -891,7 +889,7 @@ public final class FipsDSA
         public DsaSigner createEngine()
         {
             // We do this using a pair-wise consistency test as per the IG 2nd March 2015, Section 9.4
-           return SelfTestExecutor.validate(ALGORITHM, new DsaSigner(), new VariantKatTest<DsaSigner>()
+            return SelfTestExecutor.validate(ALGORITHM, new DsaSigner(), new VariantKatTest<DsaSigner>()
             {
                 @Override
                 void evaluate(DsaSigner signer)
@@ -928,14 +926,14 @@ public final class FipsDSA
                     DsaKeyPairGenerator kpGen = new DsaKeyPairGenerator();
 
                     kpGen.init(new DsaKeyGenerationParameters(
-                        new TestRandomBigInteger(Hex.decode("947813B589EDBA642411AD79205E43CE9B859327A4F84CF4B02628DB058A7B22771EA1852903711B")),
+                        new TestRandomBigInteger("947813B589EDBA642411AD79205E43CE9B859327A4F84CF4B02628DB058A7B22771EA185", 16),
                         new DsaParameters(p, q, g)));
 
                     AsymmetricCipherKeyPair kp = kpGen.generateKeyPair();
 
-                    signer.init(true, new ParametersWithRandom(kp.getPrivate(), new FixedSecureRandom(
-                        new FixedSecureRandom.BigInteger("735959CC4463B8B440E407EECA8A473BF6A6D1FE657546F67D401F05"),
-                        new FixedSecureRandom.Data(Hex.decode("01020304")))));
+                    signer.init(true,
+                            new ParametersWithRandom(kp.getPrivate(),
+                            new TestRandomBigInteger(224,Hex.decode("735959CC4463B8B440E407EECA8A473BF6A6D1FE657546F67D401F0500000000"))));
 
                     byte[] msg = Hex.decode("23097D223405D8228642A477BDA255B32AADBCE4BDA0B3F7E36C9DA7");
 
@@ -947,7 +945,7 @@ public final class FipsDSA
                     }
 
                     signer.init(false, kp.getPublic());
-                    
+
                     if (!signer.verifySignature(msg, sig[0], sig[1]))
                     {
                         fail("KAT signature not verified");

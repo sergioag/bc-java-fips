@@ -18,7 +18,7 @@ class PKCS12ParametersGenerator<T extends Parameters>
     extends PBEParametersGenerator<T>
 {
     public static final int KEY_MATERIAL = 1;
-    public static final int IV_MATERIAL  = 2;
+    public static final int IV_MATERIAL = 2;
     public static final int MAC_MATERIAL = 3;
 
     private final Digest digest;
@@ -30,9 +30,8 @@ class PKCS12ParametersGenerator<T extends Parameters>
      * accept any digest which also implements ExtendedDigest.
      *
      * @param parameters algorithm parameters.
-     * @param digest the digest calculator to be used as the source of derived keys.
-     *
-     * @exception IllegalArgumentException if an unknown digest is passed in.
+     * @param digest     the digest calculator to be used as the source of derived keys.
+     * @throws IllegalArgumentException if an unknown digest is passed in.
      */
     public PKCS12ParametersGenerator(
         T parameters,
@@ -47,15 +46,15 @@ class PKCS12ParametersGenerator<T extends Parameters>
 
     /**
      * add a + b + 1, returning the result in a. The a value is treated
-     * as a BigInteger of length (b.length * 8) bits. The result is 
+     * as a BigInteger of length (b.length * 8) bits. The result is
      * modulo 2^b.length in case of overflow.
      */
     private void adjust(
-        byte[]  a,
-        int     aOff,
-        byte[]  b)
+        byte[] a,
+        int aOff,
+        byte[] b)
     {
-        int  x = (b[b.length - 1] & 0xff) + (a[aOff + b.length - 1] & 0xff) + 1;
+        int x = (b[b.length - 1] & 0xff) + (a[aOff + b.length - 1] & 0xff) + 1;
 
         a[aOff + b.length - 1] = (byte)x;
         x >>>= 8;
@@ -75,15 +74,15 @@ class PKCS12ParametersGenerator<T extends Parameters>
         int idByte,
         int n)
     {
-        byte[]  D = new byte[v];
-        byte[]  dKey = new byte[n];
+        byte[] D = new byte[v];
+        byte[] dKey = new byte[n];
 
         for (int i = 0; i != D.length; i++)
         {
             D[i] = (byte)idByte;
         }
 
-        byte[]  S;
+        byte[] S;
 
         if ((salt != null) && (salt.length != 0))
         {
@@ -99,7 +98,7 @@ class PKCS12ParametersGenerator<T extends Parameters>
             S = new byte[0];
         }
 
-        byte[]  P;
+        byte[] P;
 
         if ((password != null) && (password.length != 0))
         {
@@ -115,14 +114,14 @@ class PKCS12ParametersGenerator<T extends Parameters>
             P = new byte[0];
         }
 
-        byte[]  I = new byte[S.length + P.length];
+        byte[] I = new byte[S.length + P.length];
 
         System.arraycopy(S, 0, I, 0, S.length);
         System.arraycopy(P, 0, I, S.length, P.length);
 
-        byte[]  B = new byte[v];
-        int     c = (n + u - 1) / u;
-        byte[]  A = new byte[u];
+        byte[] B = new byte[v];
+        int c = (n + u - 1) / u;
+        byte[] A = new byte[u];
 
         for (int i = 1; i <= c; i++)
         {
@@ -171,7 +170,7 @@ class PKCS12ParametersGenerator<T extends Parameters>
     {
         keySize = keySize / 8;
 
-        byte[]  dKey = generateDerivedKey(KEY_MATERIAL, keySize);
+        byte[] dKey = generateDerivedKey(KEY_MATERIAL, keySize);
 
         return new KeyParameterImpl(dKey);
     }
@@ -182,19 +181,19 @@ class PKCS12ParametersGenerator<T extends Parameters>
      * with.
      *
      * @param keySize the size of the key we want (in bits)
-     * @param ivSize the size of the iv we want (in bits)
+     * @param ivSize  the size of the iv we want (in bits)
      * @return a ParametersWithIV object.
      */
     public CipherParameters generateDerivedParameters(
-        int     keySize,
-        int     ivSize)
+        int keySize,
+        int ivSize)
     {
         keySize = keySize / 8;
         ivSize = ivSize / 8;
 
-        byte[]  dKey = generateDerivedKey(KEY_MATERIAL, keySize);
+        byte[] dKey = generateDerivedKey(KEY_MATERIAL, keySize);
 
-        byte[]  iv = generateDerivedKey(IV_MATERIAL, ivSize);
+        byte[] iv = generateDerivedKey(IV_MATERIAL, ivSize);
 
         return new ParametersWithIV(new KeyParameterImpl(dKey), iv, 0, ivSize);
     }
@@ -211,7 +210,7 @@ class PKCS12ParametersGenerator<T extends Parameters>
     {
         keySize = keySize / 8;
 
-        byte[]  dKey = generateDerivedKey(MAC_MATERIAL, keySize);
+        byte[] dKey = generateDerivedKey(MAC_MATERIAL, keySize);
 
         return new KeyParameterImpl(dKey);
     }

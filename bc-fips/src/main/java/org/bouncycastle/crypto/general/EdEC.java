@@ -6,6 +6,7 @@ import java.security.SecureRandom;
 
 import org.bouncycastle.crypto.Agreement;
 import org.bouncycastle.crypto.AgreementFactory;
+import org.bouncycastle.crypto.AsymmetricKey;
 import org.bouncycastle.crypto.AsymmetricPrivateKey;
 import org.bouncycastle.crypto.AsymmetricPublicKey;
 import org.bouncycastle.crypto.CryptoServicesRegistrar;
@@ -20,6 +21,10 @@ import org.bouncycastle.crypto.asymmetric.AsymmetricEdDSAPublicKey;
 import org.bouncycastle.crypto.asymmetric.AsymmetricKeyPair;
 import org.bouncycastle.crypto.asymmetric.AsymmetricXDHPrivateKey;
 import org.bouncycastle.crypto.asymmetric.AsymmetricXDHPublicKey;
+import org.bouncycastle.crypto.fips.FipsEdEC;
+import org.bouncycastle.crypto.fips.FipsOutputSigner;
+import org.bouncycastle.crypto.fips.FipsOutputValidator;
+import org.bouncycastle.crypto.fips.FipsOutputVerifier;
 import org.bouncycastle.crypto.fips.FipsSHS;
 import org.bouncycastle.crypto.fips.FipsStatus;
 import org.bouncycastle.crypto.fips.FipsUnapprovedOperationError;
@@ -82,13 +87,13 @@ public final class EdEC
 
     public static final int X448_PUBLIC_KEY_SIZE = X448PublicKeyParameters.KEY_SIZE;
     public static final int X25519_PUBLIC_KEY_SIZE = X25519PublicKeyParameters.KEY_SIZE;
-    public static final int Ed448_PUBLIC_KEY_SIZE = Ed448PublicKeyParameters.KEY_SIZE;
-    public static final int Ed25519_PUBLIC_KEY_SIZE = Ed25519PublicKeyParameters.KEY_SIZE;
+    public static final int Ed448_PUBLIC_KEY_SIZE = FipsEdEC.Ed448_PUBLIC_KEY_SIZE;
+    public static final int Ed25519_PUBLIC_KEY_SIZE = FipsEdEC.Ed25519_PUBLIC_KEY_SIZE;
 
     public static final int X448_PRIVATE_KEY_SIZE = X448PrivateKeyParameters.KEY_SIZE;
     public static final int X25519_PRIVATE_KEY_SIZE = X25519PrivateKeyParameters.KEY_SIZE;
-    public static final int Ed448_PRIVATE_KEY_SIZE = Ed448PrivateKeyParameters.KEY_SIZE;
-    public static final int Ed25519_PRIVATE_KEY_SIZE = Ed25519PrivateKeyParameters.KEY_SIZE;
+    public static final int Ed448_PRIVATE_KEY_SIZE = FipsEdEC.Ed448_PRIVATE_KEY_SIZE;
+    public static final int Ed25519_PRIVATE_KEY_SIZE = FipsEdEC.Ed25519_PRIVATE_KEY_SIZE;
 
     /**
      * Edwards Curve key pair generation parameters.
@@ -156,50 +161,33 @@ public final class EdEC
     public static final class EdDSAKeyPairGenerator
         extends GuardedAsymmetricKeyPairGenerator
     {
-        private final Variations variation;
-        private final AsymmetricCipherKeyPairGenerator kpGen;
+        private final FipsEdEC.EdDSAKeyPairGenerator kpGenerator;
 
         public EdDSAKeyPairGenerator(Parameters keyGenParameters, SecureRandom random)
         {
             super(keyGenParameters);
 
+            FipsEdEC.Parameters fipsParams;
+
             switch ((Variations)keyGenParameters.getAlgorithm().basicVariation())
             {
             case Ed448:
-                this.variation = Variations.Ed448;
-                this.kpGen = new Ed448KeyPairGenerator();
+                fipsParams = FipsEdEC.Ed448;
                 break;
             case Ed25519:
-                this.variation = Variations.Ed25519;
-                this.kpGen = new Ed25519KeyPairGenerator();
+                fipsParams = FipsEdEC.Ed25519;
                 break;
             default:
                 throw new IllegalArgumentException("unknown algorithm");
             }
 
-            kpGen.init(new KeyGenerationParameters(random, 0));    // strength ignored
+            this.kpGenerator = new FipsEdEC.EdDSAKeyPairGenerator(fipsParams, random);
         }
 
         @Override
         protected AsymmetricKeyPair doGenerateKeyPair()
         {
-            AsymmetricCipherKeyPair kp = kpGen.generateKeyPair();
-
-            validateSigningKeyPair(kp);
-            
-            switch (variation)
-            {
-            case Ed448:
-                return new AsymmetricKeyPair(
-                    new AsymmetricEdDSAPublicKey(getParameters().getAlgorithm(), ((Ed448PublicKeyParameters)kp.getPublic()).getEncoded()),
-                    new AsymmetricEdDSAPrivateKey(getParameters().getAlgorithm(), ((Ed448PrivateKeyParameters)kp.getPrivate()).getEncoded(), ((Ed448PublicKeyParameters)kp.getPublic()).getEncoded()));
-            case Ed25519:
-                return new AsymmetricKeyPair(
-                    new AsymmetricEdDSAPublicKey(getParameters().getAlgorithm(), ((Ed25519PublicKeyParameters)kp.getPublic()).getEncoded()),
-                    new AsymmetricEdDSAPrivateKey(getParameters().getAlgorithm(), ((Ed25519PrivateKeyParameters)kp.getPrivate()).getEncoded(), ((Ed25519PublicKeyParameters)kp.getPublic()).getEncoded()));
-            default:
-                throw new IllegalArgumentException("unknown algorithm");
-            }
+            return kpGenerator.generateKeyPair();
         }
     }
 
@@ -239,7 +227,7 @@ public final class EdEC
             AsymmetricCipherKeyPair kp = kpGen.generateKeyPair();
 
             validateAgreementKeyPair(kp);
- 
+
             switch (variation)
             {
             case X448:
@@ -262,37 +250,22 @@ public final class EdEC
     public static final class EdDSAOperatorFactory
         extends GuardedSignatureOperatorFactory<Parameters>
     {
+        final FipsEdEC.EdDSAOperatorFactory opFact;
+
         public EdDSAOperatorFactory()
         {
+            opFact = new FipsEdEC.EdDSAOperatorFactory();
         }
 
         @Override
         protected OutputSigner<Parameters> doCreateSigner(AsymmetricPrivateKey key, final Parameters parameters)
         {
-            final Signer signer;
-            final GeneralAlgorithm algorithm = (parameters.getAlgorithm() != null) ? parameters.getAlgorithm() : (GeneralAlgorithm)key.getAlgorithm();
+            final FipsEdEC.Parameters fipsParams = toFipsParams(key, parameters);
 
-            switch ((Variations)algorithm.basicVariation())
-            {
-            case Ed448:
-                signer = (parameters instanceof ParametersWithContext) ?
-                            new Ed448Signer(((ParametersWithContext)parameters).context) :
-                            new Ed448Signer(ZERO_CONTEXT);
-
-                signer.init(true, getLwKey((AsymmetricEdDSAPrivateKey)key));
-                break;
-            case Ed25519:
-                signer = new Ed25519Signer();
-
-                signer.init(true, getLwKey((AsymmetricEdDSAPrivateKey)key));
-                break;
-            default:
-                throw new IllegalArgumentException("unknown algorithm");
-            }
+            final FipsOutputSigner signer = opFact.createSigner(key, fipsParams);
 
             return new OutputSigner<Parameters>()
             {
-
                 public Parameters getParameters()
                 {
                     return parameters;
@@ -300,30 +273,19 @@ public final class EdEC
 
                 public UpdateOutputStream getSigningStream()
                 {
-                    return new SignerOutputStream(algorithm.getName(), signer);
+                    return signer.getSigningStream();
                 }
 
                 public byte[] getSignature()
                     throws PlainInputProcessingException
                 {
-                    try
-                    {
-                        return signer.generateSignature();
-                    }
-                    catch (Exception e)
-                    {
-                        throw new PlainInputProcessingException("Unable to create signature: " + e.getMessage(), e);
-                    }
+                    return signer.getSignature();
                 }
 
                 public int getSignature(byte[] output, int off)
                     throws PlainInputProcessingException
                 {
-                    byte[] sig = getSignature();
-
-                    System.arraycopy(sig, 0, output, off, sig.length);
-
-                    return sig.length;
+                    return signer.getSignature(output, off);
                 }
             };
         }
@@ -331,8 +293,9 @@ public final class EdEC
         @Override
         protected OutputVerifier<Parameters> doCreateVerifier(AsymmetricPublicKey key, final Parameters parameters)
         {
-            final GeneralAlgorithm algorithm = (parameters.getAlgorithm() != null) ? parameters.getAlgorithm() : (GeneralAlgorithm)key.getAlgorithm();
-            final Signer signer = getVerifySigner((AsymmetricEdDSAPublicKey)key, algorithm, parameters);
+            final FipsEdEC.Parameters fipsParams = toFipsParams(key, parameters);
+
+            final FipsOutputVerifier verifier = opFact.createVerifier(key, fipsParams);
 
             return new OutputVerifier<Parameters>()
             {
@@ -343,13 +306,13 @@ public final class EdEC
 
                 public UpdateOutputStream getVerifyingStream()
                 {
-                    return new SignerOutputStream(algorithm.getName(), signer);
+                    return verifier.getVerifyingStream();
                 }
 
                 public boolean isVerified(byte[] signature)
                     throws InvalidSignatureException
                 {
-                    return signer.verifySignature(signature);
+                    return verifier.isVerified(signature);
                 }
             };
         }
@@ -357,8 +320,9 @@ public final class EdEC
         @Override
         protected OutputValidator<Parameters> doCreateValidator(AsymmetricPublicKey key, final Parameters parameters, final byte[] signature)
         {
-            final GeneralAlgorithm algorithm = (parameters.getAlgorithm() != null) ? parameters.getAlgorithm() : (GeneralAlgorithm)key.getAlgorithm();
-            final Signer signer = getVerifySigner((AsymmetricEdDSAPublicKey)key, algorithm, parameters);
+            final FipsEdEC.Parameters fipsParams = toFipsParams(key, parameters);
+
+            final FipsOutputValidator validator = opFact.createValidator(key, fipsParams, signature);
 
             return new OutputValidator<Parameters>()
             {
@@ -369,44 +333,37 @@ public final class EdEC
 
                 public UpdateOutputStream getValidatingStream()
                 {
-                    return new SignerOutputStream(algorithm.getName(), signer);
+                    return validator.getValidatingStream();
                 }
 
                 public boolean isValidated()
                 {
-                    try
-                    {
-                        return signer.verifySignature(signature);
-                    }
-                    catch (InvalidSignatureException e)
-                    {
-                        return false;
-                    }
+                    return validator.isValidated();
                 }
             };
         }
 
-        private Signer getVerifySigner(AsymmetricEdDSAPublicKey key, GeneralAlgorithm algorithm, Parameters parameters)
+        private FipsEdEC.Parameters toFipsParams(AsymmetricKey key, Parameters parameters)
         {
-            Signer signer;
+            final GeneralAlgorithm algorithm = (parameters.getAlgorithm() != null) ? parameters.getAlgorithm() : (GeneralAlgorithm)key.getAlgorithm();
+            final FipsEdEC.Parameters fipsParams;
+
             switch ((Variations)algorithm.basicVariation())
             {
             case Ed448:
-                signer = (parameters instanceof ParametersWithContext) ?
-                            new Ed448Signer(((ParametersWithContext)parameters).context) :
-                            new Ed448Signer(ZERO_CONTEXT);
-
-                signer.init(false, getLwKey(key));
+                fipsParams = (parameters instanceof ParametersWithContext) ?
+                    new FipsEdEC.ParametersWithContext(FipsEdEC.Algorithm.Ed448, ((ParametersWithContext)parameters).context) :
+                    FipsEdEC.Ed448;
                 break;
             case Ed25519:
-                signer = new Ed25519Signer();
-
-                signer.init(false, getLwKey(key));
+                fipsParams = (parameters instanceof ParametersWithContext) ?
+                    new FipsEdEC.ParametersWithContext(FipsEdEC.Algorithm.Ed25519, ((ParametersWithContext)parameters).context) :
+                    FipsEdEC.Ed25519;
                 break;
             default:
                 throw new IllegalArgumentException("unknown algorithm");
             }
-            return signer;
+            return fipsParams;
         }
     }
 
@@ -459,7 +416,7 @@ public final class EdEC
 
                     if (lwKey instanceof X448PublicKeyParameters)
                     {
-                         sharedValue = new byte[X448PrivateKeyParameters.SECRET_SIZE];
+                        sharedValue = new byte[X448PrivateKeyParameters.SECRET_SIZE];
                     }
                     else
                     {
@@ -478,7 +435,7 @@ public final class EdEC
     {
         byte[] publicKey;
 
-        if (algorithm.equals(EdEC.Algorithm.Ed448))
+        if (algorithm.equals(FipsEdEC.Algorithm.Ed448))
         {
             final Ed448 ed448 = new Ed448()
             {
@@ -492,7 +449,7 @@ public final class EdEC
             publicKey = new byte[Ed448_PUBLIC_KEY_SIZE];
             ed448.generatePublicKey(secret, 0, publicKey, 0);
         }
-        else if (algorithm.equals(Algorithm.Ed25519))
+        else if (algorithm.equals(FipsEdEC.Algorithm.Ed25519))
         {
             final Ed25519 ed25519 = new Ed25519()
             {
@@ -518,42 +475,6 @@ public final class EdEC
         }
 
         return publicKey;
-    }
-
-    private static AsymmetricKeyParameter getLwKey(final AsymmetricEdDSAPrivateKey privKey)
-    {
-        return AccessController.doPrivileged(new PrivilegedAction<AsymmetricKeyParameter>()
-        {
-            public AsymmetricKeyParameter run()
-            {
-                if (privKey.getAlgorithm().equals(Algorithm.Ed448))
-                {
-                    return new Ed448PrivateKeyParameters(privKey.getSecret());
-                }
-                else
-                {
-                    return new Ed25519PrivateKeyParameters(privKey.getSecret());
-                }
-            }
-        });
-    }
-
-    private static AsymmetricKeyParameter getLwKey(final AsymmetricEdDSAPublicKey pubKey)
-    {
-        return AccessController.doPrivileged(new PrivilegedAction<AsymmetricKeyParameter>()
-        {
-            public AsymmetricKeyParameter run()
-            {
-                if (pubKey.getAlgorithm().equals(Algorithm.Ed448))
-                {
-                    return new Ed448PublicKeyParameters(pubKey.getPublicData());
-                }
-                else
-                {
-                    return new Ed25519PublicKeyParameters(pubKey.getPublicData());
-                }
-            }
-        });
     }
 
     private static AsymmetricKeyParameter getLwKey(final AsymmetricXDHPrivateKey privKey)
@@ -639,54 +560,6 @@ public final class EdEC
             agreement.calculateAgreement(kp.getPublic(), rv2, 0);
 
             return Arrays.areEqual(rv1, rv2);
-        }
-        catch (Exception e)
-        {
-            return false;
-        }
-    }
-
-    private static final byte[] data = Hex.decode("576a1f885e3420128c8a656097ba7d8bb4c6f1b1853348cf2ba976971dbdbefc");
-
-    private static void validateSigningKeyPair(AsymmetricCipherKeyPair kp)
-    {
-        if (kp.getPublic() instanceof Ed448PublicKeyParameters)
-        {
-            SelfTestExecutor.validate(Algorithm.Ed448, kp, new ConsistencyTest<AsymmetricCipherKeyPair>()
-            {
-                public boolean hasTestPassed(AsymmetricCipherKeyPair kp)
-                {
-                    return isOkaySigning(new Ed448Signer(ZERO_CONTEXT), kp);
-                }
-            });
-        }
-        else
-        {
-            SelfTestExecutor.validate(Algorithm.Ed25519, kp, new ConsistencyTest<AsymmetricCipherKeyPair>()
-            {
-                public boolean hasTestPassed(AsymmetricCipherKeyPair kp)
-                {
-                    return isOkaySigning(new Ed25519Signer(), kp);
-                }
-            });
-        }
-    }
-
-    private static boolean isOkaySigning(Signer signer, AsymmetricCipherKeyPair kp)
-    {
-        try
-        {
-            signer.init(true, kp.getPrivate());
-
-            signer.update(data, 0, data.length);
-
-            byte[] rv = signer.generateSignature();
-
-            signer.init(false, kp.getPublic());
-
-            signer.update(data, 0, data.length);
-
-            return signer.verifySignature(rv);
         }
         catch (Exception e)
         {

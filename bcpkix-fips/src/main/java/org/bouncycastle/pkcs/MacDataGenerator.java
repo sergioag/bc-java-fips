@@ -6,6 +6,7 @@ import java.io.OutputStream;
 
 import org.bouncycastle.asn1.pkcs.MacData;
 import org.bouncycastle.asn1.pkcs.PKCS12PBEParams;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.DigestInfo;
 import org.bouncycastle.operator.MacCalculator;
@@ -46,7 +47,7 @@ class MacDataGenerator
         byte[] salt;
         int iterations;
         
-        if (PKCSObjectIdentifiers.id_PBMAC1.equals(dInfo.getAlgorithmId().getAlgorithm())) 
+        if (PKCSObjectIdentifiers.pkcs_5.branch("14").equals(dInfo.getAlgorithmId().getAlgorithm()))
         {
             salt = Strings.toUTF8ByteArray("NOT USED".toCharArray());
             iterations = 1;

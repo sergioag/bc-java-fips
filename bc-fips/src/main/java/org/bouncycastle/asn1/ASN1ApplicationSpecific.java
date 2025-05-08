@@ -237,6 +237,7 @@ public abstract class ASN1ApplicationSpecific
         if (this.octets != null)
         {
             sb.append(" #");
+            // -DM Hex.toHexString
             sb.append(Hex.toHexString(this.octets));
         }
         else

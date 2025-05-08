@@ -1,8 +1,8 @@
 package org.bouncycastle.crypto.fips;
 
-import org.bouncycastle.crypto.internal.BlockCipher;
 import org.bouncycastle.crypto.internal.CipherParameters;
 import org.bouncycastle.crypto.internal.DataLengthException;
+import org.bouncycastle.crypto.internal.DefaultMultiBlockCipher;
 import org.bouncycastle.crypto.internal.OutputLengthException;
 import org.bouncycastle.crypto.internal.params.KeyParameter;
 
@@ -10,17 +10,18 @@ import org.bouncycastle.crypto.internal.params.KeyParameter;
  * a class that provides a basic DESede (or Triple DES) engine.
  */
 class DesEdeEngine
-    extends DesBase
-    implements BlockCipher
+    extends DefaultMultiBlockCipher
 {
     private static final int MAX_BLOCK_COUNT = 1 << 16;
 
-    protected static final int  BLOCK_SIZE = 8;
+    protected static final int BLOCK_SIZE = 8;
 
-    private WorkingBuffer       workingBuf = null;
+    private WorkingBuffer workingBuf = null;
 
-    private boolean             forEncryption;
-    private int                 blockCount;
+    private boolean forEncryption;
+    private int blockCount;
+
+    private final DesBase desBase = new DesBase();
 
     /**
      * standard constructor.
@@ -33,13 +34,13 @@ class DesEdeEngine
      * initialise a DESede cipher.
      *
      * @param encrypting whether or not we are for encryption.
-     * @param params the parameters required to set up the cipher.
-     * @exception IllegalArgumentException if the params argument is
-     * inappropriate.
+     * @param params     the parameters required to set up the cipher.
+     * @throws IllegalArgumentException if the params argument is
+     *                                  inappropriate.
      */
     public void init(
-        boolean           encrypting,
-        CipherParameters  params)
+        boolean encrypting,
+        CipherParameters params)
     {
         if (!(params instanceof KeyParameter))
         {
@@ -57,18 +58,18 @@ class DesEdeEngine
 
         byte[] key1 = new byte[8];
         System.arraycopy(keyMaster, 0, key1, 0, key1.length);
-        int[] workingKey1 = generateWorkingKey(encrypting, key1);
+        int[] workingKey1 = desBase.generateWorkingKey(encrypting, key1);
 
         byte[] key2 = new byte[8];
         System.arraycopy(keyMaster, 8, key2, 0, key2.length);
-        int[] workingKey2 = generateWorkingKey(!encrypting, key2);
+        int[] workingKey2 = desBase.generateWorkingKey(!encrypting, key2);
 
         int[] workingKey3;
         if (keyMaster.length == 24)
         {
             byte[] key3 = new byte[8];
             System.arraycopy(keyMaster, 16, key3, 0, key3.length);
-            workingKey3 = generateWorkingKey(encrypting, key3);
+            workingKey3 = desBase.generateWorkingKey(encrypting, key3);
         }
         else    // 16 byte key
         {
@@ -121,15 +122,15 @@ class DesEdeEngine
                 throw new IllegalStateException("attempt to process more than " + MAX_BLOCK_COUNT + " blocks with 2-Key TripleDES");
             }
 
-            desFunc(workingBuf.workingKey1, in, inOff, temp, 0);
-            desFunc(workingBuf.workingKey2, temp, 0, temp, 0);
-            desFunc(workingBuf.workingKey3, temp, 0, out, outOff);
+            desBase.desFunc(workingBuf.workingKey1, in, inOff, temp, 0);
+            desBase.desFunc(workingBuf.workingKey2, temp, 0, temp, 0);
+            desBase.desFunc(workingBuf.workingKey3, temp, 0, out, outOff);
         }
         else
         {
-            desFunc(workingBuf.workingKey3, in, inOff, temp, 0);
-            desFunc(workingBuf.workingKey2, temp, 0, temp, 0);
-            desFunc(workingBuf.workingKey1, temp, 0, out, outOff);
+            desBase.desFunc(workingBuf.workingKey3, in, inOff, temp, 0);
+            desBase.desFunc(workingBuf.workingKey2, temp, 0, temp, 0);
+            desBase.desFunc(workingBuf.workingKey1, temp, 0, out, outOff);
         }
 
         blockCount++;

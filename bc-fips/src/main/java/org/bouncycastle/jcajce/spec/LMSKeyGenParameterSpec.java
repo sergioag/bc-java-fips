@@ -2,6 +2,7 @@ package org.bouncycastle.jcajce.spec;
 
 import java.security.spec.AlgorithmParameterSpec;
 
+import org.bouncycastle.crypto.fips.FipsLMS;
 import org.bouncycastle.crypto.general.LMS;
 
 /**
@@ -50,7 +51,7 @@ public class LMSKeyGenParameterSpec
      *
      * @return the LM OTS parameters.
      */
-    public LMS.KeyParameters getKeyParams()
+    public FipsLMS.KeyParameters getKeyParams()
     {
         return lmSigParams.keyParameters.using(lmOtsParameters.otsParameters);
     }

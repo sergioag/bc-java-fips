@@ -17,7 +17,7 @@ import org.bouncycastle.math.ec.ECPoint;
 
 /**
  * P1363 7.2.1 ECSVDP-DH
- *
+ * <p>
  * ECSVDP-DH is Elliptic Curve Secret Value Derivation Primitive,
  * Diffie-Hellman version. It is based on the work of [DH76], [Mil86],
  * and [Kob87]. This primitive derives a shared secret value from one

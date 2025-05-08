@@ -56,7 +56,7 @@ public final class GeneralSecureRandom
     {
         return algorithmName;
     }
-    
+
     public void nextBytes(byte[] bytes)
     {
         this.nextBytes(bytes, (byte[])null);

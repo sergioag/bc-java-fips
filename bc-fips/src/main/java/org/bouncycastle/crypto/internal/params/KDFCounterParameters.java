@@ -23,11 +23,11 @@ import org.bouncycastle.util.Arrays;
  * </p>
  * Resulting function calls assuming an 8 bit counter.
  * <ul>
- * <li>1.  KDFCounterParameters(ki, 	null, 									"Label || 0x00 || Context || [L]_2]",	8); </li>
- * <li>2.  KDFCounterParameters(ki, 	"Label || 0x00 || Context || [L]_2]", 	null,									8); </li>
- * <li>3a. KDFCounterParameters(ki, 	"Label || 0x00",						"Context || [L]_2]",					8);  </li>
- * <li>3b. KDFCounterParameters(ki, 	"Label || 0x00",						"[L]_2] || Context",					8);</li>
- * <li>3c. KDFCounterParameters(ki, 	"Label", 								"0x00 || Context || [L]_2]",			8); </li>
+ * <li>1.  KDFCounterParameters(ki,     null,                                     "Label || 0x00 || Context || [L]_2]",    8); </li>
+ * <li>2.  KDFCounterParameters(ki,     "Label || 0x00 || Context || [L]_2]",     null,                                    8); </li>
+ * <li>3a. KDFCounterParameters(ki,     "Label || 0x00",                        "Context || [L]_2]",                    8);  </li>
+ * <li>3b. KDFCounterParameters(ki,     "Label || 0x00",                        "[L]_2] || Context",                    8);</li>
+ * <li>3c. KDFCounterParameters(ki,     "Label",                                 "0x00 || Context || [L]_2]",            8); </li>
  * </ul>
  */
 public final class KDFCounterParameters
@@ -42,22 +42,22 @@ public final class KDFCounterParameters
     /**
      * Base constructor - suffix fixed input data only.
      *
-     * @param ki the KDF seed
-     * @param fixedInputDataCounterSuffix  fixed input data to follow counter.
-     * @param r length of the counter in bits.
+     * @param ki                          the KDF seed
+     * @param fixedInputDataCounterSuffix fixed input data to follow counter.
+     * @param r                           length of the counter in bits.
      */
     public KDFCounterParameters(byte[] ki, byte[] fixedInputDataCounterSuffix, int r)
     {
-    	this(ki, null, fixedInputDataCounterSuffix, r);
+        this(ki, null, fixedInputDataCounterSuffix, r);
     }
 
     /**
      * Base constructor - prefix and suffix fixed input data.
      *
-     * @param ki the KDF seed
+     * @param ki                          the KDF seed
      * @param fixedInputDataCounterPrefix fixed input data to precede counter
      * @param fixedInputDataCounterSuffix fixed input data to follow counter.
-     * @param r length of the counter in bits.
+     * @param r                           length of the counter in bits.
      */
     public KDFCounterParameters(byte[] ki, byte[] fixedInputDataCounterPrefix, byte[] fixedInputDataCounterSuffix, int r)
     {
@@ -75,7 +75,7 @@ public final class KDFCounterParameters
         {
             this.fixedInputDataCounterPrefix = Arrays.clone(fixedInputDataCounterPrefix);
         }
-        
+
         if (fixedInputDataCounterSuffix == null)
         {
             this.fixedInputDataCounterSuffix = new byte[0];
@@ -91,7 +91,7 @@ public final class KDFCounterParameters
         }
         this.r = r;
     }
-    
+
     public byte[] getKI()
     {
         return ki;
@@ -101,7 +101,7 @@ public final class KDFCounterParameters
     {
         return Arrays.clone(fixedInputDataCounterPrefix);
     }
-    
+
     public byte[] getFixedInputDataCounterSuffix()
     {
         return Arrays.clone(fixedInputDataCounterSuffix);

@@ -52,9 +52,6 @@ class CMSUtils
        wrapAlgNames.put(CMSAlgorithm.AES128_WRAP, "AESWRAP");
        wrapAlgNames.put(CMSAlgorithm.AES192_WRAP, "AESWRAP");
        wrapAlgNames.put(CMSAlgorithm.AES256_WRAP, "AESWRAP");
-       wrapAlgNames.put(CMSAlgorithm.AES128_WRAP_PAD, "AES-KWP");
-       wrapAlgNames.put(CMSAlgorithm.AES192_WRAP_PAD, "AES-KWP");
-       wrapAlgNames.put(CMSAlgorithm.AES256_WRAP_PAD, "AES-KWP");
     }
 
     static
@@ -267,15 +264,15 @@ class CMSUtils
     public static int getKekSize(ASN1ObjectIdentifier symWrapAlg)
     {
         // TODO: add table
-        if (symWrapAlg.equals(CMSAlgorithm.AES256_WRAP) || symWrapAlg.equals(CMSAlgorithm.AES256_WRAP_PAD))
+        if (symWrapAlg.equals(CMSAlgorithm.AES256_WRAP))
         {
             return 32;
         }
-        else if (symWrapAlg.equals(CMSAlgorithm.AES128_WRAP) || symWrapAlg.equals(CMSAlgorithm.AES128_WRAP_PAD))
+        else if (symWrapAlg.equals(CMSAlgorithm.AES128_WRAP))
         {
             return  16;
         }
-        else if (symWrapAlg.equals(CMSAlgorithm.AES192_WRAP) || symWrapAlg.equals(CMSAlgorithm.AES192_WRAP_PAD))
+        else if (symWrapAlg.equals(CMSAlgorithm.AES192_WRAP))
         {
             return  24;
         }

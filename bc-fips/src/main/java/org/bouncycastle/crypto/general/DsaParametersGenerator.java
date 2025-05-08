@@ -20,10 +20,10 @@ import org.bouncycastle.util.encoders.Hex;
  */
 class DsaParametersGenerator
 {
-    private Digest          digest;
-    private int             L, N;
-    private int             certainty;
-    private SecureRandom    random;
+    private Digest digest;
+    private int L, N;
+    private int certainty;
+    private SecureRandom random;
 
     private static final BigInteger ZERO = BigInteger.valueOf(0);
     private static final BigInteger ONE = BigInteger.valueOf(1);
@@ -45,14 +45,14 @@ class DsaParametersGenerator
     /**
      * initialise the key generator.
      *
-     * @param size size of the key (range 2^512 -&gt; 2^1024 - 64 bit increments)
+     * @param size      size of the key (range 2^512 -&gt; 2^1024 - 64 bit increments)
      * @param certainty measure of robustness of prime (for FIPS 186-2 compliance this should be at least 80).
-     * @param random random byte source.
+     * @param random    random byte source.
      */
     public void init(
-        int             size,
-        int             certainty,
-        SecureRandom    random)
+        int size,
+        int certainty,
+        SecureRandom random)
     {
         this.use186_3 = false;
         this.L = size;
@@ -64,10 +64,10 @@ class DsaParametersGenerator
     /**
      * Initialise the key generator for DSA 2.
      * <p>
-     *     Use this init method if you need to generate parameters for DSA 2 keys.
+     * Use this init method if you need to generate parameters for DSA 2 keys.
      * </p>
      *
-     * @param params  DSA 2 key generation parameters.
+     * @param params DSA 2 key generation parameters.
      */
     public void init(
         DsaParameterGenerationParameters params)
@@ -117,19 +117,19 @@ class DsaParametersGenerator
 
     private DsaParameters generateParameters_FIPS186_2()
     {
-        byte[]          seed = new byte[20];
-        byte[]          part1 = new byte[20];
-        byte[]          part2 = new byte[20];
-        byte[]          u = new byte[20];
-        int             n = (L - 1) / 160;
-        byte[]          w = new byte[L / 8];
+        byte[] seed = new byte[20];
+        byte[] part1 = new byte[20];
+        byte[] part2 = new byte[20];
+        byte[] u = new byte[20];
+        int n = (L - 1) / 160;
+        byte[] w = new byte[L / 8];
 
 //        if (!(digest instanceof SHA1Digest))
 //        {
 //            throw new IllegalStateException("can only use SHA-1 for generating FIPS 186-2 parameters");
 //        }
 
-        for (;;)
+        for (; ; )
         {
             random.nextBytes(seed);
 
@@ -197,7 +197,7 @@ class DsaParametersGenerator
         BigInteger e = p.subtract(ONE).divide(q);
         BigInteger pSub2 = p.subtract(TWO);
 
-        for (;;)
+        for (; ; )
         {
             BigInteger h = BigIntegers.createRandomInRange(TWO, pSub2, r);
             BigInteger g = h.modPow(e, p);
@@ -235,7 +235,7 @@ class DsaParametersGenerator
         int b = (L - 1) % outlen;
 
         byte[] output = new byte[d.getDigestSize()];
-        for (;;)
+        for (; ; )
         {
 // 5. Get an arbitrary sequence of seedlen bits as the domain_parameter_seed.
             random.nextBytes(seed);
@@ -285,7 +285,7 @@ class DsaParametersGenerator
 
 // 11.3 X = W + 2^(L–1). Comment: 0 ≤ W < 2L–1; hence, 2L–1 ≤ X < 2L.
                 BigInteger X = W.add(ONE.shiftLeft(L - 1));
- 
+
 // 11.4 c = X mod 2q.
                 BigInteger c = X.mod(q.shiftLeft(1));
 
@@ -309,7 +309,7 @@ class DsaParametersGenerator
                         BigInteger g = calculateGenerator_FIPS186_3_Verifiable(d, p, q, seed, usageIndex);
                         if (g != null)
                         {
-                           return new DsaParameters(p, q, g, new DsaValidationParameters(seed, counter, usageIndex));
+                            return new DsaParameters(p, q, g, new DsaValidationParameters(seed, counter, usageIndex));
                         }
                     }
 
@@ -328,13 +328,13 @@ class DsaParametersGenerator
     }
 
     private static BigInteger calculateGenerator_FIPS186_3_Unverifiable(BigInteger p, BigInteger q,
-        SecureRandom r)
+                                                                        SecureRandom r)
     {
         return calculateGenerator_FIPS186_2(p, q, r);
     }
 
     private static BigInteger calculateGenerator_FIPS186_3_Verifiable(Digest d, BigInteger p, BigInteger q,
-        byte[] seed, int index)
+                                                                      byte[] seed, int index)
     {
 // A.2.3 Verifiable Canonical Generation of the Generator g
         BigInteger e = p.subtract(ONE).divide(q);

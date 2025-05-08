@@ -17,7 +17,6 @@ import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.ASN1UTCTime;
 import org.bouncycastle.asn1.DERGeneralizedTime;
 import org.bouncycastle.asn1.DERUTCTime;
-import org.bouncycastle.asn1.LocaleUtil;
 
 public class Time
     extends ASN1Object
@@ -55,7 +54,7 @@ public class Time
         Date    time)
     {
         SimpleTimeZone      tz = new SimpleTimeZone(0, "Z");
-        SimpleDateFormat    dateF = new SimpleDateFormat("yyyyMMddHHmmss", LocaleUtil.EN_Locale);
+        SimpleDateFormat    dateF = new SimpleDateFormat("yyyyMMddHHmmss");
 
         dateF.setTimeZone(tz);
 

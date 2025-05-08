@@ -31,11 +31,11 @@ class PKCS5S2ParametersGenerator<T extends Parameters>
     }
 
     private void F(
-        byte[]  S,
-        int     c,
-        byte[]  iBuf,
-        byte[]  out,
-        int     outOff)
+        byte[] S,
+        int c,
+        byte[] iBuf,
+        byte[] out,
+        int outOff)
     {
         if (c == 0)
         {
@@ -67,11 +67,11 @@ class PKCS5S2ParametersGenerator<T extends Parameters>
     private byte[] generateDerivedKey(
         int dkLen)
     {
-        int     hLen = hMac.getMacSize();
-        int     l = (dkLen + hLen - 1) / hLen;
-        byte[]  iBuf = new byte[4];
-        byte[]  outBytes = new byte[l * hLen];
-        int     outPos = 0;
+        int hLen = hMac.getMacSize();
+        int l = (dkLen + hLen - 1) / hLen;
+        byte[] iBuf = new byte[4];
+        byte[] outBytes = new byte[l * hLen];
+        int outPos = 0;
 
         CipherParameters param = new KeyParameterImpl(password);
 
@@ -116,12 +116,12 @@ class PKCS5S2ParametersGenerator<T extends Parameters>
      * with.
      *
      * @param keySize the size of the key we want (in bits)
-     * @param ivSize the size of the iv we want (in bits)
+     * @param ivSize  the size of the iv we want (in bits)
      * @return a ParametersWithIV object.
      */
     public CipherParameters generateDerivedParameters(
-        int     keySize,
-        int     ivSize)
+        int keySize,
+        int ivSize)
     {
         keySize = keySize / 8;
         ivSize = ivSize / 8;
@@ -160,7 +160,7 @@ class PKCS5S2ParametersGenerator<T extends Parameters>
     {
         byte[][] rv = new byte[2][];
 
-        byte[]  dKey = generateDerivedKey(keySizeInBytes + ivSizeInBytes);
+        byte[] dKey = generateDerivedKey(keySizeInBytes + ivSizeInBytes);
 
         switch (keyType)
         {

@@ -20,13 +20,13 @@ public class SICBlockCipher
     extends StreamBlockCipher
     implements SkippingStreamCipher
 {
-    private final BlockCipher     cipher;
-    private final int             blockSize;
+    private final BlockCipher cipher;
+    private final int blockSize;
 
-    private byte[]          IV;
-    private byte[]          counter;
-    private byte[]          counterOut;
-    private int             byteCount;
+    private byte[] IV;
+    private byte[] counter;
+    private byte[] counterOut;
+    private int byteCount;
 
     /**
      * Basic constructor.
@@ -46,8 +46,8 @@ public class SICBlockCipher
     }
 
     public void init(
-        boolean             forEncryption, //ignored by this CTR mode
-        CipherParameters    params)
+        boolean forEncryption, //ignored by this CTR mode
+        CipherParameters params)
         throws IllegalArgumentException
     {
         if (params instanceof ParametersWithIV)
@@ -87,7 +87,7 @@ public class SICBlockCipher
     }
 
     public int processBlock(byte[] in, int inOff, byte[] out, int outOff)
-          throws DataLengthException, IllegalStateException
+        throws DataLengthException, IllegalStateException
     {
         processBytes(in, inOff, blockSize, out, outOff);
 
@@ -95,10 +95,12 @@ public class SICBlockCipher
     }
 
     protected byte calculateByte(byte in)
-          throws DataLengthException, IllegalStateException
+        throws DataLengthException, IllegalStateException
     {
         if (byteCount == 0)
         {
+            checkCounter();
+
             cipher.processBlock(counter, 0, counterOut, 0);
 
             return (byte)(counterOut[byteCount++] ^ in);
@@ -111,8 +113,6 @@ public class SICBlockCipher
             byteCount = 0;
 
             incrementCounter();
-
-            checkCounter();
         }
 
         return rv;
@@ -272,7 +272,7 @@ public class SICBlockCipher
             else
             {
                 decrementCounter();
-                byteCount =  blockSize + gap;
+                byteCount = blockSize + gap;
             }
         }
     }
@@ -323,8 +323,8 @@ public class SICBlockCipher
 
             if (v < 0)
             {
-               res[i - 1]--;
-               v += 256;
+                res[i - 1]--;
+                v += 256;
             }
 
             res[i] = (byte)v;

@@ -83,8 +83,6 @@ public final class AsymmetricECGOST3410PrivateKey
 
     public final byte[] getEncoded()
     {
-        GOST3410Parameters<ECDomainParameters> parameters = getParameters();
-
         byte[] encKey;
         byte[] encS = this.getS().toByteArray();
 
@@ -98,15 +96,15 @@ public final class AsymmetricECGOST3410PrivateKey
         }
         extractBytes(encKey, this.getS());
 
-        if (parameters.getPublicKeyParamSet() != null)
+        if (getParameters().getPublicKeyParamSet() != null)
         {
-            GOST3410PublicKeyAlgParameters pubParams = new GOST3410PublicKeyAlgParameters(parameters.getPublicKeyParamSet(), parameters.getDigestParamSet(), parameters.getEncryptionParamSet());
+            GOST3410PublicKeyAlgParameters pubParams = new GOST3410PublicKeyAlgParameters(getParameters().getPublicKeyParamSet(), getParameters().getDigestParamSet(), getParameters().getEncryptionParamSet());
 
             if (encKey.length == 64)
             {
                 return KeyUtils.getEncodedPrivateKeyInfo(new AlgorithmIdentifier(RosstandartObjectIdentifiers.id_tc26_gost_3410_12_512, pubParams), new DEROctetString(encKey));
             }
-            if (pubParams.getEncryptionParamSet() != null && pubParams.getEncryptionParamSet().on(RosstandartObjectIdentifiers.id_tc26))
+            if (pubParams.getEncryptionParamSet().on(RosstandartObjectIdentifiers.id_tc26))
             {
                 return KeyUtils.getEncodedPrivateKeyInfo(new AlgorithmIdentifier(RosstandartObjectIdentifiers.id_tc26_gost_3410_12_256, pubParams), new DEROctetString(encKey));
             }
@@ -121,7 +119,7 @@ public final class AsymmetricECGOST3410PrivateKey
             {
                 return KeyUtils.getEncodedSubjectPublicKeyInfo(new AlgorithmIdentifier(RosstandartObjectIdentifiers.id_tc26_gost_3410_12_512), new DEROctetString(encKey));
             }
-            if (parameters.getDomainParameters() instanceof NamedECDomainParameters)
+            if (getParameters().getDomainParameters() instanceof NamedECDomainParameters)
             {
                 ASN1ObjectIdentifier id = ((NamedECDomainParameters)getParameters().getDomainParameters()).getID();
                 if (id.on(RosstandartObjectIdentifiers.id_tc26))
@@ -174,10 +172,8 @@ public final class AsymmetricECGOST3410PrivateKey
         return super.getParameters();
     }
 
-    public final BigInteger getS()
+    public BigInteger getS()
     {
-        checkApprovedOnlyModeStatus();
-
         KeyUtils.checkPermission(Permissions.CanOutputPrivateKey);
 
         BigInteger xVal = x;
@@ -220,17 +216,6 @@ public final class AsymmetricECGOST3410PrivateKey
         return result;
     }
 
-    /*
-    @Override
-    protected void finalize()
-        throws Throwable
-    {
-        super.finalize();
-
-        //destroy();
-    }
-     */
-
     @Override
     public boolean equals(Object o)
     {
@@ -246,8 +231,11 @@ public final class AsymmetricECGOST3410PrivateKey
 
         AsymmetricECGOST3410PrivateKey other = (AsymmetricECGOST3410PrivateKey)o;
 
-        other.checkApprovedOnlyModeStatus();
-
-        return KeyUtils.isFieldEqual(this.x, other.x) && KeyUtils.isFieldEqual(this.domainParameters, other.domainParameters);
+        if (this.isDestroyed() || other.isDestroyed())
+        {
+            return false;
+        }
+        
+        return x.equals(other.x) && this.getParameters().equals(other.getParameters());
     }
 }

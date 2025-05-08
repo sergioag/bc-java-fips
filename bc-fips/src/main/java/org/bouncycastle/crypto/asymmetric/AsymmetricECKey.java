@@ -15,7 +15,7 @@ public abstract class AsymmetricECKey
     private final boolean    approvedModeOnly;
 
     private Algorithm algorithm;
-    protected ECDomainParameters domainParameters;
+    private ECDomainParameters domainParameters;
 
     AsymmetricECKey(Algorithm algorithm, ECDomainParameters domainParameters)
     {

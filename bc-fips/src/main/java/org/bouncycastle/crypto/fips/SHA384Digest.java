@@ -21,7 +21,7 @@ import org.bouncycastle.util.Pack;
 class SHA384Digest
     extends LongDigest
 {
-    private static final int    DIGEST_LENGTH = 48;
+    private static final int DIGEST_LENGTH = 48;
 
     /**
      * Standard constructor
@@ -50,8 +50,8 @@ class SHA384Digest
     }
 
     public int doFinal(
-        byte[]  out,
-        int     outOff)
+        byte[] out,
+        int outOff)
     {
         finish();
 

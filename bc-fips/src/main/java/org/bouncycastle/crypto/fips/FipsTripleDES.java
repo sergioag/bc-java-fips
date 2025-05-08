@@ -17,11 +17,11 @@ import org.bouncycastle.crypto.PlainInputProcessingException;
 import org.bouncycastle.crypto.SymmetricKey;
 import org.bouncycastle.crypto.SymmetricSecretKey;
 import org.bouncycastle.crypto.general.FipsRegister;
-import org.bouncycastle.crypto.internal.BlockCipher;
 import org.bouncycastle.crypto.internal.BufferedBlockCipher;
 import org.bouncycastle.crypto.internal.InvalidCipherTextException;
 import org.bouncycastle.crypto.internal.KeyGenerationParameters;
 import org.bouncycastle.crypto.internal.Mac;
+import org.bouncycastle.crypto.internal.MultiBlockCipher;
 import org.bouncycastle.crypto.internal.StreamCipher;
 import org.bouncycastle.crypto.internal.ValidatedSymmetricKey;
 import org.bouncycastle.crypto.internal.Wrapper;
@@ -54,7 +54,7 @@ public final class FipsTripleDES
      */
     public static final FipsAlgorithm ALGORITHM = new FipsAlgorithm("TripleDES");
 
-    static final FipsEngineProvider<BlockCipher> ENGINE_PROVIDER;
+    static final FipsEngineProvider<MultiBlockCipher> ENGINE_PROVIDER;
 
     /**
      * TripleDES in electronic code book(ECB) mode.
@@ -307,32 +307,32 @@ public final class FipsTripleDES
      * Parameters for Triple-DES key wrap operators.
      */
     public static final class WrapParameters
-       extends FipsParameters
-   {
-       private final boolean useInverse;
+        extends FipsParameters
+    {
+        private final boolean useInverse;
 
-       WrapParameters(FipsAlgorithm algorithm)
-       {
-           this(algorithm, false);
-       }
+        WrapParameters(FipsAlgorithm algorithm)
+        {
+            this(algorithm, false);
+        }
 
-       private WrapParameters(FipsAlgorithm algorithm, boolean useInverse)
-       {
-           super(algorithm);
+        private WrapParameters(FipsAlgorithm algorithm, boolean useInverse)
+        {
+            super(algorithm);
 
-           this.useInverse = useInverse;
-       }
+            this.useInverse = useInverse;
+        }
 
-       public boolean isUsingInverseFunction()
-       {
-           return useInverse;
-       }
+        public boolean isUsingInverseFunction()
+        {
+            return useInverse;
+        }
 
-       public WrapParameters withUsingInverseFunction(boolean useInverse)
-       {
-           return new WrapParameters(getAlgorithm(), useInverse);
-       }
-   }
+        public WrapParameters withUsingInverseFunction(boolean useInverse)
+        {
+            return new WrapParameters(getAlgorithm(), useInverse);
+        }
+    }
 
     /**
      * Triple-DES key generator.
@@ -445,10 +445,10 @@ public final class FipsTripleDES
                 {
                     if (cipher.getUnderlyingCipher() instanceof StreamCipher)
                     {
-                        return new CipherOutputStreamImpl(out, (StreamCipher)cipher.getUnderlyingCipher());
+                        return CipherOutputStreamImpl.getInstance(out, (StreamCipher)cipher.getUnderlyingCipher());
                     }
 
-                    return new CipherOutputStreamImpl(out, cipher);
+                    return CipherOutputStreamImpl.getInstance(out, cipher);
                 }
             };
         }
@@ -499,7 +499,7 @@ public final class FipsTripleDES
 
                     LOG.warning("Triple-DES encryption detected: no longer an approved operation but override set");
                 }
-                
+
                 this.key = key;
                 this.parameters = parameters;
 
@@ -510,10 +510,10 @@ public final class FipsTripleDES
             {
                 if (cipher.getUnderlyingCipher() instanceof StreamCipher)
                 {
-                    return new CipherOutputStreamImpl(out, (StreamCipher)cipher.getUnderlyingCipher());
+                    return CipherOutputStreamImpl.getInstance(out, (StreamCipher)cipher.getUnderlyingCipher());
                 }
 
-                return new CipherOutputStreamImpl(out, cipher);
+                return CipherOutputStreamImpl.getInstance(out, cipher);
             }
 
             public OutputEncryptor<Parameters> withSecureRandom(SecureRandom random)
@@ -556,7 +556,7 @@ public final class FipsTripleDES
             final Mac mac = makeMAC(parameters);
             ValidatedSymmetricKey sKey = validateKey(key, parameters, false);
 
-            if(parameters.getIV() != null)
+            if (parameters.getIV() != null)
             {
                 mac.init(Utils.getParametersWithIV(sKey, parameters.getIV()));
             }
@@ -615,9 +615,9 @@ public final class FipsTripleDES
     {
         private Wrapper createWrapper(FipsAlgorithm algorithm, boolean useInverse)
         {
-            Wrapper  cipher;
+            Wrapper cipher;
 
-            switch(((Mode)algorithm.basicVariation()))
+            switch (((Mode)algorithm.basicVariation()))
             {
             case WRAP:
                 cipher = new SP80038FWrapEngine(ENGINE_PROVIDER.createEngine(), useInverse);
@@ -632,16 +632,6 @@ public final class FipsTripleDES
         @Override
         public FipsKeyWrapper<WrapParameters> createKeyWrapper(SymmetricKey key, final WrapParameters parameters)
         {
-            if (CryptoServicesRegistrar.isInApprovedOnlyMode())
-            {
-                if (!Properties.isOverrideSet("org.bouncycastle.tripledes.allow_wrap"))
-                {
-                    throw new FipsUnapprovedOperationError("Triple-DES encryption key-wrapping disallowed");
-                }
-
-                LOG.warning("Triple-DES encryption key-wrapping detected: no longer an approved operation but override set");
-            }
-            
             ValidatedSymmetricKey sKey = validateKey(key, parameters, false);
             final Wrapper wrapper = createWrapper(parameters.getAlgorithm(), parameters.useInverse);
 
@@ -657,6 +647,16 @@ public final class FipsTripleDES
                 public byte[] wrap(byte[] in, int inOff, int inLen)
                     throws PlainInputProcessingException
                 {
+                    if (CryptoServicesRegistrar.isInApprovedOnlyMode())
+                    {
+                        if (!Properties.isOverrideSet("org.bouncycastle.tripledes.allow_wrap"))
+                        {
+                            throw new FipsUnapprovedOperationError("Triple-DES encryption key-wrapping disallowed");
+                        }
+
+                        LOG.warning("Triple-DES encryption key-wrapping detected: no longer an approved operation but override set");
+                    }
+
                     try
                     {
                         return wrapper.wrap(in, inOff, inLen);
@@ -775,14 +775,14 @@ public final class FipsTripleDES
     }
 
     private static final class EngineProvider
-        extends FipsEngineProvider<BlockCipher>
+        extends FipsEngineProvider<MultiBlockCipher>
     {
         private static byte[] input = Hex.decode("4e6f772069732074");
         private static byte[] output = Hex.decode("f7cfbe5e6c38b35a");
 
         private static final byte[] keyBytes = Hex.decode("0102020404070708080b0b0d0d0e0e101013131515161619");
 
-        public BlockCipher createEngine()
+        public MultiBlockCipher createEngine()
         {
             return SelfTestExecutor.validate(ALGORITHM, new DesEdeEngine(), new VariantKatTest<DesEdeEngine>()
             {

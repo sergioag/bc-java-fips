@@ -1,12 +1,8 @@
-/***************************************************************/
-/******    DO NOT EDIT THIS CLASS bc-java SOURCE FILE     ******/
-/***************************************************************/
 package org.bouncycastle.asn1.esf;
 
 import java.io.IOException;
 
 import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -84,9 +80,6 @@ public class OtherRevVals
 
     public ASN1Primitive toASN1Primitive()
     {
-        ASN1EncodableVector v = new ASN1EncodableVector();
-        v.add(this.otherRevValType);
-        v.add(this.otherRevVals);
-        return new DERSequence(v);
+        return new DERSequence(new ASN1Encodable[]{otherRevValType, otherRevVals});
     }
 }

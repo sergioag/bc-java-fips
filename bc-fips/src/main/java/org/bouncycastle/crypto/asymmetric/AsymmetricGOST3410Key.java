@@ -36,7 +36,7 @@ public abstract class AsymmetricGOST3410Key<T>
     }
 
     private Algorithm algorithm;
-    protected GOST3410Parameters<T> domainParameters;
+    private GOST3410Parameters<T> domainParameters;
 
     AsymmetricGOST3410Key(Algorithm algorithm, GOST3410Parameters<T> domainParameters)
     {
@@ -61,7 +61,7 @@ public abstract class AsymmetricGOST3410Key<T>
         {
             GOST3410PublicKeyAlgParameters params = GOST3410PublicKeyAlgParameters.getInstance(algorithmIdentifier.getParameters());
 
-            return new GOST3410Parameters<GOST3410DomainParameters>(params.getPublicKeyParamSet(), params.getDigestParamSet(), params.getEncryptionParamSet());
+            return new GOST3410Parameters<GOST3410DomainParameters>(params.getPublicKeyParamSet(), params.getDigestParamSet(), params.getDigestParamSet());
         }
 
         return null;

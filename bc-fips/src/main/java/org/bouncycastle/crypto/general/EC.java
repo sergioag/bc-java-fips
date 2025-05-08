@@ -79,7 +79,7 @@ public final class EC
         /**
          * Key Generation parameters for a specific algorithm set.
          *
-         * @param parameters parameter set representing the algorithm involved.
+         * @param parameters       parameter set representing the algorithm involved.
          * @param domainParameters the EC domain parameters.
          */
         public KeyGenParameters(DSAParameters parameters, ECDomainParameters domainParameters)
@@ -103,7 +103,7 @@ public final class EC
      * EC DSA signature parameters for non-FIPS algorithms.
      */
     public static final class DSAParameters
-        extends GeneralParameters
+        extends GeneralParameters<GeneralAlgorithm>
     {
         private final DigestAlgorithm digestAlgorithm;
 
@@ -196,7 +196,7 @@ public final class EC
             Digest digest = (parameters.digestAlgorithm != null) ? Register.createDigest(parameters.digestAlgorithm) : new NullDigest();
 
             EcDsaSigner ecdsaSigner;
-            if (parameters.getAlgorithm() == DSA.getDigestAlgorithm())
+            if (parameters.getAlgorithm().basicVariation() == DSA.getAlgorithm().basicVariation())
             {
                 ecdsaSigner = new EcDsaSigner(new RandomDsaKCalculator());
             }

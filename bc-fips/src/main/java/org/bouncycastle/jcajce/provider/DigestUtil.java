@@ -66,6 +66,12 @@ class DigestUtil
         algorithms.put("SHA3-512", FipsSHS.Algorithm.SHA3_512);
         algorithms.put(NISTObjectIdentifiers.id_sha3_512.getId(), FipsSHS.Algorithm.SHA3_512);
 
+        algorithms.put("SHAKE128", FipsSHS.Algorithm.SHAKE128);
+        algorithms.put(NISTObjectIdentifiers.id_shake128.getId(), FipsSHS.Algorithm.SHAKE128);
+
+        algorithms.put("SHAKE256", FipsSHS.Algorithm.SHAKE256);
+        algorithms.put(NISTObjectIdentifiers.id_shake256.getId(), FipsSHS.Algorithm.SHAKE256);
+
         algorithms.put("RIPEMD128", SecureHash.Algorithm.RIPEMD128);
         algorithms.put("RIPEMD-128", SecureHash.Algorithm.RIPEMD128);
         algorithms.put(TeleTrusTObjectIdentifiers.ripemd128.getId(), SecureHash.Algorithm.RIPEMD128);
@@ -132,6 +138,12 @@ class DigestUtil
 
         oids.put("SHA3-512", NISTObjectIdentifiers.id_sha3_512);
         oids.put(NISTObjectIdentifiers.id_sha3_512.getId(), NISTObjectIdentifiers.id_sha3_512);
+
+        oids.put("SHAKE128", NISTObjectIdentifiers.id_shake128);
+        oids.put(NISTObjectIdentifiers.id_shake128.getId(), NISTObjectIdentifiers.id_shake128);
+
+        oids.put("SHAKE256", NISTObjectIdentifiers.id_shake256);
+        oids.put(NISTObjectIdentifiers.id_shake256.getId(), NISTObjectIdentifiers.id_shake256);
 
         oids.put("RIPEMD128", TeleTrusTObjectIdentifiers.ripemd128);
         oids.put("RIPEMD-128", TeleTrusTObjectIdentifiers.ripemd128);

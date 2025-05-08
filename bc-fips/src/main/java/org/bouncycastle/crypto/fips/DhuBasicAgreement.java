@@ -43,7 +43,7 @@ class DhuBasicAgreement
         eAgree.init(privParams.getEphemeralPrivateKey());
 
         BigInteger eComp = eAgree.calculateAgreement(pubParams.getEphemeralPublicKey());
-        
+
         return Arrays.concatenate(
             BigIntegers.asUnsignedByteArray(this.getFieldSize(), eComp),
             BigIntegers.asUnsignedByteArray(this.getFieldSize(), sComp));

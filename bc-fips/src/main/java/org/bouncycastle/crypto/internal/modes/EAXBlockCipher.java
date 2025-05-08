@@ -17,14 +17,14 @@ import org.bouncycastle.util.Arrays;
 /**
  * A Two-Pass Authenticated-Encryption Scheme Optimized for Simplicity and
  * Efficiency - by M. Bellare, P. Rogaway, D. Wagner.
- *
+ * <p>
  * https://www.cs.ucdavis.edu/~rogaway/papers/eax.pdf
- *
+ * <p>
  * EAX is an AEAD scheme based on CTR and OMAC1/CMAC, that uses a single block
  * cipher to encrypt and authenticate data. It's on-line (the length of a
  * message isn't needed to begin processing it), has good performances, it's
  * simple and provably secure (provided the underlying block cipher is secure).
- *
+ * <p>
  * Of course, this implementations is NOT thread-safe.
  */
 public class EAXBlockCipher
@@ -188,7 +188,7 @@ public class EAXBlockCipher
 
         if (initialAssociatedText != null)
         {
-           processAADBytes(initialAssociatedText, 0, initialAssociatedText.length);
+            processAADBytes(initialAssociatedText, 0, initialAssociatedText.length);
         }
     }
 

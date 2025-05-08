@@ -1,11 +1,6 @@
 package org.bouncycastle.cert.cmp;
 
-import java.io.IOException;
-import java.io.OutputStream;
-
-import org.bouncycastle.asn1.ASN1EncodableVector;
-import org.bouncycastle.asn1.ASN1Encoding;
-import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.cmp.CMPCertificate;
 import org.bouncycastle.asn1.cmp.CMPObjectIdentifiers;
@@ -183,9 +178,6 @@ public class ProtectedPKIMessage
 
     private DERSequence createProtected()
     {
-        ASN1EncodableVector v = new ASN1EncodableVector(2);
-        v.add(pkiMessage.getHeader());
-        v.add(pkiMessage.getBody());
-        return new DERSequence(v);
+        return new DERSequence(new ASN1Encodable[] {pkiMessage.getHeader(), pkiMessage.getBody()});
     }
 }

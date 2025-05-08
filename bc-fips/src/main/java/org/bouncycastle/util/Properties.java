@@ -10,6 +10,7 @@ import java.security.Security;
  */
 public class Properties
 {
+
     /**
      * Return whether a particular override has been set to true.
      *
@@ -83,6 +84,27 @@ public class Properties
                     return v;
                 }
                 return System.getProperty(propertyName);
+            }
+        });
+    }
+
+    public static String getPropertyValue(final String propertyName, final String alternative)
+    {
+        return AccessController.doPrivileged(new PrivilegedAction<String>()
+        {
+            public String run()
+            {
+                String v = Security.getProperty(propertyName);
+                if (v != null)
+                {
+                    return v;
+                }
+                v = System.getProperty(propertyName);
+                if (v != null)
+                {
+                    return v;
+                }
+                return alternative;
             }
         });
     }

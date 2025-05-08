@@ -263,7 +263,7 @@ public final class RSA
          * Base constructor.
          *
          * @param publicExponent the public exponent to use.
-         * @param keySize the key size (in bits).
+         * @param keySize        the key size (in bits).
          */
         public KeyGenParameters(BigInteger publicExponent, int keySize)
         {
@@ -271,23 +271,23 @@ public final class RSA
         }
 
         /**
-          * Base constructor with certainty.
-          *
-          * @param publicExponent the public exponent to use.
-          * @param keySize the key size (in bits).
-          * @param certainty certainty to use for prime number calculation.
-          */
-         public KeyGenParameters(BigInteger publicExponent, int keySize, int certainty)
-         {
-             this(ALGORITHM, publicExponent, keySize, certainty);
-         }
+         * Base constructor with certainty.
+         *
+         * @param publicExponent the public exponent to use.
+         * @param keySize        the key size (in bits).
+         * @param certainty      certainty to use for prime number calculation.
+         */
+        public KeyGenParameters(BigInteger publicExponent, int keySize, int certainty)
+        {
+            this(ALGORITHM, publicExponent, keySize, certainty);
+        }
 
         /**
          * Constructor for a key targeted to a specific signature algorithm.
          *
-         * @param parameters the signature parameter set containing the algorithm.
+         * @param parameters     the signature parameter set containing the algorithm.
          * @param publicExponent the public exponent to use.
-         * @param keySize the key size (in bits).
+         * @param keySize        the key size (in bits).
          */
         public KeyGenParameters(SignatureParameters parameters, BigInteger publicExponent, int keySize)
         {
@@ -297,9 +297,9 @@ public final class RSA
         /**
          * Constructor for a key targeted to a specific wrap algorithm.
          *
-         * @param parameters the wrap parameter set containing the algorithm.
+         * @param parameters     the wrap parameter set containing the algorithm.
          * @param publicExponent the public exponent to use.
-         * @param keySize the key size (in bits).
+         * @param keySize        the key size (in bits).
          */
         public KeyGenParameters(WrapParameters parameters, BigInteger publicExponent, int keySize)
         {
@@ -1324,7 +1324,7 @@ public final class RSA
                     throw new IllegalKeyException("Attempt to encrypt/decrypt with RSA modulus already used for sign/verify.");
                 }
                 // FSM_TRANS:5.RSA.4.1,"RSA KEY USAGE CHECK", "CONDITIONAL TEST", "RSA key usage check successful"
-                
+
                 this.key = key;
                 this.parameters = parameters;
 

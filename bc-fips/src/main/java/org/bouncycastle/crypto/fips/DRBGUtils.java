@@ -45,7 +45,7 @@ class DRBGUtils
      */
     static byte[] hash_df(Digest digest, byte[] seedMaterial, int seedLength)
     {
-         // 1. temp = the Null string.
+        // 1. temp = the Null string.
         // 2. .
         // 3. counter = an 8-bit binary value representing the integer "1".
         // 4. For i = 1 to len do
@@ -77,8 +77,8 @@ class DRBGUtils
             digest.doFinal(dig, 0);
 
             int bytesToCopy = ((temp.length - i * dig.length) > dig.length)
-                    ? dig.length
-                    : (temp.length - i * dig.length);
+                ? dig.length
+                : (temp.length - i * dig.length);
             System.arraycopy(dig, 0, temp, i * dig.length, bytesToCopy);
 
             counter++;

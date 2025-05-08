@@ -18,42 +18,54 @@ import org.bouncycastle.util.Arrays;
 class RC2WrapEngine
     implements Wrapper
 {
-   /** Field engine */
-   private CBCBlockCipher engine;
+    /**
+     * Field engine
+     */
+    private CBCBlockCipher engine;
 
-   /** Field param */
-   private CipherParameters param;
+    /**
+     * Field param
+     */
+    private CipherParameters param;
 
-   /** Field paramPlusIV */
-   private ParametersWithIV paramPlusIV;
+    /**
+     * Field paramPlusIV
+     */
+    private ParametersWithIV paramPlusIV;
 
-   /** Field iv */
-   private byte[] iv;
+    /**
+     * Field iv
+     */
+    private byte[] iv;
 
-   /** Field forWrapping */
-   private boolean forWrapping;
-   
-   private SecureRandom sr;
+    /**
+     * Field forWrapping
+     */
+    private boolean forWrapping;
 
-   /** Field IV2           */
-   private static final byte[] IV2 = { (byte) 0x4a, (byte) 0xdd, (byte) 0xa2,
-                                       (byte) 0x2c, (byte) 0x79, (byte) 0xe8,
-                                       (byte) 0x21, (byte) 0x05 };
+    private SecureRandom sr;
+
+    /**
+     * Field IV2
+     */
+    private static final byte[] IV2 = {(byte)0x4a, (byte)0xdd, (byte)0xa2,
+        (byte)0x2c, (byte)0x79, (byte)0xe8,
+        (byte)0x21, (byte)0x05};
 
     //
     // checksum digest
     //
     Digest sha1 = Register.createDigest(FipsSHS.Algorithm.SHA1);
-    byte[]  digest = new byte[20];
+    byte[] digest = new byte[20];
 
-   /**
-    * Method init
-    *
-    * @param forWrapping
-    * @param param
-    */
-   public void init(boolean forWrapping, CipherParameters param)
-   {
+    /**
+     * Method init
+     *
+     * @param forWrapping
+     * @param param
+     */
+    public void init(boolean forWrapping, CipherParameters param)
+    {
         this.forWrapping = forWrapping;
         this.engine = new CBCBlockCipher(new RC2Engine());
 
@@ -67,7 +79,7 @@ class RC2WrapEngine
         {
             throw new IllegalArgumentException("No random provided where one required.");
         }
-        
+
         if (param instanceof ParametersWithIV)
         {
             this.paramPlusIV = (ParametersWithIV)param;
@@ -84,7 +96,7 @@ class RC2WrapEngine
             else
             {
                 throw new IllegalArgumentException(
-                        "You should not supply an IV for unwrapping");
+                    "You should not supply an IV for unwrapping");
             }
         }
         else
@@ -109,27 +121,27 @@ class RC2WrapEngine
             }
         }
 
-   }
+    }
 
-   /**
-    * Method getAlgorithmName
-    *
-    * @return the algorithm name "RC2".
-    */
-   public String getAlgorithmName()
-   {
-      return "RC2";
-   }
+    /**
+     * Method getAlgorithmName
+     *
+     * @return the algorithm name "RC2".
+     */
+    public String getAlgorithmName()
+    {
+        return "RC2";
+    }
 
-   /**
-    * Method wrap
-    *
-    * @param in
-    * @param inOff
-    * @param inLen
-    * @return the wrapped bytes.
-    */
-   public byte[] wrap(byte[] in, int inOff, int inLen)
+    /**
+     * Method wrap
+     *
+     * @param in
+     * @param inOff
+     * @param inLen
+     * @return the wrapped bytes.
+     */
+    public byte[] wrap(byte[] in, int inOff, int inLen)
     {
 
         if (!forWrapping)
@@ -147,7 +159,7 @@ class RC2WrapEngine
 
         keyToBeWrapped[0] = (byte)inLen;
         System.arraycopy(in, inOff, keyToBeWrapped, 1, inLen);
-        
+
         byte[] pad = new byte[keyToBeWrapped.length - inLen - 1];
 
         if (pad.length > 0)
@@ -218,19 +230,19 @@ class RC2WrapEngine
         }
 
         return TEMP3;
-   }
+    }
 
-   /**
-    * Method unwrap
-    *
-    * @param in
-    * @param inOff
-    * @param inLen
-    * @return the unwrapped bytes.
-    * @throws org.bouncycastle.crypto.InvalidCipherTextException
-    */
-   public byte[] unwrap(byte[] in, int inOff, int inLen)
-            throws InvalidCipherTextException
+    /**
+     * Method unwrap
+     *
+     * @param in
+     * @param inOff
+     * @param inLen
+     * @return the unwrapped bytes.
+     * @throws org.bouncycastle.crypto.InvalidCipherTextException
+     */
+    public byte[] unwrap(byte[] in, int inOff, int inLen)
+        throws InvalidCipherTextException
     {
 
         if (forWrapping)
@@ -246,7 +258,7 @@ class RC2WrapEngine
         if (inLen % engine.getBlockSize() != 0)
         {
             throw new InvalidCipherTextException("Ciphertext not multiple of "
-                    + engine.getBlockSize());
+                + engine.getBlockSize());
         }
 
         /*
@@ -257,7 +269,7 @@ class RC2WrapEngine
          * intended, // return error. // // we do not accept 168 bit keys. it
          * has to be 192 bit. int lengthA = (estimatedKeyLengthInBit / 8) + 16;
          * int lengthB = estimatedKeyLengthInBit % 8;
-         * 
+         *
          * if ((lengthA != keyToBeUnwrapped.length) || (lengthB != 0)) { throw
          * new XMLSecurityException("empty"); }
          */
@@ -312,7 +324,7 @@ class RC2WrapEngine
             int currentBytePos = i * engine.getBlockSize();
 
             engine.processBlock(LCEKPADICV, currentBytePos, LCEKPADICV,
-                    currentBytePos);
+                currentBytePos);
         }
 
         // Decompose LCEKPADICV. CKS is the last 8 octets and WK, the wrapped
@@ -332,13 +344,13 @@ class RC2WrapEngine
         if (!checkCMSKeyChecksum(result, CKStoBeVerified))
         {
             throw new InvalidCipherTextException(
-                    "Checksum inside ciphertext is corrupted");
+                "Checksum inside ciphertext is corrupted");
         }
 
         if ((result.length - ((result[0] & 0xff) + 1)) > 7)
         {
             throw new InvalidCipherTextException("too many pad bytes ("
-                    + (result.length - ((result[0] & 0xff) + 1)) + ")");
+                + (result.length - ((result[0] & 0xff) + 1)) + ")");
         }
 
         // CEK is the wrapped key, now extracted for use in data decryption.
@@ -351,19 +363,19 @@ class RC2WrapEngine
      * Some key wrap algorithms make use of the Key Checksum defined
      * in CMS [CMS-Algorithms]. This is used to provide an integrity
      * check value for the key being wrapped. The algorithm is
-     *
+     * <p>
      * - Compute the 20 octet SHA-1 hash on the key being wrapped.
      * - Use the first 8 octets of this hash as the checksum value.
-     *
+     * <p>
      * For details see  https://www.w3.org/TR/xmlenc-core/#sec-CMSKeyChecksum
+     *
      * @param key
      * @return
-     *
      */
     private byte[] calculateCMSKeyChecksum(
         byte[] key)
     {
-        byte[]  result = new byte[8];
+        byte[] result = new byte[8];
 
         sha1.update(key, 0, key.length);
         sha1.doFinal(digest, 0);

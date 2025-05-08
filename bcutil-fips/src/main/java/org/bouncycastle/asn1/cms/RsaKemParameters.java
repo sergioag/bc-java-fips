@@ -1,11 +1,8 @@
-/***************************************************************/
-/******    DO NOT EDIT THIS CLASS bc-java SOURCE FILE     ******/
-/***************************************************************/
 package org.bouncycastle.asn1.cms;
 
 import java.math.BigInteger;
 
-import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -80,11 +77,6 @@ public class RsaKemParameters
 
     public ASN1Primitive toASN1Primitive()
     {
-        ASN1EncodableVector v = new ASN1EncodableVector();
-
-        v.add(keyDerivationFunction);
-        v.add(new ASN1Integer(keyLength));
-
-        return new DERSequence(v);
+        return new DERSequence(new ASN1Encodable[] {keyDerivationFunction, new ASN1Integer(keyLength)});
     }
 }

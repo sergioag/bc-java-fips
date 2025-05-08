@@ -17,7 +17,7 @@ public abstract class FipsMACOperatorFactory<T extends AuthenticationParameters>
     // package protect constructor
     FipsMACOperatorFactory()
     {
-         FipsStatus.isReady();
+        FipsStatus.isReady();
     }
 
     public final FipsOutputMACCalculator<T> createOutputMACCalculator(SymmetricKey key, final T parameters)

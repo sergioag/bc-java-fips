@@ -151,7 +151,7 @@ public final class ChaCha20
         extends GuardedSymmetricKeyGenerator
     {
         private static final int keySizeInBits = 256;
-        
+
         private final GeneralAlgorithm algorithm;
         private final SecureRandom random;
 
@@ -162,7 +162,7 @@ public final class ChaCha20
 
         public KeyGenerator(GeneralParameters parameterSet, SecureRandom random)
         {
-             this((GeneralAlgorithm)parameterSet.getAlgorithm(), random);
+            this((GeneralAlgorithm)parameterSet.getAlgorithm(), random);
         }
 
         private KeyGenerator(GeneralAlgorithm algorithm, SecureRandom random)

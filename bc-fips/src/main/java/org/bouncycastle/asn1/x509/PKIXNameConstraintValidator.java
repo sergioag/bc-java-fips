@@ -2079,6 +2079,7 @@ public class PKIXNameConstraintValidator
             temp.append(":");
             try
             {
+                // -DM Hex.toHexString
                 temp.append(Hex.toHexString(name.getValue().toASN1Primitive().getEncoded()));
             }
             catch (IOException e)

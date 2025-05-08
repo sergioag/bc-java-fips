@@ -14,7 +14,7 @@ class SHA512tDigest
 {
     private final int digestLength;
 
-    private long  H1t, H2t, H3t, H4t, H5t, H6t, H7t, H8t;
+    private long H1t, H2t, H3t, H4t, H5t, H6t, H7t, H8t;
 
     /**
      * Standard constructor
@@ -67,8 +67,8 @@ class SHA512tDigest
     }
 
     public int doFinal(
-        byte[]  out,
-        int     outOff)
+        byte[] out,
+        int outOff)
     {
         finish();
 

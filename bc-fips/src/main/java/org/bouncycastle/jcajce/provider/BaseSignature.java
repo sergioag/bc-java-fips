@@ -13,6 +13,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.MGF1ParameterSpec;
 import java.security.spec.PSSParameterSpec;
 
+import org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x509.X509ObjectIdentifiers;
 import org.bouncycastle.crypto.Algorithm;
@@ -26,6 +27,7 @@ import org.bouncycastle.crypto.SignatureOperatorFactory;
 import org.bouncycastle.crypto.UpdateOutputStream;
 import org.bouncycastle.crypto.fips.FipsAlgorithm;
 import org.bouncycastle.crypto.fips.FipsDigestAlgorithm;
+import org.bouncycastle.crypto.fips.FipsEdEC;
 import org.bouncycastle.crypto.fips.FipsRSA;
 import org.bouncycastle.crypto.general.EdEC;
 import org.bouncycastle.crypto.general.GeneralAlgorithm;
@@ -194,33 +196,46 @@ class BaseSignature
                     throw new InvalidAlgorithmParameterException("Parameter must be using " + origPssSpec.getDigestAlgorithm());
                 }
             }
-            if (!newParamSpec.getMGFAlgorithm().equalsIgnoreCase("MGF1") && !newParamSpec.getMGFAlgorithm().equals(PKCSObjectIdentifiers.id_mgf1.getId()))
+
+            Algorithm newDigest = DigestUtil.getDigestID(newParamSpec.getDigestAlgorithm());
+
+            String mgfAlgorithm = newParamSpec.getMGFAlgorithm();
+            if (!mgfAlgorithm.equalsIgnoreCase("MGF1") && !mgfAlgorithm.equals(PKCSObjectIdentifiers.id_mgf1.getId())
+                && !mgfAlgorithm.equalsIgnoreCase("SHAKE128") && !mgfAlgorithm.equals(NISTObjectIdentifiers.id_shake128.getId())
+                && !mgfAlgorithm.equalsIgnoreCase("SHAKE256") && !mgfAlgorithm.equals(NISTObjectIdentifiers.id_shake256.getId()))
             {
                 throw new InvalidAlgorithmParameterException("Unknown mask generation function specified");
             }
 
-            if (!(newParamSpec.getMGFParameters() instanceof MGF1ParameterSpec))
+            if (newParamSpec.getMGFParameters() != null && !(newParamSpec.getMGFParameters() instanceof MGF1ParameterSpec))
             {
                 throw new InvalidAlgorithmParameterException("Unknown MGF parameters");
             }
 
             MGF1ParameterSpec mgfParams = (MGF1ParameterSpec)newParamSpec.getMGFParameters();
 
-            if (!DigestUtil.isSameDigest(mgfParams.getDigestAlgorithm(), newParamSpec.getDigestAlgorithm()))
+            Algorithm mgfDigest;
+            if (mgfParams != null)
             {
-                throw new InvalidAlgorithmParameterException("Digest algorithm for MGF should be the same as for PSS parameters.");
+                if (!DigestUtil.isSameDigest(mgfParams.getDigestAlgorithm(), newParamSpec.getDigestAlgorithm()))
+                {
+                    throw new InvalidAlgorithmParameterException("Digest algorithm for MGF should be the same as for PSS parameters.");
+                }
+                mgfDigest = DigestUtil.getDigestID(mgfParams.getDigestAlgorithm());
+            }
+            else
+            {
+                mgfDigest = DigestUtil.getDigestID(mgfAlgorithm);
             }
 
-            Algorithm newDigest = DigestUtil.getDigestID(mgfParams.getDigestAlgorithm());
-
-            if (newDigest == null)
+            if (mgfDigest == null)
             {
                 throw new InvalidAlgorithmParameterException("No match on MGF digest algorithm: " + mgfParams.getDigestAlgorithm());
             }
 
-            if (newDigest instanceof FipsAlgorithm)
+            if (mgfDigest instanceof FipsAlgorithm)
             {
-                parameters = FipsRSA.PSS.withDigestAlgorithm((FipsDigestAlgorithm)newDigest).withMGFDigest((FipsDigestAlgorithm)newDigest).withSaltLength(newParamSpec.getSaltLength()).withTrailer(getPssTrailer(newParamSpec.getTrailerField()));
+                parameters = FipsRSA.PSS.withDigestAlgorithm((FipsDigestAlgorithm)newDigest).withMGFDigest((FipsDigestAlgorithm)mgfDigest).withSaltLength(newParamSpec.getSaltLength()).withTrailer(getPssTrailer(newParamSpec.getTrailerField()));
             }
             else
             {
@@ -246,7 +261,7 @@ class BaseSignature
                 if (((EdDSASigParameterSpec)params).getContext() != null)
                 {
                     paramSpec = params;
-                    parameters = new EdEC.ParametersWithContext((GeneralAlgorithm)algorithm, ((EdDSASigParameterSpec)params).getContext());
+                    parameters = new FipsEdEC.ParametersWithContext((FipsAlgorithm)algorithm, ((EdDSASigParameterSpec)params).getContext());
                     reInit();
                 }
             }

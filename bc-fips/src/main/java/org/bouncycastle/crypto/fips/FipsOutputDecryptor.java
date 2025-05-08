@@ -13,7 +13,7 @@ import org.bouncycastle.crypto.Parameters;
 public abstract class FipsOutputDecryptor<T extends Parameters>
     implements OutputDecryptor<T>
 {
-     // package protect construction
+    // package protect construction
     FipsOutputDecryptor()
     {
     }

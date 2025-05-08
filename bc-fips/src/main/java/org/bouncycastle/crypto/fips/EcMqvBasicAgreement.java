@@ -60,12 +60,12 @@ class EcMqvBasicAgreement
 
     // The ECMQV Primitive as described in SEC-1, 3.4
     private ECPoint calculateMqvAgreement(
-        EcDomainParameters      parameters,
-        EcPrivateKeyParameters  d1U,
-        EcPrivateKeyParameters  d2U,
-        EcPublicKeyParameters   Q2U,
-        EcPublicKeyParameters   Q1V,
-        EcPublicKeyParameters   Q2V)
+        EcDomainParameters parameters,
+        EcPrivateKeyParameters d1U,
+        EcPrivateKeyParameters d2U,
+        EcPublicKeyParameters Q2U,
+        EcPublicKeyParameters Q1V,
+        EcPublicKeyParameters Q2V)
     {
         BigInteger n = parameters.getN();
         int e = (n.bitLength() + 1) / 2;

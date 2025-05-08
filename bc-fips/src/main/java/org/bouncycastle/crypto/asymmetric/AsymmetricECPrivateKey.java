@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.security.auth.Destroyable;
-
 import org.bouncycastle.asn1.DERBitString;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.sec.ECPrivateKey;
@@ -22,7 +20,7 @@ import org.bouncycastle.math.ec.ECPoint;
  */
 public final class AsymmetricECPrivateKey
     extends AsymmetricECKey
-    implements Destroyable, AsymmetricPrivateKey
+    implements AsymmetricPrivateKey
 {
     private final AtomicBoolean hasBeenDestroyed = new AtomicBoolean(false);
 
@@ -154,9 +152,11 @@ public final class AsymmetricECPrivateKey
     {
         checkApprovedOnlyModeStatus();
 
+        ECDomainParameters dp = super.getDomainParameters();
+
         KeyUtils.checkDestroyed(this);
 
-        return super.getDomainParameters();
+        return dp;
     }
 
     public BigInteger getS()
@@ -210,9 +210,14 @@ public final class AsymmetricECPrivateKey
 
         other.checkApprovedOnlyModeStatus();
 
+        if (!getS().equals(other.getS()))
+        {
+            return false;
+        }
+
         // we ignore the public point encoding.
-        return KeyUtils.isFieldEqual(this.d, other.d)
-            && KeyUtils.isFieldEqual(this.domainParameters, other.domainParameters);
+
+        return this.getDomainParameters().equals(other.getDomainParameters());
     }
 
     @Override
@@ -229,15 +234,4 @@ public final class AsymmetricECPrivateKey
         result = 31 * result + this.getDomainParameters().hashCode();
         return result;
     }
-
-    /*
-    @Override
-    protected void finalize()
-        throws Throwable
-    {
-        super.finalize();
-
-        //destroy();
-    }
-     */
 }

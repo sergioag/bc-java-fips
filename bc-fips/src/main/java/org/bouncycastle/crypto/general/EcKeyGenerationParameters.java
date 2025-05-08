@@ -14,8 +14,8 @@ class EcKeyGenerationParameters
     private EcDomainParameters domainParams;
 
     public EcKeyGenerationParameters(
-        EcDomainParameters      domainParams,
-        SecureRandom            random)
+        EcDomainParameters domainParams,
+        SecureRandom random)
     {
         super(random, domainParams.getN().bitLength());
 

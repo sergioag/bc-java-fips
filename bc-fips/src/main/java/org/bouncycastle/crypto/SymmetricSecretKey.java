@@ -94,7 +94,7 @@ public final class SymmetricSecretKey
             securityManager.checkPermission(Permissions.CanOutputSecretKey);
         }
 
-        byte[] clone = Arrays.clone(bytes);
+        byte[] clone = org.bouncycastle.util.Arrays.clone(bytes);
 
         checkDestroyed();
 
@@ -121,7 +121,7 @@ public final class SymmetricSecretKey
         other.checkApprovedOnlyModeStatus();
 
         return (this.algorithm != null && this.algorithm.equals(other.algorithm))
-            && Arrays.constantTimeAreEqual(bytes, other.bytes);
+            && org.bouncycastle.util.Arrays.constantTimeAreEqual(bytes, other.bytes);
     }
 
     @Override
@@ -140,13 +140,6 @@ public final class SymmetricSecretKey
         result = 31 * result + Arrays.hashCode(bytes);
         return result;
     }
-
-//    @Override - Too dangerous on Java 13 or later.
-//    protected void finalize()
-//        throws Throwable
-//    {
-//        zeroize();       // ZEROIZE: clear key bytes on de-allocation
-//    }
 
     final void checkApprovedOnlyModeStatus()
     {

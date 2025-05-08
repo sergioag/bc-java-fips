@@ -16,7 +16,7 @@ import org.bouncycastle.math.ec.ECPoint;
 
 /**
  * P1363 7.2.2 ECSVDP-DHC
- *
+ * <p>
  * ECSVDP-DHC is Elliptic Curve Secret Value Derivation Primitive,
  * Diffie-Hellman version with cofactor multiplication. It is based on
  * the work of [DH76], [Mil86], [Kob87], [LMQ98] and [Kal98a]. This

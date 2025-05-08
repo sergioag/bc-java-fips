@@ -190,11 +190,29 @@ public final class AsymmetricDSTU4145PrivateKey
 
         AsymmetricDSTU4145PrivateKey other = (AsymmetricDSTU4145PrivateKey)o;
 
-        other.checkApprovedOnlyModeStatus();
+        if (this.isDestroyed() || other.isDestroyed())
+        {
+            return false;
+        }
+
+        if (d == null)
+        {
+            if (other.d != null)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (!d.equals(other.d))
+            {
+                return false;
+            }
+        }
 
         // we ignore the public point encoding.
 
-        return KeyUtils.isFieldEqual(this.d, other.d) && KeyUtils.isFieldEqual(this.parameters, other.parameters);
+        return this.getParameters().equals(other.getParameters());
     }
 
     @Override
@@ -211,15 +229,4 @@ public final class AsymmetricDSTU4145PrivateKey
         result = 31 * result + this.getParameters().hashCode();
         return result;
     }
-
-    /*
-    @Override
-    protected void finalize()
-        throws Throwable
-    {
-        //destroy();
-
-        super.finalize();
-    }
-     */
 }

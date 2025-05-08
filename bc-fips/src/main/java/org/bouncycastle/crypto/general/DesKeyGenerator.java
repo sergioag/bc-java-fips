@@ -25,14 +25,14 @@ class DesKeyGenerator
         else if (strength != DesParameters.DES_KEY_LENGTH)
         {
             throw new IllegalArgumentException("DES key must be "
-                    + (DesParameters.DES_KEY_LENGTH * 8)
-                    + " bits long.");
+                + (DesParameters.DES_KEY_LENGTH * 8)
+                + " bits long.");
         }
     }
 
     public byte[] generateKey()
     {
-        byte[]  newKey = new byte[DesParameters.DES_KEY_LENGTH];
+        byte[] newKey = new byte[DesParameters.DES_KEY_LENGTH];
 
         do
         {

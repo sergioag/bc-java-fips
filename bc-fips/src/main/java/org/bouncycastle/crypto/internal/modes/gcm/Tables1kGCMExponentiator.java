@@ -7,7 +7,8 @@ import java.util.Vector;
 
 import org.bouncycastle.util.Arrays;
 
-public class Tables1kGCMExponentiator implements GCMExponentiator
+public class Tables1kGCMExponentiator
+    implements GCMExponentiator
 {
     // A lookup table of the power-of-two powers of 'x'
     // - lookupPowX2[i] = x^(2^i)

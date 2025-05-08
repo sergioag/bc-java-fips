@@ -27,5 +27,5 @@ public abstract class FipsAsymmetricKeyPairGenerator<T extends Parameters, P ext
         return parameters;
     }
 
-    public abstract AsymmetricKeyPair<P,S> generateKeyPair();
+    public abstract AsymmetricKeyPair<P, S> generateKeyPair();
 }

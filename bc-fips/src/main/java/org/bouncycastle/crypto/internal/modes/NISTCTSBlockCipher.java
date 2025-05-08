@@ -8,7 +8,7 @@ import org.bouncycastle.crypto.internal.DefaultBufferedBlockCipher;
  * A Cipher Text Stealing (CTS) mode cipher. CTS allows block ciphers to
  * be used to produce cipher text which is the same length as the plain text.
  * <p>
- *     This class implements the NIST version as documented in "Addendum to NIST SP 800-38A, Recommendation for Block Cipher Modes of Operation: Three Variants of Ciphertext Stealing for CBC Mode"
+ * This class implements the NIST version as documented in "Addendum to NIST SP 800-38A, Recommendation for Block Cipher Modes of Operation: Three Variants of Ciphertext Stealing for CBC Mode"
  * </p>
  */
 public class NISTCTSBlockCipher
@@ -24,7 +24,7 @@ public class NISTCTSBlockCipher
     /**
      * Create a buffered block cipher that uses NIST Cipher Text Stealing
      *
-     * @param type type of CTS mode (CS1, CS2, or CS3)
+     * @param type   type of CTS mode (CS1, CS2, or CS3)
      * @param cipher the underlying block cipher used to create the CBC block cipher this cipher uses..
      */
     public NISTCTSBlockCipher(
@@ -51,8 +51,8 @@ public class NISTCTSBlockCipher
     public int getUpdateOutputSize(
         int len)
     {
-        int total       = len + bufOff;
-        int leftOver    = total % buf.length;
+        int total = len + bufOff;
+        int leftOver = total % buf.length;
 
         if (leftOver == 0)
         {
@@ -79,21 +79,21 @@ public class NISTCTSBlockCipher
     /**
      * process an array of bytes, producing output if necessary.
      *
-     * @param in the input byte array.
-     * @param inOff the offset at which the input data starts.
-     * @param len the number of bytes to be copied out of the input array.
-     * @param out the space for any output that might be produced.
+     * @param in     the input byte array.
+     * @param inOff  the offset at which the input data starts.
+     * @param len    the number of bytes to be copied out of the input array.
+     * @param out    the space for any output that might be produced.
      * @param outOff the offset from which the output will be copied.
      * @return the number of output bytes copied to out.
-     * @exception DataLengthException if there isn't enough space in out.
-     * @exception IllegalStateException if the cipher isn't initialised.
+     * @throws DataLengthException   if there isn't enough space in out.
+     * @throws IllegalStateException if the cipher isn't initialised.
      */
     public int processBytes(
-        byte[]      in,
-        int         inOff,
-        int         len,
-        byte[]      out,
-        int         outOff)
+        byte[] in,
+        int inOff,
+        int len,
+        byte[] out,
+        int outOff)
         throws DataLengthException, IllegalStateException
     {
         if (len < 0)
@@ -101,8 +101,8 @@ public class NISTCTSBlockCipher
             throw new IllegalArgumentException("Can't have a negative input length!");
         }
 
-        int blockSize   = getBlockSize();
-        int length      = getUpdateOutputSize(len);
+        int blockSize = getBlockSize();
+        int length = getUpdateOutputSize(len);
 
         if (length > 0)
         {
@@ -148,19 +148,19 @@ public class NISTCTSBlockCipher
     /**
      * Process the last block in the buffer.
      *
-     * @param out the array the block currently being held is copied into.
+     * @param out    the array the block currently being held is copied into.
      * @param outOff the offset at which the copying starts.
      * @return the number of output bytes copied to out.
-     * @exception DataLengthException if there is insufficient space in out for
-     * the output.
-     * @exception IllegalStateException if the underlying cipher is not
-     * initialised.
-     * @exception org.bouncycastle.crypto.InvalidCipherTextException if cipher text decrypts wrongly (in
-     * case the exception will never get thrown).
+     * @throws DataLengthException                                if there is insufficient space in out for
+     *                                                            the output.
+     * @throws IllegalStateException                              if the underlying cipher is not
+     *                                                            initialised.
+     * @throws org.bouncycastle.crypto.InvalidCipherTextException if cipher text decrypts wrongly (in
+     *                                                            case the exception will never get thrown).
      */
     public int doFinal(
-        byte[]  out,
-        int     outOff)
+        byte[] out,
+        int outOff)
         throws DataLengthException, IllegalStateException
     {
         if (bufOff + outOff > out.length)
@@ -168,9 +168,9 @@ public class NISTCTSBlockCipher
             throw new DataLengthException("output buffer to small in doFinal");
         }
 
-        int     blockSize = cipher.getBlockSize();
-        int     len = bufOff - blockSize;
-        byte[]  block = new byte[blockSize];
+        int blockSize = cipher.getBlockSize();
+        int len = bufOff - blockSize;
+        byte[] block = new byte[blockSize];
 
         if (forEncryption)
         {
@@ -181,7 +181,7 @@ public class NISTCTSBlockCipher
 
             if (bufOff > blockSize)
             {
-                byte[]  lastBlock = new byte[blockSize];
+                byte[] lastBlock = new byte[blockSize];
 
                 if (this.type == CS2 || this.type == CS3)
                 {
@@ -229,7 +229,7 @@ public class NISTCTSBlockCipher
                 throw new DataLengthException("need at least one block of input for CTS");
             }
 
-            byte[]  lastBlock = new byte[blockSize];
+            byte[] lastBlock = new byte[blockSize];
 
             if (bufOff > blockSize)
             {

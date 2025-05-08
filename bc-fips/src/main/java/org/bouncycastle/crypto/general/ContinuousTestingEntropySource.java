@@ -4,6 +4,7 @@ import java.util.logging.Logger;
 
 import org.bouncycastle.crypto.EntropySource;
 import org.bouncycastle.crypto.fips.FipsEntropyConfig;
+import org.bouncycastle.crypto.fips.FipsOperationError;
 import org.bouncycastle.crypto.util.EntropyUtil;
 import org.bouncycastle.util.Arrays;
 
@@ -29,77 +30,62 @@ class ContinuousTestingEntropySource
     }
 
     public byte[] getEntropy()
+    {
+        synchronized (this)
         {
-            synchronized (this)
+            byte[] nxt;
+
+            if (buf == null)
             {
-                byte[] nxt;
-
-                if (buf == null)
+                buf = entropySource.getEntropy();
+                windStats = EntropyUtil.createStats();
+                String msg = EntropyUtil.isProportionate(windStats, buf);
+                if (msg != null)
                 {
-                    buf = entropySource.getEntropy();
-                    windStats = EntropyUtil.createStats();
-                    String msg = EntropyUtil.isProportionate(windStats, buf);
-                    if (msg != null)
-                    {
-                        throw new IllegalStateException(msg);
-                    }
+                    throw new IllegalStateException(msg);
                 }
-
-                int retries = 0;
-                int maxRetries = FipsEntropyConfig.getMaxRetries();
-                String msg;
-
-                do
-                {
-                    retries++;
-                    nxt = entropySource.getEntropy();
-
-                    msg = EntropyUtil.isNotStuck(buf[buf.length - 1], nxt);
-                    if (msg != null)
-                    {
-                        if (retries == maxRetries)
-                        {
-                            throw new IllegalStateException(msg);
-                        }
-                        else
-                        {
-                            LOG.warning(msg);
-                        }
-                    }
-
-                    msg = EntropyUtil.isProportionate(windStats, nxt);
-                    if (msg != null)
-                    {
-                        if (retries == maxRetries)
-                        {
-                            throw new IllegalStateException(msg);
-                        }
-                        else
-                        {
-                            LOG.warning(msg);
-                        }
-                    }
-
-                    if (Arrays.areEqual(nxt, buf))
-                    {
-                        msg = "Duplicate block detected in EntropySource output";
-                        if (retries == maxRetries)
-                        {
-                            throw new IllegalStateException(msg);
-                        }
-                        else
-                        {
-                            LOG.warning(msg);
-                        }
-                    }
-                }
-                while (msg != null && retries <= maxRetries);
-
-                System.arraycopy(nxt, 0, buf, 0, buf.length);
-
-                return nxt;
             }
+
+            int retries = 0;
+            int maxRetries = FipsEntropyConfig.getMaxRetries();
+            String msg;
+
+            do
+            {
+                retries++;
+                nxt = entropySource.getEntropy();
+
+                msg = EntropyUtil.isNotStuck(buf[buf.length - 1], nxt);
+                if (msg != null)
+                {
+                    LOG.warning(msg);
+                }
+
+                msg = EntropyUtil.isProportionate(windStats, nxt);
+                if (msg != null)
+                {
+                    LOG.warning(msg);
+                }
+
+                if (Arrays.areEqual(nxt, buf))
+                {
+                    msg = "Duplicate block detected in EntropySource output";
+                    LOG.warning(msg);
+                }
+            }
+            while (msg != null && retries <= maxRetries);
+
+            if (retries > maxRetries)
+            {
+                // the entropy source is in trouble, everything is about to crash anyway.
+                FipsOperationError.flag(msg);
+            }
+
+            System.arraycopy(nxt, 0, buf, 0, buf.length);
+
+            return nxt;
         }
+    }
 
     public int entropySize()
     {

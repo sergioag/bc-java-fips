@@ -16,16 +16,16 @@ import org.bouncycastle.util.Pack;
 class GOST3411Digest
     implements ExtendedDigest, Memoable
 {
-    private static final int    DIGEST_LENGTH = 32;
+    private static final int DIGEST_LENGTH = 32;
 
-    private byte[]   H = new byte[32], L = new byte[32],
-                     M = new byte[32], Sum = new byte[32];
+    private byte[] H = new byte[32], L = new byte[32],
+        M = new byte[32], Sum = new byte[32];
     private byte[][] C = new byte[4][32];
 
-    private byte[]  xBuf = new byte[32];
-    private int  xBufOff;
+    private byte[] xBuf = new byte[32];
+    private int xBufOff;
     private long byteCount;
-    
+
     private BlockCipher cipher = new GOST28147Engine();
     private byte[] sBox;
 
@@ -42,6 +42,7 @@ class GOST3411Digest
 
     /**
      * Constructor to allow use of a particular sbox with GOST28147
+     *
      * @see GOST28147Engine#getSBox(String)
      */
     public GOST3411Digest(byte[] sBoxParam)
@@ -117,12 +118,12 @@ class GOST3411Digest
 
     private byte[] P(byte[] in)
     {
-        for(int k = 0; k < 8; k++)
+        for (int k = 0; k < 8; k++)
         {
-            K[4*k] = in[k];
-            K[1 + 4*k] = in[ 8 + k];
-            K[2 + 4*k] = in[16 + k];
-            K[3 + 4*k] = in[24 + k];
+            K[4 * k] = in[k];
+            K[1 + 4 * k] = in[8 + k];
+            K[2 + 4 * k] = in[16 + k];
+            K[3 + 4 * k] = in[24 + k];
         }
 
         return K;
@@ -130,11 +131,12 @@ class GOST3411Digest
 
     //A (x) = (x0 ^ x1) || x3 || x2 || x1
     byte[] a = new byte[8];
+
     private byte[] A(byte[] in)
     {
-        for(int j=0; j<8; j++)
+        for (int j = 0; j < 8; j++)
         {
-            a[j]=(byte)(in[j] ^ in[j+8]);
+            a[j] = (byte)(in[j] ^ in[j + 8]);
         }
 
         System.arraycopy(in, 8, in, 0, 24);
@@ -147,7 +149,7 @@ class GOST3411Digest
     private void E(byte[] key, byte[] s, int sOff, byte[] in, int inOff)
     {
         cipher.init(true, new KeyParameterImpl(key));
-        
+
         cipher.processBlock(in, inOff, s, sOff);
     }
 
@@ -171,52 +173,52 @@ class GOST3411Digest
         System.arraycopy(in, inOff, M, 0, 32);
 
         //key step 1
- 
+
         // H = h3 || h2 || h1 || h0
         // S = s3 || s2 || s1 || s0
         System.arraycopy(H, 0, U, 0, 32);
         System.arraycopy(M, 0, V, 0, 32);
-        for (int j=0; j<32; j++)
+        for (int j = 0; j < 32; j++)
         {
-            W[j] = (byte)(U[j]^V[j]);
+            W[j] = (byte)(U[j] ^ V[j]);
         }
         // Encrypt gost28147-ECB
         E(P(W), S, 0, H, 0); // s0 = EK0 [h0]
 
         //keys step 2,3,4
-        for (int i=1; i<4; i++)
+        for (int i = 1; i < 4; i++)
         {
             byte[] tmpA = A(U);
-            for (int j=0; j<32; j++)
+            for (int j = 0; j < 32; j++)
             {
                 U[j] = (byte)(tmpA[j] ^ C[i][j]);
             }
             V = A(A(V));
-            for (int j=0; j<32; j++)
+            for (int j = 0; j < 32; j++)
             {
-                W[j] = (byte)(U[j]^V[j]);
+                W[j] = (byte)(U[j] ^ V[j]);
             }
             // Encrypt gost28147-ECB
             E(P(W), S, i * 8, H, i * 8); // si = EKi [hi]
         }
 
         // x(M, H) = y61(H^y(M^y12(S)))
-        for(int n = 0; n < 12; n++)
+        for (int n = 0; n < 12; n++)
         {
             fw(S);
         }
-        for(int n = 0; n < 32; n++)
+        for (int n = 0; n < 32; n++)
         {
             S[n] = (byte)(S[n] ^ M[n]);
         }
 
         fw(S);
 
-        for(int n = 0; n < 32; n++)
+        for (int n = 0; n < 32; n++)
         {
             S[n] = (byte)(H[n] ^ S[n]);
         }
-        for(int n = 0; n < 61; n++)
+        for (int n = 0; n < 61; n++)
         {
             fw(S);
         }
@@ -237,8 +239,8 @@ class GOST3411Digest
     }
 
     public int doFinal(
-        byte[]  out,
-        int     outOff)
+        byte[] out,
+        int outOff)
     {
         finish();
 
@@ -252,42 +254,42 @@ class GOST3411Digest
     /**
      * reset the chaining variables to the IV values.
      */
-    private static final byte[]  C2 = {
-       0x00,(byte)0xFF,0x00,(byte)0xFF,0x00,(byte)0xFF,0x00,(byte)0xFF,
-       (byte)0xFF,0x00,(byte)0xFF,0x00,(byte)0xFF,0x00,(byte)0xFF,0x00,
-       0x00,(byte)0xFF,(byte)0xFF,0x00,(byte)0xFF,0x00,0x00,(byte)0xFF,
-       (byte)0xFF,0x00,0x00,0x00,(byte)0xFF,(byte)0xFF,0x00,(byte)0xFF};
+    private static final byte[] C2 = {
+        0x00, (byte)0xFF, 0x00, (byte)0xFF, 0x00, (byte)0xFF, 0x00, (byte)0xFF,
+        (byte)0xFF, 0x00, (byte)0xFF, 0x00, (byte)0xFF, 0x00, (byte)0xFF, 0x00,
+        0x00, (byte)0xFF, (byte)0xFF, 0x00, (byte)0xFF, 0x00, 0x00, (byte)0xFF,
+        (byte)0xFF, 0x00, 0x00, 0x00, (byte)0xFF, (byte)0xFF, 0x00, (byte)0xFF};
 
     public void reset()
     {
         byteCount = 0;
         xBufOff = 0;
 
-        for(int i=0; i<H.length; i++)
+        for (int i = 0; i < H.length; i++)
         {
             H[i] = 0;  // start vector H
         }
-        for(int i=0; i<L.length; i++)
+        for (int i = 0; i < L.length; i++)
         {
             L[i] = 0;
         }
-        for(int i=0; i<M.length; i++)
+        for (int i = 0; i < M.length; i++)
         {
             M[i] = 0;
         }
-        for(int i=0; i<C[1].length; i++)
+        for (int i = 0; i < C[1].length; i++)
         {
             C[1][i] = 0;  // real index C = +1 because index array with 0.
         }
-        for(int i=0; i<C[3].length; i++)
+        for (int i = 0; i < C[3].length; i++)
         {
             C[3][i] = 0;
         }
-        for(int i=0; i<Sum.length; i++)
+        for (int i = 0; i < Sum.length; i++)
         {
             Sum[i] = 0;
         }
-        for(int i = 0; i < xBuf.length; i++)
+        for (int i = 0; i < xBuf.length; i++)
         {
             xBuf[i] = 0;
         }
@@ -312,25 +314,25 @@ class GOST3411Digest
 
     private void cpyBytesToShort(byte[] S, short[] wS)
     {
-        for(int i=0; i<S.length/2; i++)
+        for (int i = 0; i < S.length / 2; i++)
         {
-            wS[i] = (short)(((S[i*2+1]<<8)&0xFF00)|(S[i*2]&0xFF));
+            wS[i] = (short)(((S[i * 2 + 1] << 8) & 0xFF00) | (S[i * 2] & 0xFF));
         }
     }
 
     private void cpyShortToBytes(short[] wS, byte[] S)
     {
-        for(int i=0; i<S.length/2; i++) 
+        for (int i = 0; i < S.length / 2; i++)
         {
-            S[i*2 + 1] = (byte)(wS[i] >> 8);
-            S[i*2] = (byte)wS[i];
+            S[i * 2 + 1] = (byte)(wS[i] >> 8);
+            S[i * 2] = (byte)wS[i];
         }
     }
 
-   public int getByteLength() 
-   {
-      return 32;
-   }
+    public int getByteLength()
+    {
+        return 32;
+    }
 
     public Memoable copy()
     {

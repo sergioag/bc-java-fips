@@ -49,7 +49,7 @@ abstract class GuardedAEADOperatorFactory<T extends Parameters>
             throw new FipsUnapprovedOperationError("Attempt to create unapproved algorithm in approved only mode", parameters.getAlgorithm());
         }
 
-        final AEADCipher  cipher = createAEADCipher(false, key, parameters);
+        final AEADCipher cipher = createAEADCipher(false, key, parameters);
 
         return new InputAEADDecryptor<T>()
         {
@@ -108,7 +108,7 @@ abstract class GuardedAEADOperatorFactory<T extends Parameters>
 
             public org.bouncycastle.crypto.CipherOutputStream getDecryptingStream(final OutputStream out)
             {
-                return new CipherOutputStreamImpl(out, cipher);
+                return CipherOutputStreamImpl.getInstance(out, cipher);
             }
 
             public byte[] getMAC()
@@ -154,7 +154,7 @@ abstract class GuardedAEADOperatorFactory<T extends Parameters>
 
         public CipherOutputStream getEncryptingStream(final OutputStream out)
         {
-            return new CipherOutputStreamImpl(out, cipher);
+            return CipherOutputStreamImpl.getInstance(out, cipher);
         }
 
         public byte[] getMAC()

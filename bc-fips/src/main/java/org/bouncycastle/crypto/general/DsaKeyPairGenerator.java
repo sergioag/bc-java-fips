@@ -16,7 +16,7 @@ import org.bouncycastle.crypto.internal.params.DsaPublicKeyParameters;
 
 /**
  * a DSA key pair generator.
- *
+ * <p>
  * This generates DSA keys in line with the method described
  * in <i>FIPS 186-3 B.1 FFC Key Pair Generation</i>.
  */

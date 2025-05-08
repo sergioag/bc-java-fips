@@ -36,40 +36,88 @@ public class LmsDigestUtil
         digestProvider = digProv;
     }
 
-    static Digest getDigest(ASN1ObjectIdentifier oid)
+    static Digest getDigest(LMOtsParameters otsParameters)
     {
-        return digestProvider.getDigest(oid);
+        return createDigest(otsParameters.getDigestOID(), otsParameters.getN());
     }
 
-    static String getDigestName(ASN1ObjectIdentifier oid)
+    static Digest getDigest(LMSigParameters lmSigParameters)
     {
-        String name = oidToName.get(oid);
-        if (name != null)
-        {
-            return name;
-        }
-
-        throw new IllegalArgumentException("unrecognized digest oid: " + oid);
+        return createDigest(lmSigParameters.getDigestOID(), lmSigParameters.getM());
     }
 
-    static ASN1ObjectIdentifier getDigestOID(String name)
+    private static Digest createDigest(ASN1ObjectIdentifier digOid, int digLen)
     {
-        ASN1ObjectIdentifier oid = nameToOid.get(name);
-        if (oid != null)
+        Digest dig = digestProvider.getDigest(digOid);
+        if (digOid.equals(NISTObjectIdentifiers.id_shake256_len))
         {
-            return oid;
+            return new WrapperDigest(dig, digLen);
         }
-
-        throw new IllegalArgumentException("unrecognized digest name: " + name);
+        if (digLen == 24)
+        {
+            return new WrapperDigest(dig, digLen);
+        }
+        return dig;
     }
 
-    public static int getDigestSize(Digest digest)
+    static class WrapperDigest
+        implements Digest
     {
-        if (digest instanceof Xof)
+
+        private final Digest dig;
+        private final int length;
+
+        WrapperDigest(Digest dig, int length)
         {
-            return digest.getDigestSize() * 2;
+            this.dig = dig;
+            this.length = length;
         }
 
-        return digest.getDigestSize();
+        @Override
+        public String getAlgorithmName()
+        {
+            return dig.getAlgorithmName() + "/" + length * 8;
+        }
+
+        @Override
+        public int getDigestSize()
+        {
+            return length;
+        }
+
+        @Override
+        public void update(byte in)
+        {
+             dig.update(in);
+        }
+
+        @Override
+        public void update(byte[] in, int inOff, int len)
+        {
+            dig.update(in, inOff, len);
+        }
+
+        @Override
+        public int doFinal(byte[] out, int outOff)
+        {
+            byte[] digOut = new byte[dig.getDigestSize()];
+
+            dig.doFinal(digOut, 0);
+
+            System.arraycopy(digOut, 0, out, outOff, length);
+            return length;
+        }
+
+        @Override
+        public void reset()
+        {
+            dig.reset();
+        }
+
+        @Override
+        public int getByteLength()
+        {
+            return dig.getByteLength();
+        }
     }
 }

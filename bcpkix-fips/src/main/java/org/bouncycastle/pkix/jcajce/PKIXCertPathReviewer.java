@@ -162,7 +162,7 @@ public class PKIXCertPathReviewer extends CertPathValidatorUtilities
             }
             try
             {
-                CertificateFactory cf = CertificateFactory.getInstance("X.509", "BCFIPS");
+                CertificateFactory cf = CertificateFactory.getInstance("X.509", "BC");
 
                 this.certPath = cf.generateCertPath(certs);
             }
@@ -500,7 +500,12 @@ public class PKIXCertPathReviewer extends CertPathValidatorUtilities
                         ErrorBundle msg = createErrorBundle("CertPathReviewer.subjAltNameExtError");
                         throw new CertPathReviewerException(msg,ae,certPath,index);
                     }
-                    
+
+                    /*
+                     * TODO RFC3280CertPathUtilities (used in CertPath validation) has a block checking name
+                     * constraints against subject's EmailAddress, which could be worth adding here too.
+                     */
+
                     if (altName != null)
                     {
                         if (altName.size() > NAME_CHECK_MAX)
@@ -629,19 +634,10 @@ public class PKIXCertPathReviewer extends CertPathValidatorUtilities
 
             if (bc != null && bc.isCA())
             {
-                BigInteger pathLenConstraint = bc.getPathLenConstraint();
+                ASN1Integer pathLenConstraint = new ASN1Integer(bc.getPathLenConstraint());
                 if (pathLenConstraint != null)
                 {
-                    int pathLen = pathLenConstraint.intValueExact();
-                    if (pathLen < 0)
-                    {
-                        ErrorBundle msg = createErrorBundle("CertPathReviewer.processLengthConstError");
-                        addError(msg,index);
-                    }
-                    else
-                    {
-                        maxPathLength = Math.min(maxPathLength, pathLen);
-                    }
+                    maxPathLength = Math.min(maxPathLength, pathLenConstraint.intPositiveValueExact());
                 }
             }
         }
@@ -2143,7 +2139,7 @@ public class PKIXCertPathReviewer extends CertPathValidatorUtilities
             {
                 try
                 {
-                    crl.verify(workingPublicKey, "BCFIPS");
+                    crl.verify(workingPublicKey, "BC");
                 }
                 catch (Exception e)
                 {
@@ -2415,7 +2411,7 @@ public class PKIXCertPathReviewer extends CertPathValidatorUtilities
                 conn.connect();
                 if (conn.getResponseCode() == HttpURLConnection.HTTP_OK)
                 {
-                    CertificateFactory cf = CertificateFactory.getInstance("X.509","BCFIPS");
+                    CertificateFactory cf = CertificateFactory.getInstance("X.509","BC");
                     result = (X509CRL) cf.generateCRL(conn.getInputStream());
                 }
                 else

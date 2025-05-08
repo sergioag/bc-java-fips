@@ -22,25 +22,30 @@ class RsaBlindedEngine
 {
     private static final BigInteger ONE = BigInteger.valueOf(1);
 
-    private RsaCoreEngine    core = new RsaCoreEngine();
+    private final RSAEngine core;
     private RsaKeyParameters key;
-    private SecureRandom     random;
+    private SecureRandom random;
+
+    RsaBlindedEngine(RSAEngine core)
+    {
+        this.core = core;
+    }
 
     /**
      * initialise the RSA engine.
      *
      * @param forEncryption true if we are encrypting, false otherwise.
-     * @param param the necessary RSA key parameters.
+     * @param param         the necessary RSA key parameters.
      */
     public void init(
-        boolean             forEncryption,
-        CipherParameters    param)
+        boolean forEncryption,
+        CipherParameters param)
     {
         core.init(forEncryption, param);
 
         if (param instanceof ParametersWithRandom)
         {
-            ParametersWithRandom    rParam = (ParametersWithRandom)param;
+            ParametersWithRandom rParam = (ParametersWithRandom)param;
 
             key = (RsaKeyParameters)rParam.getParameters();
             random = rParam.getRandom();
@@ -82,16 +87,16 @@ class RsaBlindedEngine
     /**
      * Process a single block using the basic RSA algorithm.
      *
-     * @param in the input array.
+     * @param in    the input array.
      * @param inOff the offset into the input buffer where the data starts.
      * @param inLen the length of the data to be processed.
      * @return the result of the RSA process.
-     * @exception DataLengthException the input block is too large.
+     * @throws DataLengthException the input block is too large.
      */
     public byte[] processBlock(
-        byte[]  in,
-        int     inOff,
-        int     inLen)
+        byte[] in,
+        int inOff,
+        int inLen)
     {
         if (key == null)
         {

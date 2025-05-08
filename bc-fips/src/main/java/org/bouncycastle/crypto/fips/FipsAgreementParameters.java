@@ -18,7 +18,7 @@ public class FipsAgreementParameters
      * Constructor which specifies returning a digest of the raw secret on agreement calculation.
      *
      * @param agreementAlgorithm the agreement algorithm these parameters are for.
-     * @param digestAlgorithm the digest algorithm to use.
+     * @param digestAlgorithm    the digest algorithm to use.
      */
     FipsAgreementParameters(FipsAlgorithm agreementAlgorithm, FipsAlgorithm digestAlgorithm)
     {
@@ -36,8 +36,8 @@ public class FipsAgreementParameters
      * standard PRFs as described in SP800-56C.
      *
      * @param agreementAlgorithm the agreement algorithm these parameters are for.
-     * @param prfAlgorithm the MAC/HMAC algorithm to use.
-     * @param salt the byte string to key the MAC/HMAC with.
+     * @param prfAlgorithm       the MAC/HMAC algorithm to use.
+     * @param salt               the byte string to key the MAC/HMAC with.
      */
     FipsAgreementParameters(FipsAlgorithm agreementAlgorithm, FipsKDF.PRF prfAlgorithm, byte[] salt)
     {
@@ -63,8 +63,8 @@ public class FipsAgreementParameters
      * Constructor with a KDF to process the Z value with. The outputSize parameter determines how many bytes
      * will be generated.
      *
-     * @param kdfType KDF algorithm type to use for parameter creation.
-     * @param iv the iv parameter for KDF initialization.
+     * @param kdfType    KDF algorithm type to use for parameter creation.
+     * @param iv         the iv parameter for KDF initialization.
      * @param outputSize the size of the output to be generated from the KDF.
      */
     FipsAgreementParameters(FipsAlgorithm agreementAlgorithm, FipsKDF.AgreementKDFParametersBuilder kdfType, byte[] iv, int outputSize)

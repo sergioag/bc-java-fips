@@ -7,12 +7,12 @@ import org.bouncycastle.crypto.KDFCalculator;
 import org.bouncycastle.crypto.KDFOperatorFactory;
 import org.bouncycastle.crypto.Parameters;
 import org.bouncycastle.crypto.PasswordConverter;
-import org.bouncycastle.crypto.internal.BlockCipher;
 import org.bouncycastle.crypto.internal.DerivationFunction;
 import org.bouncycastle.crypto.internal.Digest;
 import org.bouncycastle.crypto.internal.EngineProvider;
 import org.bouncycastle.crypto.internal.ExtendedDigest;
 import org.bouncycastle.crypto.internal.Mac;
+import org.bouncycastle.crypto.internal.MultiBlockCipher;
 import org.bouncycastle.crypto.internal.StreamCipher;
 import org.bouncycastle.crypto.internal.macs.HMac;
 import org.bouncycastle.crypto.internal.modes.SICBlockCipher;
@@ -96,6 +96,11 @@ public final class FipsKDF
      * Algorithm parameter source for concatenating KDF in FIPS SP 800-56A/B - default PRF is SHA-1
      */
     public static final AgreementKDFParametersBuilder CONCATENATION = new AgreementKDFParametersBuilder(new FipsAlgorithm("Concatenation"), AgreementKDFPRF.SHA1);
+
+    /**
+     * Algorithm parameter source for no counter KDF in FIPS SP 800-56C - default PRF is SHA-1
+     */
+    public static final AgreementKDFParametersBuilder NO_COUNTER = new AgreementKDFParametersBuilder(new FipsAlgorithm("NoCounter"), AgreementKDFPRF.SHA1);
 
     /**
      * Algorithm parameter source for HKDF - default PRF is SHA-1
@@ -1325,7 +1330,7 @@ public final class FipsKDF
     }
 
     /**
-     * Parameters builder for the X9.63 and CONCATENATION key derivation function.
+     * Parameters builder for the X9.63, CONCATENATION, and NoCounter key derivation function.
      */
     public static final class AgreementKDFParametersBuilder
         extends FipsParameters
@@ -1451,6 +1456,13 @@ public final class FipsKDF
 
             return new HKDFKey(prf, new HKDFKeyGenerator(mac).generate(new HKDFKeyParameters(ikm, skipExtract, salt)).getKey());
         }
+
+        public HKDFKey build(byte[] ikm, byte[] t)
+        {
+            HMac mac = (HMac)FipsSHS.createHMac(prf.algorithm);
+
+            return new HKDFKey(prf, new HKDFKeyGenerator(mac).generate(new HKDFKeyParameters(Arrays.concatenate(ikm, t), skipExtract, salt)).getKey());
+        }
     }
 
     /**
@@ -1513,6 +1525,13 @@ public final class FipsKDF
 
             return new TwoStepKDFKey(prf, new TwoStepKeyGenerator(mac).generate(new HKDFKeyParameters(ikm, false, salt)).getKey());
         }
+
+        public TwoStepKDFKey build(byte[] ikm, byte[] t)
+        {
+            Mac mac = createPRF(prf).createEngine();
+
+            return new TwoStepKDFKey(prf, new TwoStepKeyGenerator(mac).generate(new HKDFKeyParameters(Arrays.concatenate(ikm, t), false, salt)).getKey());
+        }
     }
 
     /**
@@ -1539,9 +1558,13 @@ public final class FipsKDF
             {
                 return createX963KDFCalculator(approvedModeOnly, params);
             }
-            else
+            else if (params.getAlgorithm().getName().startsWith(CONCATENATION.getAlgorithm().getName()))
             {
                 return createConcatenationKDFCalculator(approvedModeOnly, params);
+            }
+            else
+            {
+                return createNoCounterKDFCalculator(approvedModeOnly, params);
             }
         }
     }
@@ -1604,6 +1627,28 @@ public final class FipsKDF
         Utils.approvedModeCheck(approvedModeOnly, params.getAlgorithm());
 
         final DerivationFunction df = new ConcatenationKDFProvider(params.getAlgorithm()).createEngine();
+
+        df.init(new KDFParameters(params.shared, params.salt, params.iv));
+
+        return new MonitoringKDFCalculator<AgreementKDFParameters>(approvedModeOnly, new BaseKDFCalculator<AgreementKDFParameters>()
+        {
+            public AgreementKDFParameters getParameters()
+            {
+                return params;
+            }
+
+            public void generateBytes(byte[] out, int outOff, int len)
+            {
+                df.generateBytes(out, outOff, len);
+            }
+        });
+    }
+
+    private static KDFCalculator<AgreementKDFParameters> createNoCounterKDFCalculator(boolean approvedModeOnly, final AgreementKDFParameters params)
+    {
+        Utils.approvedModeCheck(approvedModeOnly, params.getAlgorithm());
+
+        final DerivationFunction df = new NoCounterKDFProvider(params.getAlgorithm()).createEngine();
 
         df.init(new KDFParameters(params.shared, params.salt, params.iv));
 
@@ -1780,9 +1825,9 @@ public final class FipsKDF
         AES_CM(FipsAES.CTR.getAlgorithm(), FipsAES.ENGINE_PROVIDER);
 
         private final FipsAlgorithm algorithm;
-        private final EngineProvider<BlockCipher> engineProvider;
+        private final EngineProvider<MultiBlockCipher> engineProvider;
 
-        SRTPPRF(FipsAlgorithm algorithm, EngineProvider<BlockCipher> engineProvider)
+        SRTPPRF(FipsAlgorithm algorithm, EngineProvider<MultiBlockCipher> engineProvider)
         {
             this.algorithm = algorithm;
             this.engineProvider = engineProvider;
@@ -2051,6 +2096,7 @@ public final class FipsKDF
 
                     if (!Arrays.areEqual(expectedOutput(prf), out))
                     {
+                        // -DM Hex.toHexString
                         fail("failed self test on generation: " + Hex.toHexString(out));
                     }
                 }
@@ -2143,6 +2189,7 @@ public final class FipsKDF
 
                     if (!Arrays.areEqual(expectedOutput(prf), out))
                     {
+                        // -DM Hex.toHexString
                         fail("failed self test on generation: " + Hex.toHexString(out));
                     }
                 }
@@ -2234,6 +2281,7 @@ public final class FipsKDF
 
                     if (!Arrays.areEqual(expectedOutput(prf), out))
                     {
+                        // -DM Hex.toHexString
                         fail("failed self test on generation: " + Hex.toHexString(out));
                     }
                 }
@@ -2364,6 +2412,160 @@ public final class FipsKDF
 
                     if (!Arrays.areEqual(expectedOutput(prf), out))
                     {
+                        // -DM Hex.toHexString
+                        fail("failed self test on generation: " + Hex.toHexString(out));
+                    }
+                }
+            });
+        }
+
+        private static byte[] expectedOutput(AgreementKDFPRF prf)
+        {
+            switch (prf)
+            {
+            case SHA1:
+                return sha1_vec;
+            case SHA224:
+                return sha224_vec;
+            case SHA256:
+                return sha256_vec;
+            case SHA384:
+                return sha384_vec;
+            case SHA512:
+                return sha512_vec;
+            case SHA512_224:
+                return sha512_224_vec;
+            case SHA512_256:
+                return sha512_256_vec;
+            case SHA3_224:
+                return sha3_224_vec;
+            case SHA3_256:
+                return sha3_256_vec;
+            case SHA3_384:
+                return sha3_384_vec;
+            case SHA3_512:
+                return sha3_512_vec;
+            case SHA1_HMAC:
+                return sha1hmac_vec;
+            case SHA224_HMAC:
+                return sha224hmac_vec;
+            case SHA256_HMAC:
+                return sha256hmac_vec;
+            case SHA384_HMAC:
+                return sha384hmac_vec;
+            case SHA512_HMAC:
+                return sha512hmac_vec;
+            case SHA512_224_HMAC:
+                return sha512_224hmac_vec;
+            case SHA512_256_HMAC:
+                return sha512_256hmac_vec;
+            case SHA3_224_HMAC:
+                return sha3_224hmac_vec;
+            case SHA3_256_HMAC:
+                return sha3_256hmac_vec;
+            case SHA3_384_HMAC:
+                return sha3_384hmac_vec;
+            case SHA3_512_HMAC:
+                return sha3_512hmac_vec;
+            case KMAC_128:
+                return kmac128_vec;
+            case KMAC_256:
+                return kmac256_vec;
+            default:
+                throw new SelfTestExecutor.TestFailedException("unknown PRF");
+            }
+        }
+    }
+
+    private static final class NoCounterKDFProvider
+        extends FipsEngineProvider<NoCounterKDFGenerator>
+    {
+        private static final byte[] KI = Hex.decode("dff1e50ac0b69dc40f1051d46c2b069c");
+        private static final byte[] SALT = Hex.decodeStrict("000102030405060708090a0b0c0d0e0f");
+        private static final byte[] IV = Hex.decodeStrict("0f0e0d0c0b0a09080706050403020100");
+
+        private static final byte[] sha1_vec = Hex.decode("197c9e7e6710b6fe8f26");
+        private static final byte[] sha224_vec = Hex.decode("74c302a8ad03aefc57bc");
+        private static final byte[] sha256_vec = Hex.decode("13c908e014820fb07f5d");
+        private static final byte[] sha384_vec = Hex.decode("d1b35d2456eaf87fe8c9");
+        private static final byte[] sha512_vec = Hex.decode("64b2b8b1c48e1a648953");
+        private static final byte[] sha512_224_vec = Hex.decode("cd1ead04edae3eb15e83");
+        private static final byte[] sha512_256_vec = Hex.decode("4b8b28aa01048ce0f792");
+        private static final byte[] sha3_224_vec = Hex.decode("ba9f46ff841c9d312295");
+        private static final byte[] sha3_256_vec = Hex.decode("96d1f5f53cefff291987");
+        private static final byte[] sha3_384_vec = Hex.decode("e945f958f862bd373827");
+        private static final byte[] sha3_512_vec = Hex.decode("2aa5d547bf565c8adbe4");
+        private static final byte[] sha1hmac_vec = Hex.decode("b6c2526bf94fd2d5d5ac");
+        private static final byte[] sha224hmac_vec = Hex.decode("a6e20a44a368ec5d8a1a");
+        private static final byte[] sha256hmac_vec = Hex.decode("a563fa67a03545bcc26f");
+        private static final byte[] sha384hmac_vec = Hex.decode("f1dc3232a663fd24e5dc");
+        private static final byte[] sha512hmac_vec = Hex.decode("fc4dd779c4556f746177");
+        private static final byte[] sha512_224hmac_vec = Hex.decode("a165a450bd79a3a5a91e");
+        private static final byte[] sha512_256hmac_vec = Hex.decode("c873dcd53046a0a60a5d");
+        private static final byte[] sha3_224hmac_vec = Hex.decode("f3cc774aa8176f40dd28");
+        private static final byte[] sha3_256hmac_vec = Hex.decode("9c85430b52da3f7003f1");
+        private static final byte[] sha3_384hmac_vec = Hex.decode("b6070ac862e6b7a7a795");
+        private static final byte[] sha3_512hmac_vec = Hex.decode("457d8f00e30deb5ee3f0");
+        private static final byte[] kmac128_vec = Hex.decode("750e695a3b7bbce58daa");
+        private static final byte[] kmac256_vec = Hex.decode("b14746201a693d14313d");
+
+        private final FipsAlgorithm algorithm;
+
+        public NoCounterKDFProvider(FipsAlgorithm algorithm)
+        {
+            this.algorithm = algorithm;
+        }
+
+        public NoCounterKDFProvider(AgreementKDFPRF prf)
+        {
+            this(new FipsAlgorithm(NO_COUNTER.getAlgorithm(), prf));
+        }
+
+        public NoCounterKDFGenerator createEngine()
+        {
+            AgreementKDFPRF prf = (AgreementKDFPRF)algorithm.basicVariation();
+            ExtendedDigest digest = FipsSHS.createDigest(prf.algorithm);
+            Mac mac = FipsSHS.createHMac(prf.algorithm);
+
+            final NoCounterKDFGenerator df;
+
+            if (digest != null)
+            {
+                df = new NoCounterKDFGenerator(digest);
+            }
+            else
+            {
+                if (mac == null)
+                {
+                    if (prf.algorithm == FipsSHS.Algorithm.KMAC128)
+                    {
+                        mac = new KMAC(128, Strings.toByteArray("KDF"));   // see section 4, SP 800-56C
+                    }
+                    else if (prf.algorithm == FipsSHS.Algorithm.KMAC256)
+                    {
+                        mac = new KMAC(256, Strings.toByteArray("KDF"));
+                    }
+                    else
+                    {
+                        throw new IllegalArgumentException("PRF not recognized");
+                    }
+                }
+                df = new NoCounterKDFGenerator(mac);
+            }
+
+            return SelfTestExecutor.validate(algorithm, df, new VariantKatTest<NoCounterKDFGenerator>()
+            {
+                public void evaluate(NoCounterKDFGenerator kdfGenerator)
+                {
+                    df.init(new KDFParameters(KI, SALT, IV));
+
+                    byte[] out = new byte[10];
+
+                    df.generateBytes(out, 0, out.length);
+
+                    if (!Arrays.areEqual(expectedOutput(prf), out))
+                    {
+                        // -DM Hex.toHexString
                         fail("failed self test on generation: " + Hex.toHexString(out));
                     }
                 }
@@ -2477,6 +2679,7 @@ public final class FipsKDF
 
                     if (!Arrays.areEqual(expectedOutput(prf), out))
                     {
+                        // -DM Hex.toHexString
                         fail("failed self test on generation: " + Hex.toHexString(out));
                     }
                 }
@@ -2564,6 +2767,7 @@ public final class FipsKDF
 
                     if (!Arrays.areEqual(expectedOutput(prf), out))
                     {
+                        // -DM Hex.toHexString
                         fail("failed self test on generation: " + Hex.toHexString(out));
                     }
                 }

@@ -26,6 +26,7 @@ import org.bouncycastle.crypto.internal.CipherParameters;
 import org.bouncycastle.crypto.internal.InvalidCipherTextException;
 import org.bouncycastle.crypto.internal.KeyGenerationParameters;
 import org.bouncycastle.crypto.internal.Mac;
+import org.bouncycastle.crypto.internal.MultiBlockCipher;
 import org.bouncycastle.crypto.internal.StreamCipher;
 import org.bouncycastle.crypto.internal.ValidatedSymmetricKey;
 import org.bouncycastle.crypto.internal.Wrapper;
@@ -43,6 +44,7 @@ import org.bouncycastle.crypto.internal.params.KeyParameterImpl;
 import org.bouncycastle.crypto.internal.test.BasicKatTest;
 import org.bouncycastle.crypto.internal.wrappers.SP80038FWrapEngine;
 import org.bouncycastle.crypto.internal.wrappers.SP80038FWrapWithPaddingEngine;
+import org.bouncycastle.crypto.util.RadixConverter;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Pack;
 import org.bouncycastle.util.Properties;
@@ -62,7 +64,7 @@ public final class FipsAES
 
     }
 
-    static final FipsEngineProvider<BlockCipher> ENGINE_PROVIDER;
+    static final FipsEngineProvider<MultiBlockCipher> ENGINE_PROVIDER;
 
     /**
      * Raw AES algorithm, can be used for creating general purpose AES keys.
@@ -296,27 +298,27 @@ public final class FipsAES
     public static final class FPEParameters
         extends Parameters
     {
-        private final int radix;
+        private final RadixConverter radixConverter;
         private final byte[] tweak;
         private final boolean useInverse;
 
         FPEParameters(FipsAlgorithm algorithm)
         {
-            this(algorithm, 0, null, false);
+            this(algorithm, null, null, false);
         }
 
-        private FPEParameters(FipsAlgorithm algorithm, int radix, byte[] tweak, boolean useInverse)
+        private FPEParameters(FipsAlgorithm algorithm, RadixConverter radixConverter, byte[] tweak, boolean useInverse)
         {
             super(algorithm);
 
-            this.radix = radix;
+            this.radixConverter = radixConverter;
             this.tweak = tweak;
             this.useInverse = useInverse;
         }
 
         public int getRadix()
         {
-            return radix;
+            return radixConverter == null ? 0 : radixConverter.getRadix();
         }
 
         public byte[] getTweak()
@@ -331,17 +333,22 @@ public final class FipsAES
 
         public FPEParameters withRadix(int radix)
         {
-            return new FPEParameters(getAlgorithm(), radix, this.tweak, this.useInverse);
+            return new FPEParameters(getAlgorithm(), new RadixConverter(radix), this.tweak, this.useInverse);
+        }
+
+        public FPEParameters withRadixConverter(RadixConverter radixConverter)
+        {
+            return new FPEParameters(getAlgorithm(), radixConverter, this.tweak, this.useInverse);
         }
 
         public FPEParameters withTweak(byte[] tweak)
         {
-            return new FPEParameters(getAlgorithm(), this.radix, Arrays.clone(tweak), this.useInverse);
+            return new FPEParameters(getAlgorithm(), this.radixConverter, Arrays.clone(tweak), this.useInverse);
         }
 
         public FPEParameters withUsingInverseFunction(boolean useInverse)
         {
-            return new FPEParameters(getAlgorithm(), this.radix, this.tweak, useInverse);
+            return new FPEParameters(getAlgorithm(), this.radixConverter, this.tweak, useInverse);
         }
     }
 
@@ -575,6 +582,7 @@ public final class FipsAES
             return new FpeOutProcessor(sKey, parameters, true);
         }
 
+
         @Override
         public FipsOutputDecryptor<Parameters> createOutputDecryptor(final SymmetricKey key, final Parameters parameters)
         {
@@ -589,6 +597,7 @@ public final class FipsAES
 
             return new FipsOutputDecryptor<Parameters>()
             {
+
                 @Override
                 public Parameters getParameters()
                 {
@@ -610,12 +619,20 @@ public final class FipsAES
                 {
                     if (cipher.getUnderlyingCipher() instanceof StreamCipher)
                     {
-                        return new CipherOutputStreamImpl(out, (StreamCipher)cipher.getUnderlyingCipher());
+                        return CipherOutputStreamImpl.getInstance(out, (StreamCipher)cipher.getUnderlyingCipher());
                     }
 
-                    return new CipherOutputStreamImpl(out, cipher);
+                    return CipherOutputStreamImpl.getInstance(out, cipher);
+                }
+
+                @Override
+                public String toString()
+                {
+                    return "FipsOutputDecryptor(" + cipher.getUnderlyingCipher().toString() + ")";
                 }
             };
+
+
         }
 
         @Override
@@ -646,6 +663,12 @@ public final class FipsAES
                     }
 
                     return new CipherInputStream(in, cipher);
+                }
+
+                @Override
+                public String toString()
+                {
+                    return "FipsInputDecryptor(" + cipher.getUnderlyingCipher().toString() + ")";
                 }
             };
         }
@@ -688,6 +711,12 @@ public final class FipsAES
                 {
                     return new LocalInputStream(cipher, parameters, in);
                 }
+
+                @Override
+                public String toString()
+                {
+                    return "FipsInputDecryptor(" + cipher.toString() + ")";
+                }
             };
         }
 
@@ -711,10 +740,10 @@ public final class FipsAES
             {
                 if (cipher.getUnderlyingCipher() instanceof StreamCipher)
                 {
-                    return new CipherOutputStreamImpl(out, (StreamCipher)cipher.getUnderlyingCipher());
+                    return CipherOutputStreamImpl.getInstance(out, (StreamCipher)cipher.getUnderlyingCipher());
                 }
 
-                return new CipherOutputStreamImpl(out, cipher);
+                return CipherOutputStreamImpl.getInstance(out, cipher);
             }
 
             public OutputEncryptor<Parameters> withSecureRandom(SecureRandom random)
@@ -735,6 +764,12 @@ public final class FipsAES
             public int getUpdateOutputSize(int inputLen)
             {
                 return cipher.getUpdateOutputSize(inputLen);
+            }
+
+            @Override
+            public String toString()
+            {
+                return "OutputEncryptor(" + cipher.toString() + ")";
             }
         }
 
@@ -766,24 +801,24 @@ public final class FipsAES
 
                     if (isFF1)
                     {
-                        if (parameters.getRadix() > 256)
+                        if (parameters.radixConverter.getRadix() > 256)
                         {
-                            this.source = new ByteArrayInputStream(toByteArray(SP80038G.decryptFF1w(cipher, parameters.getRadix(), parameters.tweak, toShortArray(data, data.length), 0, data.length / 2)));
+                            this.source = new ByteArrayInputStream(toByteArray(SP80038G.decryptFF1w(cipher, parameters.radixConverter, parameters.tweak, toShortArray(data, data.length), 0, data.length / 2)));
                         }
                         else
                         {
-                            this.source = new ByteArrayInputStream(SP80038G.decryptFF1(cipher, parameters.getRadix(), parameters.tweak, data, 0, data.length));
+                            this.source = new ByteArrayInputStream(SP80038G.decryptFF1(cipher, parameters.radixConverter, parameters.tweak, data, 0, data.length));
                         }
                     }
                     else
                     {
-                        if (parameters.getRadix() > 256)
+                        if (parameters.radixConverter.getRadix() > 256)
                         {
-                            this.source = new ByteArrayInputStream(toByteArray(SP80038G.decryptFF3_1w(cipher, parameters.getRadix(), parameters.tweak, toShortArray(data, data.length), 0, data.length / 2)));
+                            this.source = new ByteArrayInputStream(toByteArray(SP80038G.decryptFF3_1w(cipher, parameters.radixConverter, parameters.tweak, toShortArray(data, data.length), 0, data.length / 2)));
                         }
                         else
                         {
-                            this.source = new ByteArrayInputStream(SP80038G.decryptFF3_1(cipher, parameters.getRadix(), parameters.tweak, data, 0, data.length));
+                            this.source = new ByteArrayInputStream(SP80038G.decryptFF3_1(cipher, parameters.radixConverter, parameters.tweak, data, 0, data.length));
                         }
                     }
                 }
@@ -981,24 +1016,24 @@ public final class FipsAES
                 {
                     if (isFF1)
                     {
-                        if (parameters.getRadix() > 256)
+                        if (parameters.radixConverter.getRadix() > 256)
                         {
-                            output.write(FipsAES.toByteArray(SP80038G.decryptFF1w(cipher, parameters.getRadix(), parameters.getTweak(), toShortArray(this.buf, size()), 0, size() / 2)));
+                            output.write(FipsAES.toByteArray(SP80038G.decryptFF1w(cipher, parameters.radixConverter, parameters.getTweak(), toShortArray(this.buf, size()), 0, size() / 2)));
                         }
                         else
                         {
-                            output.write(SP80038G.decryptFF1(cipher, parameters.getRadix(), parameters.getTweak(), this.buf, 0, size()));
+                            output.write(SP80038G.decryptFF1(cipher, parameters.radixConverter, parameters.getTweak(), this.buf, 0, size()));
                         }
                     }
                     else
                     {
-                        if (parameters.getRadix() > 256)
+                        if (parameters.radixConverter.getRadix() > 256)
                         {
-                            output.write(FipsAES.toByteArray(SP80038G.decryptFF3_1w(cipher, parameters.getRadix(), parameters.getTweak(), toShortArray(buf, size()), 0, size() / 2)));
+                            output.write(FipsAES.toByteArray(SP80038G.decryptFF3_1w(cipher, parameters.radixConverter, parameters.getTweak(), toShortArray(buf, size()), 0, size() / 2)));
                         }
                         else
                         {
-                            output.write(SP80038G.decryptFF3_1(cipher, parameters.getRadix(), parameters.getTweak(), buf, 0, size()));
+                            output.write(SP80038G.decryptFF3_1(cipher, parameters.radixConverter, parameters.getTweak(), buf, 0, size()));
                         }
                     }
 
@@ -1045,24 +1080,24 @@ public final class FipsAES
                 {
                     if (isFF1)
                     {
-                        if (parameters.getRadix() > 256)
+                        if (parameters.radixConverter.getRadix() > 256)
                         {
-                            output.write(FipsAES.toByteArray(SP80038G.encryptFF1w(cipher, parameters.getRadix(), parameters.getTweak(), toShortArray(this.buf, size()), 0, size() / 2)));
+                            output.write(FipsAES.toByteArray(SP80038G.encryptFF1w(cipher, parameters.radixConverter, parameters.getTweak(), toShortArray(this.buf, size()), 0, size() / 2)));
                         }
                         else
                         {
-                            output.write(SP80038G.encryptFF1(cipher, parameters.getRadix(), parameters.getTweak(), this.buf, 0, size()));
+                            output.write(SP80038G.encryptFF1(cipher, parameters.radixConverter, parameters.getTweak(), this.buf, 0, size()));
                         }
                     }
                     else
                     {
-                        if (parameters.getRadix() > 256)
+                        if (parameters.radixConverter.getRadix() > 256)
                         {
-                            output.write(FipsAES.toByteArray(SP80038G.encryptFF3_1w(cipher, parameters.getRadix(), parameters.getTweak(), toShortArray(this.buf, size()), 0, size() / 2)));
+                            output.write(FipsAES.toByteArray(SP80038G.encryptFF3_1w(cipher, parameters.radixConverter, parameters.getTweak(), toShortArray(this.buf, size()), 0, size() / 2)));
                         }
                         else
                         {
-                            output.write(SP80038G.encryptFF3_1(cipher, parameters.getRadix(), parameters.getTweak(), this.buf, 0, size()));
+                            output.write(SP80038G.encryptFF3_1(cipher, parameters.radixConverter, parameters.getTweak(), this.buf, 0, size()));
                         }
                     }
 
@@ -1132,7 +1167,16 @@ public final class FipsAES
             {
                 public Mac createEngine()
                 {
-                    return new GMac(new GCMBlockCipher(ENGINE_PROVIDER.createEngine()));
+                    AEADBlockCipher gcm;
+                    if (NativeLoader.hasNativeService(FipsNativeServices.AES_GCM))
+                    {
+                        gcm = AESNativeGCM.newInstance();
+                    }
+                    else
+                    {
+                        gcm = new GCMBlockCipher(ENGINE_PROVIDER.createEngine());
+                    }
+                    return new GMac(gcm);
                 }
             };
             break;
@@ -1156,7 +1200,16 @@ public final class FipsAES
             mac = new CMac(ENGINE_PROVIDER.createEngine(), parameters.macLenInBits);
             break;
         case GMAC:
-            mac = new GMac(new GCMBlockCipher(ENGINE_PROVIDER.createEngine()), parameters.macLenInBits);
+            AEADBlockCipher gcm;
+            if (NativeLoader.hasNativeService(FipsNativeServices.AES_GCM))
+            {
+                gcm = AESNativeGCM.newInstance();
+            }
+            else
+            {
+                gcm = new GCMBlockCipher(ENGINE_PROVIDER.createEngine());
+            }
+            mac = new GMac(gcm, parameters.macLenInBits);
             break;
         default:
             throw new IllegalArgumentException("Unknown algorithm passed to FipsAES.OperatorFactory.createMACCalculator: " + parameters.getAlgorithm());
@@ -1310,7 +1363,7 @@ public final class FipsAES
                 @Override
                 public CipherOutputStream getDecryptingStream(final OutputStream out)
                 {
-                    return new CipherOutputStreamImpl(out, cipher);
+                    return CipherOutputStreamImpl.getInstance(out, cipher);
                 }
 
                 @Override
@@ -1318,6 +1371,12 @@ public final class FipsAES
                 {
                     return cipher.getMac();
                 }
+
+                public String toString()
+                {
+                    return "FipsOutputAEADDecryptor(" + cipher.toString() + ")";
+                }
+
             };
         }
 
@@ -1409,7 +1468,7 @@ public final class FipsAES
             @Override
             public CipherOutputStream getEncryptingStream(final OutputStream out)
             {
-                return new CipherOutputStreamImpl(out, cipher);
+                return CipherOutputStreamImpl.getInstance(out, cipher);
             }
 
             @Override
@@ -1417,6 +1476,13 @@ public final class FipsAES
             {
                 return cipher.getMac();
             }
+
+            @Override
+            public String toString()
+            {
+                return "OutEncryptor(" + cipher.toString() + ")";
+            }
+
         }
 
         private static class AADStream
@@ -1503,15 +1569,47 @@ public final class FipsAES
     }
 
     private static final class EngineProvider
-        extends FipsEngineProvider<BlockCipher>
+        extends FipsEngineProvider<MultiBlockCipher>
     {
         private static final byte[] input = Hex.decode("00112233445566778899aabbccddeeff");
         private static final byte[] output = Hex.decode("69c4e0d86a7b0430d8cdb78070b4c55a");
 
         private static final byte[] keyBytes = Hex.decode("000102030405060708090a0b0c0d0e0f");
 
-        public BlockCipher createEngine()
+        public MultiBlockCipher createEngine()
         {
+            if (NativeLoader.hasNativeService(FipsNativeServices.AES_ECB))
+            {
+                return SelfTestExecutor.validate(ALGORITHM, new AESNativeEngine(), new VariantKatTest<AESNativeEngine>()
+                {
+                    public void evaluate(AESNativeEngine aesEngine)
+                    {
+
+                        byte[] tmp = new byte[input.length];
+
+                        KeyParameter key = new KeyParameterImpl(keyBytes);
+
+                        aesEngine.init(true, key);
+
+                        aesEngine.processBlock(input, 0, tmp, 0);
+
+                        if (!Arrays.areEqual(output, tmp))
+                        {
+                            fail("Failed self test on encryption");
+                        }
+
+                        aesEngine.init(false, key);
+
+                        aesEngine.processBlock(tmp, 0, tmp, 0);
+
+                        if (!Arrays.areEqual(input, tmp))
+                        {
+                            fail("Failed self test on decryption");
+                        }
+                    }
+                });
+            }
+
             return SelfTestExecutor.validate(ALGORITHM, new AESEngine(), new VariantKatTest<AESEngine>()
             {
                 public void evaluate(AESEngine aesEngine)
@@ -1641,89 +1739,97 @@ public final class FipsAES
 
     private static void gcmStartUpTest(EngineProvider provider)
     {
-        SelfTestExecutor.validate(GCM.getAlgorithm(), provider, new VariantKatTest<EngineProvider>()
+        if (NativeLoader.hasNativeService(FipsNativeServices.AES_GCM))
         {
-            public void evaluate(EngineProvider provider)
-                throws Exception
+            // newInstance will launch the startup test.
+            AESNativeGCM.newInstance();
+        }
+        else
+        {
+            SelfTestExecutor.validate(GCM.getAlgorithm(), provider, new VariantKatTest<EngineProvider>()
             {
-
-                BlockCipher aesCipher = provider.createEngine();
-                GCMBlockCipher encCipher = new GCMBlockCipher(aesCipher);
-
-                byte[] K = Hex.decode("feffe9928665731c6d6a8f9467308308");
-                byte[] P = Hex.decode("d9313225f88406e5a55909c5aff5269a"
-                    + "86a7a9531534f7da2e4c303d8a318a72"
-                    + "1c3c0c95956809532fcf0e2449a6b525"
-                    + "b16aedf5aa0de657ba637b39");
-                byte[] A = Hex.decode("feedfacedeadbeeffeedfacedeadbeef"
-                    + "abaddad2");
-                byte[] IV = Hex.decode("cafebabefacedbaddecaf888");
-                byte[] C = Hex.decode("42831ec2217774244b7221b784d0d49c"
-                    + "e3aa212f2c02a4e035c17e2329aca12e"
-                    + "21d514b25466931c7d8f6a5aac84aa05"
-                    + "1ba30b396a0aac973d58e091");
-                byte[] T = Hex.decode("5bc94fbc3221a5db94fae95ae7121a47");
-
-                CipherParameters params = new org.bouncycastle.crypto.internal.params.AEADParameters(new KeyParameterImpl(K), T.length * 8, IV, A);
-
-                encCipher.init(true, params);
-
-                byte[] enc = new byte[encCipher.getOutputSize(P.length)];
-
-                int len = encCipher.processBytes(P, 0, P.length, enc, 0);
-                len += encCipher.doFinal(enc, len);
-
-                if (enc.length != len)
+                public void evaluate(EngineProvider provider)
+                    throws Exception
                 {
-                    fail("Encryption reported incorrect length");
+                    AEADBlockCipher encCipher;
+                    BlockCipher aesCipher = provider.createEngine();
+                    encCipher = new GCMBlockCipher(aesCipher);
+
+                    byte[] K = Hex.decode("feffe9928665731c6d6a8f9467308308");
+                    byte[] P = Hex.decode("d9313225f88406e5a55909c5aff5269a"
+                        + "86a7a9531534f7da2e4c303d8a318a72"
+                        + "1c3c0c95956809532fcf0e2449a6b525"
+                        + "b16aedf5aa0de657ba637b39");
+                    byte[] A = Hex.decode("feedfacedeadbeeffeedfacedeadbeef"
+                        + "abaddad2");
+                    byte[] IV = Hex.decode("cafebabefacedbaddecaf888");
+                    byte[] C = Hex.decode("42831ec2217774244b7221b784d0d49c"
+                        + "e3aa212f2c02a4e035c17e2329aca12e"
+                        + "21d514b25466931c7d8f6a5aac84aa05"
+                        + "1ba30b396a0aac973d58e091");
+                    byte[] T = Hex.decode("5bc94fbc3221a5db94fae95ae7121a47");
+
+                    CipherParameters params = new org.bouncycastle.crypto.internal.params.AEADParameters(new KeyParameterImpl(K), T.length * 8, IV, A);
+
+                    encCipher.init(true, params);
+
+                    byte[] enc = new byte[encCipher.getOutputSize(P.length)];
+
+                    int len = encCipher.processBytes(P, 0, P.length, enc, 0);
+                    len += encCipher.doFinal(enc, len);
+
+                    if (enc.length != len)
+                    {
+                        fail("Encryption reported incorrect length");
+                    }
+
+                    byte[] mac = encCipher.getMac();
+
+                    byte[] data = new byte[P.length];
+                    System.arraycopy(enc, 0, data, 0, data.length);
+                    byte[] tail = new byte[enc.length - P.length];
+                    System.arraycopy(enc, P.length, tail, 0, tail.length);
+
+                    if (!Arrays.areEqual(C, data))
+                    {
+                        fail("Incorrect encrypt");
+                    }
+
+                    if (!Arrays.areEqual(T, mac))
+                    {
+                        fail("getMac() returned wrong MAC");
+                    }
+
+                    if (!Arrays.areEqual(T, tail))
+                    {
+                        fail("Stream contained wrong MAC");
+                    }
+
+                    GCMBlockCipher decCipher = new GCMBlockCipher(aesCipher);
+
+                    decCipher.init(false, params);
+
+                    byte[] dec = new byte[decCipher.getOutputSize(enc.length)];
+
+                    len = decCipher.processBytes(enc, 0, enc.length, dec, 0);
+                    decCipher.doFinal(dec, len);
+                    mac = decCipher.getMac();
+
+                    data = new byte[C.length];
+                    System.arraycopy(dec, 0, data, 0, data.length);
+
+                    if (!Arrays.areEqual(P, data))
+                    {
+                        fail("Incorrect decrypt");
+                    }
+
+                    if (!Arrays.areEqual(T, mac))
+                    {
+                        fail("Incorrect MAC on decrypt");
+                    }
                 }
-
-                byte[] mac = encCipher.getMac();
-
-                byte[] data = new byte[P.length];
-                System.arraycopy(enc, 0, data, 0, data.length);
-                byte[] tail = new byte[enc.length - P.length];
-                System.arraycopy(enc, P.length, tail, 0, tail.length);
-
-                if (!Arrays.areEqual(C, data))
-                {
-                    fail("Incorrect encrypt");
-                }
-
-                if (!Arrays.areEqual(T, mac))
-                {
-                    fail("getMac() returned wrong MAC");
-                }
-
-                if (!Arrays.areEqual(T, tail))
-                {
-                    fail("Stream contained wrong MAC");
-                }
-
-                GCMBlockCipher decCipher = new GCMBlockCipher(aesCipher);
-
-                decCipher.init(false, params);
-
-                byte[] dec = new byte[decCipher.getOutputSize(enc.length)];
-
-                len = decCipher.processBytes(enc, 0, enc.length, dec, 0);
-                decCipher.doFinal(dec, len);
-                mac = decCipher.getMac();
-
-                data = new byte[C.length];
-                System.arraycopy(dec, 0, data, 0, data.length);
-
-                if (!Arrays.areEqual(P, data))
-                {
-                    fail("Incorrect decrypt");
-                }
-
-                if (!Arrays.areEqual(T, mac))
-                {
-                    fail("Incorrect MAC on decrypt");
-                }
-            }
-        });
+            });
+        }
     }
 
     private static class ErasableByteArrayOutputStream

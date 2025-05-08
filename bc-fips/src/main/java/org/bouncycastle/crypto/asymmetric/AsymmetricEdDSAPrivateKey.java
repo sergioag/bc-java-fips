@@ -3,8 +3,6 @@ package org.bouncycastle.crypto.asymmetric;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.security.auth.Destroyable;
-
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Set;
@@ -14,17 +12,18 @@ import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.crypto.Algorithm;
 import org.bouncycastle.crypto.AsymmetricPrivateKey;
+import org.bouncycastle.crypto.fips.FipsEdEC;
 import org.bouncycastle.crypto.general.EdEC;
 import org.bouncycastle.crypto.internal.Permissions;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Properties;
 
 /**
- * Edwards Curve Diffie-Hellman (XDH) private keys.
+ * Edwards Curve Diffie-Hellman (EdDSA) private keys.
  */
 public final class AsymmetricEdDSAPrivateKey
     extends AsymmetricEdDSAKey
-    implements Destroyable, AsymmetricPrivateKey
+    implements AsymmetricPrivateKey
 {
     private final AtomicBoolean hasBeenDestroyed = new AtomicBoolean(false);
 
@@ -39,18 +38,18 @@ public final class AsymmetricEdDSAPrivateKey
     {
         super(algorithm);
         this.keyData = Arrays.clone(keyData);
-        this.hashCode = calculateHashCode();
         this.attributes = null;
         if (publicData == null)
         {
             this.hasPublicKey = false;
-            this.publicData = EdEC.computePublicData(algorithm, keyData);
+            this.publicData = FipsEdEC.computePublicData(algorithm, keyData);
         }
         else
         {
             this.hasPublicKey = true;
             this.publicData = Arrays.clone(publicData);
         }
+        this.hashCode = calculateHashCode();
     }
 
     /**
@@ -73,7 +72,7 @@ public final class AsymmetricEdDSAPrivateKey
         throws IOException
     {
         super(EdECObjectIdentifiers.id_Ed448.equals(keyInfo.getPrivateKeyAlgorithm().getAlgorithm())
-                    ? EdEC.Algorithm.Ed448 : EdEC.Algorithm.Ed25519);
+                    ? FipsEdEC.Algorithm.Ed448 : FipsEdEC.Algorithm.Ed25519);
 
         ASN1Encodable keyOcts = keyInfo.parsePrivateKey();
         keyData = Arrays.clone(ASN1OctetString.getInstance(keyOcts).getOctets());
@@ -86,7 +85,7 @@ public final class AsymmetricEdDSAPrivateKey
         else
         {
             hasPublicKey = false;
-            this.publicData = EdEC.computePublicData(getAlgorithm(), keyData);
+            this.publicData = FipsEdEC.computePublicData(getAlgorithm(), keyData);
         }
 
         if (EdECObjectIdentifiers.id_Ed448.equals(keyInfo.getPrivateKeyAlgorithm().getAlgorithm()))
@@ -114,20 +113,20 @@ public final class AsymmetricEdDSAPrivateKey
 
         KeyUtils.checkPermission(Permissions.CanOutputPrivateKey);
 
-        byte[] clone = Arrays.clone(keyData);
+        byte[] rv = Arrays.clone(keyData);
 
         KeyUtils.checkDestroyed(this);
 
-        return clone;
+        return rv;
     }
 
     public byte[] getPublicData()
     {
-        byte[] clone = Arrays.clone(publicData);
+        byte[] rv = Arrays.clone(publicData);
 
         KeyUtils.checkDestroyed(this);
 
-        return clone;
+        return rv;
     }
 
     public byte[] getEncoded()
@@ -136,10 +135,11 @@ public final class AsymmetricEdDSAPrivateKey
 
         KeyUtils.checkPermission(Permissions.CanOutputPrivateKey);
 
-        byte[] pubData = (hasPublicKey && !Properties.isOverrideSet("org.bouncycastle.pkcs8.v1_info_only")) ? publicData : null;
-        ASN1Set attributes = this.attributes;
+        KeyUtils.checkDestroyed(this);
 
-        if (getAlgorithm().equals(EdEC.Algorithm.Ed448))
+        byte[] pubData = (hasPublicKey && !Properties.isOverrideSet("org.bouncycastle.pkcs8.v1_info_only")) ? publicData : null;
+
+        if (getAlgorithm().equals(FipsEdEC.Algorithm.Ed448))
         {
             return KeyUtils.getEncodedPrivateKeyInfo(
                 new AlgorithmIdentifier(EdECObjectIdentifiers.id_Ed448), new DEROctetString(getSecret()), attributes, pubData);
@@ -158,10 +158,7 @@ public final class AsymmetricEdDSAPrivateKey
         if (!hasBeenDestroyed.getAndSet(true))
         {
             Arrays.clear(keyData);
-            if (publicData != null)
-            {
-                Arrays.clear(publicData);
-            }
+            Arrays.clear(publicData);
             this.publicData = null;
             this.hasPublicKey = false;
             this.attributes = null;
@@ -196,9 +193,12 @@ public final class AsymmetricEdDSAPrivateKey
 
         other.checkApprovedOnlyModeStatus();
 
-        return this.hashCode == other.hashCode
-            && KeyUtils.isFieldEqual(this.getAlgorithm(), other.getAlgorithm())
-            && Arrays.constantTimeAreEqual(this.keyData, other.keyData);
+        if (!Arrays.constantTimeAreEqual(keyData, other.keyData))
+        {
+            return false;
+        }
+
+        return this.getAlgorithm().equals(other.getAlgorithm()) & !(this.isDestroyed() | other.isDestroyed());
     }
 
     @Override
@@ -212,18 +212,7 @@ public final class AsymmetricEdDSAPrivateKey
     private int calculateHashCode()
     {
         int result = getAlgorithm().hashCode();
-        result = 31 * result + Arrays.hashCode(keyData);
+        result = 31 * result + 3 * Arrays.hashCode(publicData);
         return result;
     }
-
-    /*
-    @Override
-    protected void finalize()
-        throws Throwable
-    {
-        super.finalize();
-
-        //destroy();
-    }
-     */
 }

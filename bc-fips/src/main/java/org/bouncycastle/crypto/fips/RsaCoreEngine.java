@@ -16,23 +16,29 @@ import org.bouncycastle.util.Arrays;
  * this does your basic RSA algorithm.
  */
 class RsaCoreEngine
+    implements RSAEngine
 {
     private RsaKeyParameters key;
-    private boolean          forEncryption;
+    private boolean forEncryption;
+
+    public static RSAEngine getEngine()
+    {
+        return new RsaCoreEngine();
+    }
 
     /**
      * initialise the RSA engine.
      *
      * @param forEncryption true if we are encrypting, false otherwise.
-     * @param param the necessary RSA key parameters.
+     * @param param         the necessary RSA key parameters.
      */
     public void init(
-        boolean          forEncryption,
+        boolean forEncryption,
         CipherParameters param)
     {
         if (param instanceof ParametersWithRandom)
         {
-            ParametersWithRandom    rParam = (ParametersWithRandom)param;
+            ParametersWithRandom rParam = (ParametersWithRandom)param;
 
             key = (RsaKeyParameters)rParam.getParameters();
         }
@@ -53,7 +59,7 @@ class RsaCoreEngine
      */
     public int getInputBlockSize()
     {
-        int     bitSize = key.getModulus().bitLength();
+        int bitSize = key.getModulus().bitLength();
 
         if (forEncryption)
         {
@@ -74,7 +80,7 @@ class RsaCoreEngine
      */
     public int getOutputBlockSize()
     {
-        int     bitSize = key.getModulus().bitLength();
+        int bitSize = key.getModulus().bitLength();
 
         if (forEncryption)
         {
@@ -87,9 +93,9 @@ class RsaCoreEngine
     }
 
     public BigInteger convertInput(
-        byte[]  in,
-        int     inOff,
-        int     inLen)
+        byte[] in,
+        int inOff,
+        int inLen)
     {
         if (inLen > (getInputBlockSize() + 1))
         {
@@ -100,7 +106,7 @@ class RsaCoreEngine
             throw new DataLengthException("input too large for RSA cipher.");
         }
 
-        byte[]  block;
+        byte[] block;
 
         if (inOff != 0 || inLen != in.length)
         {
@@ -125,13 +131,13 @@ class RsaCoreEngine
     public byte[] convertOutput(
         BigInteger result)
     {
-        byte[]      output = result.toByteArray();
+        byte[] output = result.toByteArray();
 
         if (forEncryption)
         {
             if (output[0] == 0 && output.length > getOutputBlockSize())        // have ended up with an extra zero byte, copy down.
             {
-                byte[]  tmp = new byte[output.length - 1];
+                byte[] tmp = new byte[output.length - 1];
 
                 System.arraycopy(output, 1, tmp, 0, tmp.length);
 
@@ -140,7 +146,7 @@ class RsaCoreEngine
 
             if (output.length < getOutputBlockSize())     // have ended up with less bytes than normal, lengthen
             {
-                byte[]  tmp = new byte[getOutputBlockSize()];
+                byte[] tmp = new byte[getOutputBlockSize()];
 
                 System.arraycopy(output, 0, tmp, tmp.length - output.length, output.length);
 
@@ -151,7 +157,7 @@ class RsaCoreEngine
         }
         else
         {
-            byte[]  rv;
+            byte[] rv;
             if (output[0] == 0)        // have ended up with an extra zero byte, copy down.
             {
                 rv = new byte[output.length - 1];
@@ -210,7 +216,7 @@ class RsaCoreEngine
         else
         {
             return input.modPow(
-                        key.getExponent(), key.getModulus());
+                key.getExponent(), key.getModulus());
         }
     }
 }

@@ -1,6 +1,3 @@
-/***************************************************************/
-/******    DO NOT EDIT THIS CLASS bc-java SOURCE FILE     ******/
-/***************************************************************/
 package org.bouncycastle.asn1;
 
 import java.text.ParseException;
@@ -10,10 +7,12 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * ASN.1 uses an EN locale for its internal formatting. This class finds the nearest equivalent in the
+ * current JVM to ensure date formats are always respected.
+ */
 public class LocaleUtil
 {
-    private static Long ZERO = longValueOf(0);
-
     private static final Map localeCache = new HashMap();
 
     public static Locale EN_Locale = forEN();
@@ -55,19 +54,12 @@ public class LocaleUtil
                 SimpleDateFormat dateF = new SimpleDateFormat("yyyyMMddHHmmssz");
                 long v = dateF.parse("19700101000000GMT+00:00").getTime();
 
-                if (v == 0)
-                {
-                    adj = ZERO;
-                }
-                else
-                {
-                    adj = longValueOf(v);
-                }
+                adj = longValueOf(v);
 
                 localeCache.put(locale, adj);
             }
 
-            if (adj != ZERO)
+            if (adj.longValue() != 0L)
             {
                 return new Date(date.getTime() - adj.longValue());
             }

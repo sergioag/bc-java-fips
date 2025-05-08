@@ -18,9 +18,9 @@ public abstract class GeneralAuthParameters<T extends GeneralAuthParameters>
     /**
      * Base Constructor that takes an iv (nonce) and a tag length.
      *
-     * @param algorithm algorithm mode.
-     * @param blockSize block size of the cipher in bytes.
-     * @param iv iv, or nonce, to be used with this algorithm.
+     * @param algorithm     algorithm mode.
+     * @param blockSize     block size of the cipher in bytes.
+     * @param iv            iv, or nonce, to be used with this algorithm.
      * @param macSizeInBits length of the checksum tag in bits.
      */
     protected GeneralAuthParameters(GeneralAlgorithm algorithm, int blockSize, byte[] iv, int macSizeInBits)
@@ -44,7 +44,7 @@ public abstract class GeneralAuthParameters<T extends GeneralAuthParameters>
      * Return an implementation of our parameterized type with an IV constructed from the passed in SecureRandom.
      *
      * @param random the SecureRandom to use as the source of IV data.
-     * @param ivLen the length (in bytes) of the IV to be generated.
+     * @param ivLen  the length (in bytes) of the IV to be generated.
      * @return a new instance of our parameterized type with a new IV.
      */
     public T withIV(SecureRandom random, int ivLen)

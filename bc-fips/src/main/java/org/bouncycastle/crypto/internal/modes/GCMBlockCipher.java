@@ -29,30 +29,30 @@ public class GCMBlockCipher
     private static final int BLOCK_SIZE = 16;
 
     // not final due to a compiler bug
-    private BlockCipher   cipher;
+    private BlockCipher cipher;
     private GCMMultiplier multiplier;
     private GCMExponentiator exp;
 
     // These fields are set by init and not modified by processing
-    private boolean             forEncryption;
-    private int                 macSize;
-    private byte[]              nonce;
-    private byte[]              initialAssociatedText;
-    private byte[]              H;
-    private byte[]              J0;
+    private boolean forEncryption;
+    private int macSize;
+    private byte[] nonce;
+    private byte[] initialAssociatedText;
+    private byte[] H;
+    private byte[] J0;
 
     // These fields are modified during processing
-    private byte[]      bufBlock;
-    private byte[]      macBlock;
-    private byte[]      S, S_at, S_atPre;
-    private byte[]      counter;
-    private int         blocksRemaining;
-    private int         bufOff;
-    private long        totalLength;
-    private byte[]      atBlock;
-    private int         atBlockPos;
-    private long        atLength;
-    private long        atLengthPre;
+    private byte[] bufBlock;
+    private byte[] macBlock;
+    private byte[] S, S_at, S_atPre;
+    private byte[] counter;
+    private int blocksRemaining;
+    private int bufOff;
+    private long totalLength;
+    private byte[] atBlock;
+    private int atBlockPos;
+    private long atLength;
+    private long atLengthPre;
 
     public GCMBlockCipher(BlockCipher c)
     {
@@ -74,6 +74,7 @@ public class GCMBlockCipher
     {
         return cipher.getAlgorithmName() + "/GCM";
     }
+
 
     /**
      * NOTE: MAC sizes from 32 bits to 128 bits (must be a multiple of 8) are supported. The default is 128 bits.
@@ -108,7 +109,7 @@ public class GCMBlockCipher
             ParametersWithIV param = (ParametersWithIV)params;
 
             nonce = param.getIV();
-            initialAssociatedText  = null;
+            initialAssociatedText = null;
             macSize = 16;
             keyParam = (KeyParameter)param.getParameters();
         }
@@ -523,14 +524,27 @@ public class GCMBlockCipher
         blocksRemaining--;
 
         int c = 1;
-        c += counter[15] & 0xFF; counter[15] = (byte)c; c >>>= 8;
-        c += counter[14] & 0xFF; counter[14] = (byte)c; c >>>= 8;
-        c += counter[13] & 0xFF; counter[13] = (byte)c; c >>>= 8;
-        c += counter[12] & 0xFF; counter[12] = (byte)c;
+        c += counter[15] & 0xFF;
+        counter[15] = (byte)c;
+        c >>>= 8;
+        c += counter[14] & 0xFF;
+        counter[14] = (byte)c;
+        c >>>= 8;
+        c += counter[13] & 0xFF;
+        counter[13] = (byte)c;
+        c >>>= 8;
+        c += counter[12] & 0xFF;
+        counter[12] = (byte)c;
 
         byte[] tmp = new byte[BLOCK_SIZE];
         // TODO Sure would be nice if ciphers could operate on int[]
         cipher.processBlock(counter, 0, tmp, 0);
         return tmp;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "GCM[Java](" + cipher.toString() + ")";
     }
 }

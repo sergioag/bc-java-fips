@@ -14,7 +14,7 @@ import org.bouncycastle.crypto.Parameters;
 public abstract class FipsOutputEncryptor<T extends Parameters>
     implements OutputEncryptor<T>
 {
-     // package protect construction
+    // package protect construction
     FipsOutputEncryptor()
     {
     }

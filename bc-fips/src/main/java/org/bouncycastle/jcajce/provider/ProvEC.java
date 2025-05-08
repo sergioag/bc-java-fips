@@ -476,100 +476,98 @@ class ProvEC
         });
         provider.addAlias("Signature", "NONEWITHECDSA", "RAWECDSA");
 
-        if (!CryptoServicesRegistrar.isInApprovedOnlyMode())
+        provider.addAlgorithmImplementation("Signature.SHA1WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA", generalEcAttributes, new EngineCreator()
         {
-            provider.addAlgorithmImplementation("Signature.SHA1WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA", generalEcAttributes, new GuardedEngineCreator(new EngineCreator()
+            public Object createInstance(Object constructorParameter)
             {
-                public Object createInstance(Object constructorParameter)
-                {
-                    return new BaseSignature(provider, getGeneralDSAFactory(), publicKeyConverter, privateKeyConverter, EC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA1));
-                }
-            }));
-            provider.addAlgorithmImplementation("Signature.SHA224WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA224", generalEcAttributes, new GuardedEngineCreator(new EngineCreator()
-            {
-                public Object createInstance(Object constructorParameter)
-                {
-                    return new BaseSignature(provider, getGeneralDSAFactory(), publicKeyConverter, privateKeyConverter, EC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA224));
-                }
-            }));
-            provider.addAlgorithmImplementation("Signature.SHA256WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA256", generalEcAttributes, new GuardedEngineCreator(new EngineCreator()
-            {
-                public Object createInstance(Object constructorParameter)
-                {
-                    return new BaseSignature(provider, getGeneralDSAFactory(), publicKeyConverter, privateKeyConverter, EC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA256));
-                }
-            }));
-            provider.addAlgorithmImplementation("Signature.SHA384WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA384", generalEcAttributes, new GuardedEngineCreator(new EngineCreator()
-            {
-                public Object createInstance(Object constructorParameter)
-                {
-                    return new BaseSignature(provider, getGeneralDSAFactory(), publicKeyConverter, privateKeyConverter, EC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA384));
-                }
-            }));
-            provider.addAlgorithmImplementation("Signature.SHA512WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA512", generalEcAttributes, new GuardedEngineCreator(new EngineCreator()
-            {
-                public Object createInstance(Object constructorParameter)
-                {
-                    return new BaseSignature(provider, getGeneralDSAFactory(), publicKeyConverter, privateKeyConverter, EC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA512));
-                }
-            }));
-            provider.addAlgorithmImplementation("Signature.SHA512(224)WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA512_224", generalEcAttributes, new GuardedEngineCreator(new EngineCreator()
-            {
-                public Object createInstance(Object constructorParameter)
-                {
-                    return new BaseSignature(provider, getGeneralDSAFactory(), publicKeyConverter, privateKeyConverter, EC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA512_224));
-                }
-            }));
-            provider.addAlgorithmImplementation("Signature.SHA512(256)WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA512_256", generalEcAttributes, new GuardedEngineCreator(new EngineCreator()
-            {
-                public Object createInstance(Object constructorParameter)
-                {
-                    return new BaseSignature(provider, getGeneralDSAFactory(), publicKeyConverter, privateKeyConverter, EC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA512_256));
-                }
-            }));
-            provider.addAlgorithmImplementation("Signature.SHA3-224WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA3_224", generalEcAttributes, new GuardedEngineCreator(new EngineCreator()
-            {
-                public Object createInstance(Object constructorParameter)
-                {
-                    return new BaseSignature(provider, getGeneralDSAFactory(), publicKeyConverter, privateKeyConverter, EC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA3_224));
-                }
-            }));
-            provider.addAlgorithmImplementation("Signature.SHA3-256WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA3_256", generalEcAttributes, new GuardedEngineCreator(new EngineCreator()
-            {
-                public Object createInstance(Object constructorParameter)
-                {
-                    return new BaseSignature(provider, getGeneralDSAFactory(), publicKeyConverter, privateKeyConverter, EC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA3_256));
-                }
-            }));
-            provider.addAlgorithmImplementation("Signature.SHA3-384WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA3_384", generalEcAttributes, new GuardedEngineCreator(new EngineCreator()
-            {
-                public Object createInstance(Object constructorParameter)
-                {
-                    return new BaseSignature(provider, getGeneralDSAFactory(), publicKeyConverter, privateKeyConverter, EC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA3_384));
-                }
-            }));
-            provider.addAlgorithmImplementation("Signature.SHA3-512WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA3_512", generalEcAttributes, new GuardedEngineCreator(new EngineCreator()
-            {
-                public Object createInstance(Object constructorParameter)
-                {
-                    return new BaseSignature(provider, getGeneralDSAFactory(), publicKeyConverter, privateKeyConverter, EC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA3_512));
-                }
-            }));
+                return new BaseSignature(provider, getFipsDSAFactory(), publicKeyConverter, privateKeyConverter, FipsEC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA1));
+            }
+        });
 
-            provider.addAlias("Alg.Alias.Signature.ECDDSA", "SHA1WITHECDDSA");
-            provider.addAlias("Alg.Alias.Signature.DETECDSA", "SHA1WITHECDDSA");
-            provider.addAlias("Alg.Alias.Signature.SHA1WITHDETECDSA", "SHA1WITHECDDSA");
-            provider.addAlias("Alg.Alias.Signature.SHA224WITHDETECDSA", "SHA224WITHECDDSA");
-            provider.addAlias("Alg.Alias.Signature.SHA256WITHDETECDSA", "SHA256WITHECDDSA");
-            provider.addAlias("Alg.Alias.Signature.SHA384WITHDETECDSA", "SHA384WITHECDDSA");
-            provider.addAlias("Alg.Alias.Signature.SHA512WITHDETECDSA", "SHA512WITHECDDSA");
-            provider.addAlias("Alg.Alias.Signature.SHA512(224)WITHDETECDSA", "SHA512(224)WITHECDDSA");
-            provider.addAlias("Alg.Alias.Signature.SHA512(256)WITHDETECDSA", "SHA512(256)WITHECDDSA");
-            provider.addAlias("Alg.Alias.Signature.SHA3-224WITHDETECDSA", "SHA3-224WITHECDDSA");
-            provider.addAlias("Alg.Alias.Signature.SHA3-256WITHDETECDSA", "SHA3-256WITHECDDSA");
-            provider.addAlias("Alg.Alias.Signature.SHA3-384WITHDETECDSA", "SHA3-384WITHECDDSA");
-            provider.addAlias("Alg.Alias.Signature.SHA3-512WITHDETECDSA", "SHA3-512WITHECDDSA");
-        }
+        provider.addAlgorithmImplementation("Signature.SHA224WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA224", generalEcAttributes, new EngineCreator()
+        {
+            public Object createInstance(Object constructorParameter)
+            {
+                return new BaseSignature(provider, getFipsDSAFactory(), publicKeyConverter, privateKeyConverter, FipsEC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA224));
+            }
+        });
+        provider.addAlgorithmImplementation("Signature.SHA256WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA256", generalEcAttributes, new EngineCreator()
+        {
+            public Object createInstance(Object constructorParameter)
+            {
+                return new BaseSignature(provider, getFipsDSAFactory(), publicKeyConverter, privateKeyConverter, FipsEC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA256));
+            }
+        });
+        provider.addAlgorithmImplementation("Signature.SHA384WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA384", generalEcAttributes, new EngineCreator()
+        {
+            public Object createInstance(Object constructorParameter)
+            {
+                return new BaseSignature(provider, getFipsDSAFactory(), publicKeyConverter, privateKeyConverter, FipsEC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA384));
+            }
+        });
+        provider.addAlgorithmImplementation("Signature.SHA512WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA512", generalEcAttributes, new EngineCreator()
+        {
+            public Object createInstance(Object constructorParameter)
+            {
+                return new BaseSignature(provider, getFipsDSAFactory(), publicKeyConverter, privateKeyConverter, FipsEC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA512));
+            }
+        });
+        provider.addAlgorithmImplementation("Signature.SHA512(224)WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA512_224", generalEcAttributes, new EngineCreator()
+        {
+            public Object createInstance(Object constructorParameter)
+            {
+                return new BaseSignature(provider, getFipsDSAFactory(), publicKeyConverter, privateKeyConverter, FipsEC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA512_224));
+            }
+        });
+        provider.addAlgorithmImplementation("Signature.SHA512(256)WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA512_256", generalEcAttributes, new EngineCreator()
+        {
+            public Object createInstance(Object constructorParameter)
+            {
+                return new BaseSignature(provider, getFipsDSAFactory(), publicKeyConverter, privateKeyConverter, FipsEC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA512_256));
+            }
+        });
+        provider.addAlgorithmImplementation("Signature.SHA3-224WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA3_224", generalEcAttributes, new EngineCreator()
+        {
+            public Object createInstance(Object constructorParameter)
+            {
+                return new BaseSignature(provider, getFipsDSAFactory(), publicKeyConverter, privateKeyConverter, FipsEC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA3_224));
+            }
+        });
+        provider.addAlgorithmImplementation("Signature.SHA3-256WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA3_256", generalEcAttributes, new EngineCreator()
+        {
+            public Object createInstance(Object constructorParameter)
+            {
+                return new BaseSignature(provider, getFipsDSAFactory(), publicKeyConverter, privateKeyConverter, FipsEC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA3_256));
+            }
+        });
+        provider.addAlgorithmImplementation("Signature.SHA3-384WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA3_384", generalEcAttributes, new EngineCreator()
+        {
+            public Object createInstance(Object constructorParameter)
+            {
+                return new BaseSignature(provider, getFipsDSAFactory(), publicKeyConverter, privateKeyConverter, FipsEC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA3_384));
+            }
+        });
+        provider.addAlgorithmImplementation("Signature.SHA3-512WITHECDDSA", PREFIX + "SignatureSpi$ecDetDSA3_512", generalEcAttributes, new EngineCreator()
+        {
+            public Object createInstance(Object constructorParameter)
+            {
+                return new BaseSignature(provider, getFipsDSAFactory(), publicKeyConverter, privateKeyConverter, FipsEC.DDSA.withDigestAlgorithm(FipsSHS.Algorithm.SHA3_512));
+            }
+        });
+
+        provider.addAlias("Alg.Alias.Signature.ECDDSA", "SHA1WITHECDDSA");
+        provider.addAlias("Alg.Alias.Signature.DETECDSA", "SHA1WITHECDDSA");
+        provider.addAlias("Alg.Alias.Signature.SHA1WITHDETECDSA", "SHA1WITHECDDSA");
+        provider.addAlias("Alg.Alias.Signature.SHA224WITHDETECDSA", "SHA224WITHECDDSA");
+        provider.addAlias("Alg.Alias.Signature.SHA256WITHDETECDSA", "SHA256WITHECDDSA");
+        provider.addAlias("Alg.Alias.Signature.SHA384WITHDETECDSA", "SHA384WITHECDDSA");
+        provider.addAlias("Alg.Alias.Signature.SHA512WITHDETECDSA", "SHA512WITHECDDSA");
+        provider.addAlias("Alg.Alias.Signature.SHA512(224)WITHDETECDSA", "SHA512(224)WITHECDDSA");
+        provider.addAlias("Alg.Alias.Signature.SHA512(256)WITHDETECDSA", "SHA512(256)WITHECDDSA");
+        provider.addAlias("Alg.Alias.Signature.SHA3-224WITHDETECDSA", "SHA3-224WITHECDDSA");
+        provider.addAlias("Alg.Alias.Signature.SHA3-256WITHDETECDSA", "SHA3-256WITHECDDSA");
+        provider.addAlias("Alg.Alias.Signature.SHA3-384WITHDETECDSA", "SHA3-384WITHECDDSA");
+        provider.addAlias("Alg.Alias.Signature.SHA3-512WITHDETECDSA", "SHA3-512WITHECDDSA");
 
         addSignatureAlgorithm(provider, "SHA1", "ECDSA", PREFIX + "SignatureSpi$ecDSA1", X9ObjectIdentifiers.ecdsa_with_SHA1, generalEcAttributes, new EngineCreator()
         {

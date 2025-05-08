@@ -10,7 +10,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.NamedParameterSpec;
 
 import org.bouncycastle.crypto.asymmetric.AsymmetricEdDSAPublicKey;
-import org.bouncycastle.crypto.general.EdEC;
+import org.bouncycastle.crypto.fips.FipsEdEC;
 import org.bouncycastle.jcajce.interfaces.EdDSAPublicKey;
 import org.bouncycastle.util.Arrays;
 
@@ -125,7 +125,7 @@ class Prov15EdDSAPublicKey
     @Override
     public NamedParameterSpec getParams()
     {
-        if (baseKey.getAlgorithm().equals(EdEC.Algorithm.Ed448))
+        if (baseKey.getAlgorithm().getName().startsWith("Ed448"))
         {
             return NamedParameterSpec.ED448;
         }

@@ -1,5 +1,7 @@
 package org.bouncycastle.crypto.internal.wrappers;
 
+import org.bouncycastle.crypto.CryptoServicesRegistrar;
+import org.bouncycastle.crypto.fips.FipsUnapprovedOperationError;
 import org.bouncycastle.crypto.internal.BlockCipher;
 import org.bouncycastle.crypto.internal.DataLengthException;
 import org.bouncycastle.crypto.internal.InvalidCipherTextException;
@@ -53,6 +55,19 @@ public final class SP80038FWrapEngine
         System.arraycopy(iv, 0, block, 0, iv.length);
         System.arraycopy(in, inOff, block, iv.length, inLen);
 
+        if (n == 1)
+        {
+            if (CryptoServicesRegistrar.isInApprovedOnlyMode())
+            {
+                throw new FipsUnapprovedOperationError("wrap data must be at least " + (2 * delta) + " bytes");
+            }
+
+            engine.init(wrapCipherMode, param);
+            engine.processBlock(block, 0, block, 0);
+
+            return block;
+        }
+
         return W(n, block);
     }
 
@@ -74,13 +89,32 @@ public final class SP80038FWrapEngine
             throw new InvalidCipherTextException("unwrap data must be a multiple of " + delta + " bytes");
         }
 
-        byte[]  block = new byte[inLen - iv.length];
         byte[]  a = new byte[iv.length];
+        byte[]  block = new byte[inLen - iv.length];
 
-        System.arraycopy(in, inOff, a, 0, iv.length);
-        System.arraycopy(in, inOff + iv.length, block, 0, inLen - iv.length);
+        if (n == 2)
+        {
+            if (CryptoServicesRegistrar.isInApprovedOnlyMode())
+            {
+                throw new FipsUnapprovedOperationError("wrapped data must be at least " + (3 * delta) + " bytes");
+            }
 
-        invW(n, block, a);
+            byte[] buf = new byte[2 * delta];
+            System.arraycopy(in, 0, buf, 0, buf.length);
+
+            engine.init(!wrapCipherMode, param);
+            engine.processBlock(buf, 0, buf, 0);
+
+            System.arraycopy(buf, 0, a, 0, iv.length);
+            System.arraycopy(buf, iv.length, block, 0, inLen - iv.length);
+        }
+        else
+        {
+            System.arraycopy(in, inOff, a, 0, iv.length);
+            System.arraycopy(in, inOff + iv.length, block, 0, inLen - iv.length);
+
+            invW(n, block, a);
+        }
 
         if (!Arrays.constantTimeAreEqual(a, iv))
         {

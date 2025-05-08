@@ -10,7 +10,7 @@ import org.bouncycastle.util.Arrays;
  * Source class for scrypt utility KDF, an augmentation of the PBKDF2 PBE algorithm which incorporates a memory-hard component.
  * <p>
  * Scrypt was created by Colin Percival and is specified in <a href="https://tools.ietf.org/html/rfc7914">
- *     RFC 7914 - The scrypt Password-Based Key Derivation Function</a>
+ * RFC 7914 - The scrypt Password-Based Key Derivation Function</a>
  */
 public final class Scrypt
 {
@@ -34,13 +34,13 @@ public final class Scrypt
         /**
          * Generate a key using the scrypt key derivation function.
          *
-         * @param salt     the salt to use for this invocation.
-         * @param n     CPU/Memory cost parameter. Must be larger than 1, a power of 2 and less than
-         *              <code>2^(128 * r / 8)</code>.
-         * @param r     the block size, must be &gt;= 1.
-         * @param p     Parallelization parameter. Must be a positive integer less than or equal to
-         *              <code>Integer.MAX_VALUE / (128 * r * 8)</code>.
-         * @param seed  the value feed into the PBKDF2 function.
+         * @param salt the salt to use for this invocation.
+         * @param n    CPU/Memory cost parameter. Must be larger than 1, a power of 2 and less than
+         *             <code>2^(128 * r / 8)</code>.
+         * @param r    the block size, must be &gt;= 1.
+         * @param p    Parallelization parameter. Must be a positive integer less than or equal to
+         *             <code>Integer.MAX_VALUE / (128 * r * 8)</code>.
+         * @param seed the value feed into the PBKDF2 function.
          * @return the generated key.
          */
         public Parameters using(byte[] salt, int n, int r, int p, byte[] seed)
@@ -51,12 +51,12 @@ public final class Scrypt
         /**
          * Generate a key using the scrypt key derivation function.
          *
-         * @param salt     the salt to use for this invocation.
-         * @param n     CPU/Memory cost parameter. Must be larger than 1, a power of 2 and less than
-         *              <code>2^(128 * r / 8)</code>.
-         * @param r     the block size, must be &gt;= 1.
-         * @param p     Parallelization parameter. Must be a positive integer less than or equal to
-         *              <code>Integer.MAX_VALUE / (128 * r * 8)</code>.
+         * @param salt      the salt to use for this invocation.
+         * @param n         CPU/Memory cost parameter. Must be larger than 1, a power of 2 and less than
+         *                  <code>2^(128 * r / 8)</code>.
+         * @param r         the block size, must be &gt;= 1.
+         * @param p         Parallelization parameter. Must be a positive integer less than or equal to
+         *                  <code>Integer.MAX_VALUE / (128 * r * 8)</code>.
          * @param converter a converter to turn the password characters into the byte array for the seed.
          * @param password  a character string to use as a seed.
          * @return the generated key.
@@ -111,31 +111,31 @@ public final class Scrypt
     {
         public KDFCalculator<Parameters> createKDFCalculator(final Parameters params)
         {
-             return new KDFCalculator<Parameters>()
-             {
-                 public Parameters getParameters()
-                 {
-                     return params;
-                 }
+            return new KDFCalculator<Parameters>()
+            {
+                public Parameters getParameters()
+                {
+                    return params;
+                }
 
-                 public void generateBytes(byte[] out)
-                 {
-                     byte[] tmp = SCryptImpl.generate(params.seed, params.salt, params.n, params.r, params.p, out.length);
+                public void generateBytes(byte[] out)
+                {
+                    byte[] tmp = SCryptImpl.generate(params.seed, params.salt, params.n, params.r, params.p, out.length);
 
-                     System.arraycopy(tmp, 0, out, 0, out.length);
+                    System.arraycopy(tmp, 0, out, 0, out.length);
 
-                     Arrays.fill(tmp, (byte)0);
-                 }
+                    Arrays.fill(tmp, (byte)0);
+                }
 
-                 public void generateBytes(byte[] out, int outOff, int len)
-                 {
-                     byte[] tmp = SCryptImpl.generate(params.seed, params.salt, params.n, params.r, params.p, len);
+                public void generateBytes(byte[] out, int outOff, int len)
+                {
+                    byte[] tmp = SCryptImpl.generate(params.seed, params.salt, params.n, params.r, params.p, len);
 
-                     System.arraycopy(tmp, 0, out, outOff, len);
+                    System.arraycopy(tmp, 0, out, outOff, len);
 
-                     Arrays.fill(tmp, (byte)0);
-                 }
-             };
+                    Arrays.fill(tmp, (byte)0);
+                }
+            };
         }
     }
 }

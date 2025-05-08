@@ -1,6 +1,6 @@
 package org.bouncycastle.asn1.cmc;
 
-import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
@@ -59,13 +59,18 @@ public class TaggedCertificationRequest
         return getInstance(ASN1Sequence.getInstance(obj, explicit));
     }
 
+    public BodyPartID getBodyPartID()
+    {
+        return bodyPartID;
+    }
+
+    public CertificationRequest getCertificationRequest()
+    {
+        return certificationRequest;
+    }
+
     public ASN1Primitive toASN1Primitive()
     {
-        ASN1EncodableVector v = new ASN1EncodableVector(2);
-
-        v.add(bodyPartID);
-        v.add(certificationRequest);
-
-        return new DERSequence(v);
+        return new DERSequence(new ASN1Encodable[] { bodyPartID, certificationRequest });
     }
 }

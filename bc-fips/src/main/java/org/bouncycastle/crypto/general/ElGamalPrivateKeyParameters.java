@@ -8,16 +8,16 @@ import java.math.BigInteger;
 class ElGamalPrivateKeyParameters
     extends ElGamalKeyParameters
 {
-    private BigInteger      x;
+    private BigInteger x;
 
     public ElGamalPrivateKeyParameters(
-        BigInteger      x,
-        ElGamalParameters    params)
+        BigInteger x,
+        ElGamalParameters params)
     {
         super(true, params);
 
         this.x = x;
-    }   
+    }
 
     public BigInteger getX()
     {

@@ -5,15 +5,17 @@ package org.bouncycastle.crypto.fips;
 
 import java.security.SecureRandom;
 
-import org.bouncycastle.crypto.InvalidSignatureException;
 import org.bouncycastle.crypto.internal.AsymmetricBlockCipher;
 import org.bouncycastle.crypto.internal.CipherParameters;
 import org.bouncycastle.crypto.internal.CryptoException;
 import org.bouncycastle.crypto.internal.DataLengthException;
 import org.bouncycastle.crypto.internal.Digest;
+import org.bouncycastle.crypto.internal.ExtendedDigest;
 import org.bouncycastle.crypto.internal.Signer;
+import org.bouncycastle.crypto.internal.Xof;
 import org.bouncycastle.crypto.internal.params.ParametersWithRandom;
 import org.bouncycastle.crypto.internal.params.RsaKeyParameters;
+import org.bouncycastle.util.Arrays;
 
 /**
  * RSA-PSS as described in PKCS# 1 v 2.1.
@@ -24,17 +26,30 @@ import org.bouncycastle.crypto.internal.params.RsaKeyParameters;
 class PSSSigner
     implements Signer
 {
-    static final public byte   TRAILER_IMPLICIT    = (byte)0xBC;
+    public static final byte TRAILER_IMPLICIT = (byte)0xBC;
 
-    private Digest                      contentDigest;
+    public static PSSSigner createRawSigner(AsymmetricBlockCipher cipher, ExtendedDigest contentDigest, ExtendedDigest mgfDigest,
+                                            int sLen, byte trailer)
+    {
+        return new PSSSigner(cipher, new NullDigest(), contentDigest, mgfDigest, sLen, trailer);
+    }
+
+    public static PSSSigner createRawSigner(AsymmetricBlockCipher cipher, ExtendedDigest contentDigest, ExtendedDigest mgfDigest,
+        byte[] salt, byte trailer)
+    {
+        return new PSSSigner(cipher, new NullDigest(), contentDigest, mgfDigest, salt, trailer);
+    }
+
+    private Digest                      contentDigest1;
+    private Digest                      contentDigest2;
     private Digest                      mgfDigest;
     private AsymmetricBlockCipher       cipher;
     private SecureRandom                random;
 
     private int                         hLen;
     private int                         mgfhLen;
-    private int                         sLen;
     private boolean                     sSet;
+    private int                         sLen;
     private int                         emBits;
     private byte[]                      salt;
     private byte[]                      mDash;
@@ -46,15 +61,27 @@ class PSSSigner
         Digest                  contentDigest,
         Digest                  mgfDigest,
         int                     sLen,
+        int                     trailer)
+    {
+        this(cipher, contentDigest, contentDigest, mgfDigest, sLen, trailer);
+    }
+
+    private PSSSigner(
+        AsymmetricBlockCipher   cipher,
+        Digest                  contentDigest1,
+        Digest                  contentDigest2,
+        Digest                  mgfDigest,
+        int                     sLen,
         int                    trailer)
     {
         this.cipher = cipher;
-        this.contentDigest = contentDigest;
+        this.contentDigest1 = contentDigest1;
+        this.contentDigest2 = contentDigest2;
         this.mgfDigest = mgfDigest;
-        this.hLen = contentDigest.getDigestSize();
+        this.hLen = contentDigest2.getDigestSize();
         this.mgfhLen = mgfDigest.getDigestSize();
-        this.sLen = sLen;
         this.sSet = false;
+        this.sLen = sLen;
         this.salt = new byte[sLen];
         this.mDash = new byte[8 + sLen + hLen];
         this.trailer = trailer;
@@ -67,13 +94,25 @@ class PSSSigner
         byte[]                  salt,
         int                     trailer)
     {
+        this(cipher, contentDigest, contentDigest, mgfDigest, salt, trailer);
+    }
+
+    private PSSSigner(
+        AsymmetricBlockCipher   cipher,
+        Digest                  contentDigest1,
+        Digest                  contentDigest2,
+        Digest                  mgfDigest,
+        byte[]                  salt,
+        int                     trailer)
+    {
         this.cipher = cipher;
-        this.contentDigest = contentDigest;
+        this.contentDigest1 = contentDigest1;
+        this.contentDigest2 = contentDigest2;
         this.mgfDigest = mgfDigest;
-        this.hLen = contentDigest.getDigestSize();
+        this.hLen = contentDigest2.getDigestSize();
         this.mgfhLen = mgfDigest.getDigestSize();
-        this.sLen = salt.length;
         this.sSet = true;
+        this.sLen = salt.length;
         this.salt = salt;
         this.mDash = new byte[8 + sLen + hLen];
         this.trailer = trailer;
@@ -113,7 +152,7 @@ class PSSSigner
         {
             kParam = (RsaKeyParameters)params;
         }
-        
+
         emBits = kParam.getModulus().bitLength() - 1;
 
         if (emBits < (8 * hLen + 8 * sLen + 9))
@@ -130,7 +169,7 @@ class PSSSigner
      * clear possible sensitive data
      */
     private void clearBlock(
-        byte[]  block)
+        byte[] block)
     {
         for (int i = 0; i != block.length; i++)
         {
@@ -142,9 +181,9 @@ class PSSSigner
      * update the internal digest with the byte b
      */
     public void update(
-        byte    b)
+        byte b)
     {
-        contentDigest.update(b);
+        contentDigest1.update(b);
     }
 
     /**
@@ -155,7 +194,7 @@ class PSSSigner
         int     off,
         int     len)
     {
-        contentDigest.update(in, off, len);
+        contentDigest1.update(in, off, len);
     }
 
     /**
@@ -163,7 +202,7 @@ class PSSSigner
      */
     public void reset()
     {
-        contentDigest.reset();
+        contentDigest1.reset();
     }
 
     /**
@@ -173,7 +212,12 @@ class PSSSigner
     public byte[] generateSignature()
         throws CryptoException, DataLengthException
     {
-        contentDigest.doFinal(mDash, mDash.length - hLen - sLen);
+        if (contentDigest1.getDigestSize() != hLen)
+        {
+            throw new IllegalStateException();
+        }
+
+        contentDigest1.doFinal(mDash, mDash.length - hLen - sLen);
 
         if (sLen != 0)
         {
@@ -187,24 +231,25 @@ class PSSSigner
 
         byte[]  h = new byte[hLen];
 
-        contentDigest.update(mDash, 0, mDash.length);
+        contentDigest2.update(mDash, 0, mDash.length);
 
-        contentDigest.doFinal(h, 0);
+        contentDigest2.doFinal(h, 0);
 
         block[block.length - sLen - 1 - hLen - 1] = 0x01;
         System.arraycopy(salt, 0, block, block.length - sLen - hLen - 1, sLen);
 
-        byte[] dbMask = maskGeneratorFunction1(h, 0, h.length, block.length - hLen - 1);
+        byte[] dbMask = maskGenerator(h, 0, h.length, block.length - hLen - 1);
         for (int i = 0; i != dbMask.length; i++)
         {
             block[i] ^= dbMask[i];
         }
 
-        block[0] &= (0xff >> ((block.length * 8) - emBits));
-
         System.arraycopy(h, 0, block, block.length - hLen - 1, hLen);
 
-        block[block.length - 1] = (byte)trailer;     // TODO: accomodate longer trailers
+        int firstByteMask = 0xff >>> ((block.length * 8) - emBits);
+
+        block[0] &= firstByteMask;
+        block[block.length - 1] = (byte)trailer;
 
         byte[]  b = cipher.processBlock(block, 0, block.length);
 
@@ -219,34 +264,42 @@ class PSSSigner
      */
     public boolean verifySignature(
         byte[]      signature)
-        throws InvalidSignatureException
     {
-        contentDigest.doFinal(mDash, mDash.length - hLen - sLen);
+        if (contentDigest1.getDigestSize() != hLen)
+        {
+            throw new IllegalStateException();
+        }
+
+        contentDigest1.doFinal(mDash, mDash.length - hLen - sLen);
 
         try
         {
             byte[] b = cipher.processBlock(signature, 0, signature.length);
+            Arrays.fill(block, 0, block.length - b.length, (byte)0);
             System.arraycopy(b, 0, block, block.length - b.length, b.length);
         }
         catch (Exception e)
         {
-            throw new InvalidSignatureException("Unable to process signature: " + e.getMessage(), e);
+            return false;
         }
 
-        if (block[block.length - 1] != trailer)
+        int firstByteMask = 0xff >>> ((block.length * 8) - emBits);
+
+        if ((block[0] & 0xff) != (block[0] & firstByteMask)
+            || block[block.length - 1] != trailer)
         {
             clearBlock(block);
             return false;
         }
 
-        byte[] dbMask = maskGeneratorFunction1(block, block.length - hLen - 1, hLen, block.length - hLen - 1);
+        byte[] dbMask = maskGenerator(block, block.length - hLen - 1, hLen, block.length - hLen - 1);
 
         for (int i = 0; i != dbMask.length; i++)
         {
             block[i] ^= dbMask[i];
         }
 
-        block[0] &= (0xff >> ((block.length * 8) - emBits));
+        block[0] &= firstByteMask;
 
         for (int i = 0; i != block.length - hLen - sLen - 2; i++)
         {
@@ -272,8 +325,8 @@ class PSSSigner
             System.arraycopy(block, block.length - sLen - hLen - 1, mDash, mDash.length - sLen, sLen);
         }
 
-        contentDigest.update(mDash, 0, mDash.length);
-        contentDigest.doFinal(mDash, mDash.length - hLen);
+        contentDigest2.update(mDash, 0, mDash.length);
+        contentDigest2.doFinal(mDash, mDash.length - hLen);
 
         for (int i = block.length - hLen - 1, j = mDash.length - hLen;
                                                  j != mDash.length; i++, j++)
@@ -303,6 +356,26 @@ class PSSSigner
         sp[1] = (byte)(i >>> 16);
         sp[2] = (byte)(i >>> 8);
         sp[3] = (byte)(i >>> 0);
+    }
+
+    private byte[] maskGenerator(
+        byte[]  Z,
+        int     zOff,
+        int     zLen,
+        int     length)
+    {
+        if (mgfDigest instanceof Xof)
+        {
+            byte[] mask = new byte[length];
+            mgfDigest.update(Z, zOff, zLen);
+            ((Xof)mgfDigest).doFinal(mask, 0, mask.length);
+
+            return mask;
+        }
+        else
+        {
+            return maskGeneratorFunction1(Z, zOff, zLen, length);
+        }
     }
 
     /**

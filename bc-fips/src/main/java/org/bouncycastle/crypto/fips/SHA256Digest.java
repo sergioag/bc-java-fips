@@ -23,12 +23,12 @@ import org.bouncycastle.util.Pack;
 class SHA256Digest
     extends GeneralDigest
 {
-    private static final int    DIGEST_LENGTH = 32;
+    private static final int DIGEST_LENGTH = 32;
 
-    private int     H1, H2, H3, H4, H5, H6, H7, H8;
+    private int H1, H2, H3, H4, H5, H6, H7, H8;
 
-    private int[]   X = new int[64];
-    private int     xOff;
+    private int[] X = new int[64];
+    private int xOff;
 
     /**
      * Standard constructor
@@ -45,7 +45,6 @@ class SHA256Digest
     public SHA256Digest(SHA256Digest t)
     {
         super(t);
-
         copyIn(t);
     }
 
@@ -77,8 +76,8 @@ class SHA256Digest
     }
 
     protected void processWord(
-        byte[]  in,
-        int     inOff)
+        byte[] in,
+        int inOff)
     {
         // Note: Inlined for performance
 //        X[xOff] = Pack.bigEndianToInt(in, inOff);
@@ -95,7 +94,7 @@ class SHA256Digest
     }
 
     protected void processLength(
-        long    bitLength)
+        long bitLength)
     {
         if (xOff > 14)
         {
@@ -107,8 +106,8 @@ class SHA256Digest
     }
 
     public int doFinal(
-        byte[]  out,
-        int     outOff)
+        byte[] out,
+        int outOff)
     {
         finish();
 
@@ -167,17 +166,17 @@ class SHA256Digest
         //
         // set up working variables.
         //
-        int     a = H1;
-        int     b = H2;
-        int     c = H3;
-        int     d = H4;
-        int     e = H5;
-        int     f = H6;
-        int     g = H7;
-        int     h = H8;
+        int a = H1;
+        int b = H2;
+        int c = H3;
+        int d = H4;
+        int e = H5;
+        int f = H6;
+        int g = H7;
+        int h = H8;
 
-        int t = 0;     
-        for(int i = 0; i < 8; i ++)
+        int t = 0;
+        for (int i = 0; i < 8; i++)
         {
             // t = 8 * i
             h += Sum1(e) + Ch(e, f, g) + K[t] + X[t];
@@ -249,41 +248,41 @@ class SHA256Digest
 
     /* SHA-256 functions */
     private int Ch(
-        int    x,
-        int    y,
-        int    z)
+        int x,
+        int y,
+        int z)
     {
         return (x & y) ^ ((~x) & z);
     }
 
     private int Maj(
-        int    x,
-        int    y,
-        int    z)
+        int x,
+        int y,
+        int z)
     {
         return (x & y) ^ (x & z) ^ (y & z);
     }
 
     private int Sum0(
-        int    x)
+        int x)
     {
         return ((x >>> 2) | (x << 30)) ^ ((x >>> 13) | (x << 19)) ^ ((x >>> 22) | (x << 10));
     }
 
     private int Sum1(
-        int    x)
+        int x)
     {
         return ((x >>> 6) | (x << 26)) ^ ((x >>> 11) | (x << 21)) ^ ((x >>> 25) | (x << 7));
     }
 
     private int Theta0(
-        int    x)
+        int x)
     {
         return ((x >>> 7) | (x << 25)) ^ ((x >>> 18) | (x << 14)) ^ (x >>> 3);
     }
 
     private int Theta1(
-        int    x)
+        int x)
     {
         return ((x >>> 17) | (x << 15)) ^ ((x >>> 19) | (x << 13)) ^ (x >>> 10);
     }

@@ -1,10 +1,6 @@
-/***************************************************************/
-/******    DO NOT EDIT THIS CLASS bc-java SOURCE FILE     ******/
-/***************************************************************/
 package org.bouncycastle.asn1.cms;
 
 import org.bouncycastle.asn1.ASN1Encodable;
-import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -13,7 +9,7 @@ import org.bouncycastle.asn1.ASN1Set;
 import org.bouncycastle.asn1.DERSequence;
 
 /**
- * <a href="http://tools.ietf.org/html/rfc5652#page-14">RFC 5652</a>:
+ * <a href="https://tools.ietf.org/html/rfc5652#page-14">RFC 5652</a>:
  * Attribute is a pair of OID (as type identifier) + set of values.
  * <p>
  * <pre>
@@ -103,11 +99,6 @@ public class Attribute
      */
     public ASN1Primitive toASN1Primitive()
     {
-        ASN1EncodableVector v = new ASN1EncodableVector();
-
-        v.add(attrType);
-        v.add(attrValues);
-
-        return new DERSequence(v);
+        return new DERSequence(new ASN1Encodable[]{attrType, attrValues});
     }
 }

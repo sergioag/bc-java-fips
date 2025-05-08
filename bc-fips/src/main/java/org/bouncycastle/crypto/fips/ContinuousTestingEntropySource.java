@@ -61,47 +61,29 @@ class ContinuousTestingEntropySource
                 msg = EntropyUtil.isNotStuck(buf[buf.length - 1], nxt);
                 if (msg != null)
                 {
-                    if (retries == maxRetries)
-                    {
-                        // FSM_TRANS:5.3, "CONTINUOUS NDRNG TEST", "SOFT ERROR", "Continuous NDRNG test failed"
-                        FipsStatus.moveToErrorStatus(msg);
-                    }
-                    else
-                    {
-                        LOG.warning(msg);
-                    }
+                    LOG.warning(msg);
                 }
 
                 msg = EntropyUtil.isProportionate(windStats, nxt);
                 if (msg != null)
                 {
-                    if (retries == maxRetries)
-                    {
-                        // FSM_TRANS:5.3, "CONTINUOUS NDRNG TEST", "SOFT ERROR", "Continuous NDRNG test failed"
-                        FipsStatus.moveToErrorStatus(msg);
-                    }
-                    else
-                    {
-                        LOG.warning(msg);
-                    }
+                    LOG.warning(msg);
                 }
 
-                // if this one fails something must be seriously wrong...
                 if (Arrays.areEqual(nxt, buf))
                 {
                     msg = "Duplicate block detected in EntropySource output";
-                    if (retries == maxRetries)
-                    {
-                        // FSM_TRANS:5.3, "CONTINUOUS NDRNG TEST", "SOFT ERROR", "Continuous NDRNG test failed"
-                        FipsStatus.moveToErrorStatus(msg);
-                    }
-                    else
-                    {
-                        LOG.warning(msg);
-                    }
+                    LOG.warning(msg);
                 }
             }
             while (msg != null && retries <= maxRetries);
+
+            if (retries > maxRetries)
+            {
+                // FSM_TRANS:5.3, "CONTINUOUS NDRNG TEST", "SOFT ERROR", "Continuous NDRNG test failed"
+                FipsStatus.moveToErrorStatus(msg);
+            }
+
             // FSM_TRANS:5.2, "CONTINUOUS NDRNG TEST", "CONDITIONAL TEST", "Continuous NDRNG test successful"
 
             System.arraycopy(nxt, 0, buf, 0, buf.length);

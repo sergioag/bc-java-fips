@@ -31,7 +31,7 @@ public final class SHACAL2
      * Raw SHACAL-2 algorithm, can be used for creating general purpose SHACAL-2 keys.
      */
     public static final GeneralAlgorithm ALGORITHM = new GeneralAlgorithm("SHACAL-2");
-    
+
     private static final EngineProvider ENGINE_PROVIDER;
 
     static
@@ -215,7 +215,7 @@ public final class SHACAL2
 
         public KeyGenerator(GeneralParameters parameterSet, int keySizeInBits, SecureRandom random)
         {
-             this((GeneralAlgorithm)parameterSet.getAlgorithm(), keySizeInBits, random);
+            this((GeneralAlgorithm)parameterSet.getAlgorithm(), keySizeInBits, random);
         }
 
         private KeyGenerator(GeneralAlgorithm algorithm, int keySizeInBits, SecureRandom random)

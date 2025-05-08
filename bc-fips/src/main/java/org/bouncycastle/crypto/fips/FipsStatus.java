@@ -32,16 +32,18 @@ public final class FipsStatus
 
     private static final Object statusLock = new Object();
 
-    private static final String[] classes = new String[] { FipsSHS.class.getName() };
+    private static final String[] classes = new String[]{FipsSHS.class.getName()};
     private static final AtomicBoolean readyStatus = new AtomicBoolean(false);
 
     private static volatile Loader loader;
     private static volatile Throwable statusException;
 
+
     private FipsStatus()
     {
 
     }
+
 
     /**
      * Check to see if the FIPS module is ready for operation.
@@ -73,6 +75,10 @@ public final class FipsStatus
                 checksumValidate();
                 // FSM_TRANS:3.XFI.0.1,"FIRMWARE INTEGRITY - HMAC-SHA256", "POWER ON SELF-TEST", "Firmware Integrity HMAC-SHA256 test successful completion"
 
+
+                // Trigger loading of native drivers.
+                NativeLoader.loadDriver();
+
                 // FSM_TRANS:3.XFI.0.2
                 readyStatus.set(true);
             }
@@ -89,7 +95,6 @@ public final class FipsStatus
     {
         return !readyStatus.get();
     }
-
 
     private static void checksumValidate()
     {
@@ -139,7 +144,7 @@ public final class FipsStatus
                     int ch;
                     while ((ch = macIn.read()) >= 0 && ch != '\r' && ch != '\n')
                     {
-                        sb.append((char)ch);
+                        sb.append((char) ch);
                     }
 
                     byte[] fileMac = Hex.decode(sb.toString().trim());
@@ -162,7 +167,7 @@ public final class FipsStatus
     /**
      * Return a message indicating the current status.
      *
-     * @return  READY if all is well, an exception message otherwise.
+     * @return READY if all is well, an exception message otherwise.
      */
     public static String getStatusMessage()
     {
@@ -240,14 +245,14 @@ public final class FipsStatus
             // build an index to make sure we get things in the same order.
             Map<String, JarEntry> index = new TreeMap<String, JarEntry>();
 
-            for (Enumeration<JarEntry> entries = jarFile.entries(); entries.hasMoreElements();)
+            for (Enumeration<JarEntry> entries = jarFile.entries(); entries.hasMoreElements(); )
             {
                 JarEntry jarEntry = entries.nextElement();
 
                 // Skip directories, META-INF, and module-info.class meta-data
                 if (jarEntry.isDirectory()
-                    || (jarEntry.getName().startsWith("META-INF/") && jarEntry.getName().indexOf("versions") < 0)
-                    || jarEntry.getName().indexOf("module-info.class") > 0)
+                        || (jarEntry.getName().startsWith("META-INF/") && jarEntry.getName().indexOf("versions") < 0)
+                        || jarEntry.getName().indexOf("module-info.class") > 0)
                 {
                     continue;
                 }
@@ -255,7 +260,7 @@ public final class FipsStatus
                 Object last = index.put(jarEntry.getName(), jarEntry);
                 if (last != null)
                 {
-                    IllegalStateException e =  new IllegalStateException("Unable to initialize module: duplicate entry found in jar file");
+                    IllegalStateException e = new IllegalStateException("Unable to initialize module: duplicate entry found in jar file");
                     statusException = e;
                     throw e;
                 }
@@ -273,10 +278,10 @@ public final class FipsStatus
 
                 // header information
                 byte[] encName = Strings.toUTF8ByteArray(jarEntry.getName());
-                hMac.update((byte)0x5B);   // '['
+                hMac.update((byte) 0x5B);   // '['
                 hMac.update(encName, 0, encName.length);
                 hMac.update(Pack.longToBigEndian(jarEntry.getSize()), 0, 8);
-                hMac.update((byte)0x5D);    // ']'
+                hMac.update((byte) 0x5D);    // ']'
 
                 // contents
                 int n;
@@ -287,10 +292,10 @@ public final class FipsStatus
                 is.close();
             }
 
-            hMac.update((byte)0x5B);   // '['
+            hMac.update((byte) 0x5B);   // '['
             byte[] encName = Strings.toUTF8ByteArray("END");
             hMac.update(encName, 0, encName.length);
-            hMac.update((byte)0x5D);    // ']'
+            hMac.update((byte) 0x5D);    // ']'
 
             byte[] hmacResult = new byte[hMac.getMacSize()];
 
@@ -346,17 +351,17 @@ public final class FipsStatus
             }
             else if (marker.startsWith("jrt:"))
             {
-                 return marker;
+                return marker;
             }
             else if (marker.startsWith("file:"))
             {
-                 return marker;    // this means we're running from classes (development)
+                return marker;    // this means we're running from classes (development)
             }
         }
 
         return result;
     }
-    
+
     static void moveToErrorStatus(String error)
     {
         moveToErrorStatus(new FipsOperationError(error));
@@ -366,8 +371,8 @@ public final class FipsStatus
     {
         // FSM_STATE:8.0
         // FSM_TRANS:3.2
-        statusException =  error;
-        throw (FipsOperationError)statusException;
+        statusException = error;
+        throw (FipsOperationError) statusException;
     }
 
     /**
@@ -387,7 +392,7 @@ public final class FipsStatus
         }
 
         void run()
-            throws Exception
+                throws Exception
         {
             // FSM_STATE:3.0, "POWER ON SELF-TEST", ""
             for (String cls : classes)
@@ -407,20 +412,22 @@ public final class FipsStatus
         if (loader != null)
         {
             Object resource = AccessController.doPrivileged(
-                                new PrivilegedAction() {
-                                    public Object run() {
-                                        try
-                                        {
-                                            CodeSource cs =
-                                                sourceClass.getProtectionDomain().getCodeSource();
-                                            return cs.getLocation();
-                                        }
-                                        catch (Exception e)
-                                        {
-                                            return null;
-                                        }
-                                    }
-                                });
+                    new PrivilegedAction()
+                    {
+                        public Object run()
+                        {
+                            try
+                            {
+                                CodeSource cs =
+                                        sourceClass.getProtectionDomain().getCodeSource();
+                                return cs.getLocation();
+                            }
+                            catch (Exception e)
+                            {
+                                return null;
+                            }
+                        }
+                    });
             if (resource != null)
             {
                 return resource.toString();

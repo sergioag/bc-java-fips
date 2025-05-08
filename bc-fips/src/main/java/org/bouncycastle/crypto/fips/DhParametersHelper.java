@@ -16,7 +16,7 @@ class DhParametersHelper
 
     /*
      * Finds a pair of prime BigInteger's {p, q: p = 2q + 1}
-     * 
+     *
      * (see: Handbook of Applied Cryptography 4.86)
      */
     static BigInteger[] generateSafePrimes(int size, int certainty, SecureRandom random)
@@ -25,7 +25,7 @@ class DhParametersHelper
         int qLength = size - 1;
         int minWeight = size >>> 2;
 
-        for (;;)
+        for (; ; )
         {
             q = new BigInteger(qLength, 2, random);
 
@@ -56,12 +56,12 @@ class DhParametersHelper
             break;
         }
 
-        return new BigInteger[] { p, q };
+        return new BigInteger[]{p, q};
     }
 
     /*
      * Select a high order element of the multiplicative group Zp*
-     * 
+     *
      * p and q must be s.t. p = 2*q + 1, where p and q are prime (see generateSafePrimes)
      */
     static BigInteger selectGenerator(BigInteger p, BigInteger q, SecureRandom random)

@@ -11,42 +11,42 @@ import org.bouncycastle.crypto.internal.params.ParametersWithIV;
 
 /**
  * DES based CBC Block Cipher MAC according to ISO9797, algorithm 3 (ANSI X9.19 Retail MAC)
- *
+ * <p>
  * This could as well be derived from CBCBlockCipherMac, but then the property mac in the base
- * class must be changed to protected  
+ * class must be changed to protected
  */
 class ISO9797Alg3Mac
-    implements Mac 
+    implements Mac
 {
-    private byte[]              mac;
-    
-    private byte[]              buf;
-    private int                 bufOff;
-    private BlockCipher         cipher;
-    private BlockCipherPadding  padding;
-    
-    private int                 macSize;
-    private KeyParameter        lastKey2;
-    private KeyParameter        lastKey3;
-    
+    private byte[] mac;
+
+    private byte[] buf;
+    private int bufOff;
+    private BlockCipher cipher;
+    private BlockCipherPadding padding;
+
+    private int macSize;
+    private KeyParameter lastKey2;
+    private KeyParameter lastKey3;
+
     /**
      * create a Retail-MAC based on a CBC block cipher. This will produce an
      * authentication code of the length of the block size of the cipher.
      *
      * @param cipher the cipher to be used as the basis of the MAC generation. This must
-     * be DESEngine.
+     *               be DESEngine.
      */
     public ISO9797Alg3Mac(
         BlockCipher cipher)
     {
         this(cipher, cipher.getBlockSize() * 8, null);
     }
-    
+
     /**
      * create a Retail-MAC based on a CBC block cipher. This will produce an
      * authentication code of the length of the block size of the cipher.
      *
-     * @param cipher the cipher to be used as the basis of the MAC generation.
+     * @param cipher  the cipher to be used as the basis of the MAC generation.
      * @param padding the padding to be used to complete the last block.
      */
     public ISO9797Alg3Mac(
@@ -66,7 +66,7 @@ class ISO9797Alg3Mac
      * and in general should be less than the size of the block cipher as it reduces
      * the chance of an exhaustive attack (see Handbook of Applied Cryptography).
      *
-     * @param cipher the cipher to be used as the basis of the MAC generation.
+     * @param cipher        the cipher to be used as the basis of the MAC generation.
      * @param macSizeInBits the size of the MAC in bits, must be a multiple of 8.
      */
     public ISO9797Alg3Mac(
@@ -87,9 +87,9 @@ class ISO9797Alg3Mac
      * and in general should be less than the size of the block cipher as it reduces
      * the chance of an exhaustive attack (see Handbook of Applied Cryptography).
      *
-     * @param cipher the cipher to be used as the basis of the MAC generation.
+     * @param cipher        the cipher to be used as the basis of the MAC generation.
      * @param macSizeInBits the size of the MAC in bits, must be a multiple of 8.
-     * @param padding the padding to be used to complete the last block.
+     * @param padding       the padding to be used to complete the last block.
      */
     public ISO9797Alg3Mac(
         BlockCipher cipher,
@@ -115,7 +115,7 @@ class ISO9797Alg3Mac
         buf = new byte[cipher.getBlockSize()];
         bufOff = 0;
     }
-    
+
     public String getAlgorithmName()
     {
         return "ISO9797Alg3";
@@ -128,7 +128,7 @@ class ISO9797Alg3Mac
         if (!(params instanceof KeyParameter || params instanceof ParametersWithIV))
         {
             throw new IllegalArgumentException(
-                    "params must be an instance of KeyParameter or ParametersWithIV");
+                "params must be an instance of KeyParameter or ParametersWithIV");
         }
 
         // KeyParameter must contain a double or triple length DES key,
@@ -164,7 +164,7 @@ class ISO9797Alg3Mac
         else
         {
             throw new IllegalArgumentException(
-                    "Key must be either 112 or 168 bit long");
+                "Key must be either 112 or 168 bit long");
         }
 
         if (params instanceof ParametersWithIV)
@@ -176,69 +176,69 @@ class ISO9797Alg3Mac
             cipher.init(true, key1);
         }
     }
-    
+
     public int getMacSize()
     {
         return macSize;
     }
-    
+
     public void update(
-            byte        in)
+        byte in)
     {
         if (bufOff == buf.length)
         {
             cipher.processBlock(buf, 0, mac, 0);
             bufOff = 0;
         }
-        
+
         buf[bufOff++] = in;
     }
-    
-    
+
+
     public void update(
-            byte[]      in,
-            int         inOff,
-            int         len)
+        byte[] in,
+        int inOff,
+        int len)
     {
         if (len < 0)
         {
             throw new IllegalArgumentException("Can't have a negative input length!");
         }
-        
+
         int blockSize = cipher.getBlockSize();
         int resultLen = 0;
         int gapLen = blockSize - bufOff;
-        
+
         if (len > gapLen)
         {
             System.arraycopy(in, inOff, buf, bufOff, gapLen);
-            
+
             resultLen += cipher.processBlock(buf, 0, mac, 0);
-            
+
             bufOff = 0;
             len -= gapLen;
             inOff += gapLen;
-            
+
             while (len > blockSize)
             {
                 resultLen += cipher.processBlock(in, inOff, mac, 0);
-                
+
                 len -= blockSize;
                 inOff += blockSize;
             }
         }
-        
+
         System.arraycopy(in, inOff, buf, bufOff, len);
-        
+
         bufOff += len;
     }
-    
+
     public int doFinal(
-            byte[]  out,
-            int     outOff)
+        byte[] out,
+        int outOff)
     {
         int blockSize = cipher.getBlockSize();
-        
+
         if (padding == null)
         {
             //
@@ -257,30 +257,30 @@ class ISO9797Alg3Mac
                 cipher.processBlock(buf, 0, mac, 0);
                 bufOff = 0;
             }
-            
+
             padding.addPadding(buf, bufOff);
         }
-        
+
         cipher.processBlock(buf, 0, mac, 0);
 
         // Added to code from base class
         DesEngine deseng = new DesEngine();
-        
+
         deseng.init(false, this.lastKey2);
         deseng.processBlock(mac, 0, mac, 0);
-        
+
         deseng.init(true, this.lastKey3);
         deseng.processBlock(mac, 0, mac, 0);
         // ****
-        
+
         System.arraycopy(mac, 0, out, outOff, macSize);
-        
+
         reset();
-        
+
         return macSize;
     }
 
-    
+
     /**
      * Reset the mac generator.
      */
@@ -293,9 +293,9 @@ class ISO9797Alg3Mac
         {
             buf[i] = 0;
         }
-        
+
         bufOff = 0;
-        
+
         /*
          * reset the underlying cipher.
          */

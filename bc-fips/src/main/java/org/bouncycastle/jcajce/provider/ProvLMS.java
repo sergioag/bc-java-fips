@@ -34,7 +34,7 @@ import org.bouncycastle.crypto.UpdateOutputStream;
 import org.bouncycastle.crypto.asymmetric.AsymmetricKeyPair;
 import org.bouncycastle.crypto.asymmetric.AsymmetricLMSPrivateKey;
 import org.bouncycastle.crypto.asymmetric.AsymmetricLMSPublicKey;
-import org.bouncycastle.crypto.general.LMS;
+import org.bouncycastle.crypto.fips.FipsLMS;
 import org.bouncycastle.jcajce.spec.LMSHSSKeyGenParameterSpec;
 import org.bouncycastle.jcajce.spec.LMSKeyGenParameterSpec;
 
@@ -116,11 +116,11 @@ final class ProvLMS
         {
             if (key instanceof PublicKey)
             {
-                return new ProvLMSPublicKey(lmsPublicKeyConverter.convertKey(LMS.ALGORITHM, (PublicKey)key));
+                return new ProvLMSPublicKey(lmsPublicKeyConverter.convertKey(FipsLMS.ALGORITHM, (PublicKey)key));
             }
             else if (key instanceof PrivateKey)
             {
-                return new ProvLMSPrivateKey(lmsPrivateKeyConverter.convertKey(LMS.ALGORITHM, (PrivateKey)key));
+                return new ProvLMSPrivateKey(lmsPrivateKeyConverter.convertKey(FipsLMS.ALGORITHM, (PrivateKey)key));
             }
             else if (key != null)
             {
@@ -188,8 +188,8 @@ final class ProvLMS
     {
         private final BouncyCastleFipsProvider provider;
 
-        LMS.KeyGenParameters param;
-        LMS.KeyPairGenerator engine;
+        FipsLMS.KeyGenParameters param;
+        FipsLMS.KeyPairGenerator engine;
 
         SecureRandom random;
         boolean initialised = false;
@@ -229,21 +229,21 @@ final class ProvLMS
             {
                 LMSKeyGenParameterSpec lmsParams = (LMSKeyGenParameterSpec)params;
 
-                param = new LMS.KeyGenParameters(lmsParams.getKeyParams());
+                param = new FipsLMS.KeyGenParameters(lmsParams.getKeyParams());
 
-                engine = new LMS.KeyPairGenerator(param, random);
+                engine = new FipsLMS.KeyPairGenerator(param, random);
             }
             else if (params instanceof LMSHSSKeyGenParameterSpec)
             {
                 LMSKeyGenParameterSpec[] lmsParams = ((LMSHSSKeyGenParameterSpec)params).getLMSSpecs();
-                LMS.KeyParameters[] hssParams = new LMS.KeyParameters[lmsParams.length];
+                FipsLMS.KeyParameters[] hssParams = new FipsLMS.KeyParameters[lmsParams.length];
                 for (int i = 0; i != lmsParams.length; i++)
                 {
                     hssParams[i] = lmsParams[i].getKeyParams();
                 }
-                param = new LMS.KeyGenParameters(hssParams);
+                param = new FipsLMS.KeyGenParameters(hssParams);
 
-                engine = new LMS.KeyPairGenerator(param, random);
+                engine = new FipsLMS.KeyPairGenerator(param, random);
             }
             else
             {
@@ -261,14 +261,14 @@ final class ProvLMS
         {
             if (!initialised)
             {
-                param = new LMS.KeyGenParameters(LMS.lms_sha256_n32_h10.using(LMS.sha256_n32_w4));
+                param = new FipsLMS.KeyGenParameters(FipsLMS.lms_sha256_n32_h10.using(FipsLMS.sha256_n32_w4));
 
                 if (random == null)
                 {
                     random = provider.getDefaultSecureRandom();
                 }
 
-                engine = new LMS.KeyPairGenerator(param, random);
+                engine = new FipsLMS.KeyPairGenerator(param, random);
                 initialised = true;
             }
 
@@ -483,7 +483,7 @@ final class ProvLMS
         {
             public Object createInstance(Object constructorParameter)
             {
-                return new LMSSignatureSpi(provider, new LMS.OperatorFactory(), lmsPublicKeyConverter, lmsPrivateKeyConverter, LMS.SIG);
+                return new LMSSignatureSpi(provider, new FipsLMS.OperatorFactory(), lmsPublicKeyConverter, lmsPrivateKeyConverter, FipsLMS.SIG);
             }
         }));
         provider.addAlias("Signature", "LMS", PKCSObjectIdentifiers.id_alg_hss_lms_hashsig);

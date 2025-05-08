@@ -7,8 +7,9 @@ import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.DERSequence;
-import org.bouncycastle.asn1.pkcs.PBKDF2Params;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.pkcs.PBKDF2Params;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 
 /**
  * From https://datatracker.ietf.org/doc/html/rfc8018
@@ -19,7 +20,7 @@ import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
  *     messageAuthScheme AlgorithmIdentifier {{PBMAC1-MACs}} }
  * </pre>
  */
-class PBMAC1Params
+public class PBMAC1Params
     extends ASN1Object
     implements PKCSObjectIdentifiers
 {
@@ -77,6 +78,6 @@ class PBMAC1Params
 
     public ASN1Primitive toASN1Primitive()
     {
-        return new DERSequence(new ASN1Encodable[] { func, scheme});
+        return new DERSequence(new ASN1Encodable[] {func, scheme});
     }
 }

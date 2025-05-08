@@ -3,6 +3,9 @@
 /***************************************************************/
 package org.bouncycastle.crypto.fips;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
+
 import org.bouncycastle.crypto.internal.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.internal.AsymmetricCipherKeyPairGenerator;
 import org.bouncycastle.crypto.internal.KeyGenerationParameters;
@@ -11,12 +14,9 @@ import org.bouncycastle.crypto.internal.params.DsaParameters;
 import org.bouncycastle.crypto.internal.params.DsaPrivateKeyParameters;
 import org.bouncycastle.crypto.internal.params.DsaPublicKeyParameters;
 
-import java.math.BigInteger;
-import java.security.SecureRandom;
-
 /**
  * a DSA key pair generator.
- *
+ * <p>
  * This generates DSA keys in line with the method described
  * in <i>FIPS 186-3 B.1 FFC Key Pair Generation</i>.
  */

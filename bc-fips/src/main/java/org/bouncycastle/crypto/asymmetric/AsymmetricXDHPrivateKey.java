@@ -3,8 +3,6 @@ package org.bouncycastle.crypto.asymmetric;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.security.auth.Destroyable;
-
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Set;
@@ -24,7 +22,7 @@ import org.bouncycastle.util.Properties;
  */
 public final class AsymmetricXDHPrivateKey
     extends AsymmetricXDHKey
-    implements Destroyable, AsymmetricPrivateKey
+    implements AsymmetricPrivateKey
 {
     private final AtomicBoolean hasBeenDestroyed = new AtomicBoolean(false);
 
@@ -39,7 +37,6 @@ public final class AsymmetricXDHPrivateKey
     {
         super(algorithm);
         this.keyData = Arrays.clone(keyData);
-        this.hashCode = calculateHashCode();
         this.attributes = null;
         if (publicData == null)
         {
@@ -51,6 +48,7 @@ public final class AsymmetricXDHPrivateKey
             this.hasPublicKey = true;
             this.publicData = Arrays.clone(publicData);
         }
+        this.hashCode = calculateHashCode();
     }
 
     /**
@@ -93,7 +91,7 @@ public final class AsymmetricXDHPrivateKey
         }
         else
         {
-            publicData = null;
+            publicData = EdEC.computePublicData(this.getAlgorithm(), keyData);
         }
 
         if (EdECObjectIdentifiers.id_X448.equals(keyInfo.getPrivateKeyAlgorithm().getAlgorithm()))
@@ -171,10 +169,7 @@ public final class AsymmetricXDHPrivateKey
         if (!hasBeenDestroyed.getAndSet(true))
         {
             Arrays.clear(keyData);
-            if (publicData != null)
-            {
-                Arrays.clear(publicData);
-            }
+            Arrays.clear(publicData);
             this.publicData = null;
             this.hasPublicKey = false;
             this.attributes = null;
@@ -208,11 +203,14 @@ public final class AsymmetricXDHPrivateKey
 
         other.checkApprovedOnlyModeStatus();
 
-        return this.hashCode == other.hashCode
-            && KeyUtils.isFieldEqual(this.getAlgorithm(), other.getAlgorithm())
-            && Arrays.constantTimeAreEqual(this.keyData, other.keyData);
+        if (!Arrays.constantTimeAreEqual(keyData, other.keyData))
+        {
+            return false;
+        }
+
+        return this.getAlgorithm().equals(other.getAlgorithm()) & !(this.isDestroyed() | other.isDestroyed());
     }
-    
+
     @Override
     public int hashCode()
     {
@@ -224,18 +222,7 @@ public final class AsymmetricXDHPrivateKey
     private int calculateHashCode()
     {
         int result = getAlgorithm().hashCode();
-        result = 31 * result + Arrays.hashCode(keyData);
+        result = 31 * result + 3 * Arrays.hashCode(publicData);
         return result;
     }
-
-    /*
-    @Override
-    protected void finalize()
-        throws Throwable
-    {
-        super.finalize();
-
-        //destroy();
-    }
-     */
 }

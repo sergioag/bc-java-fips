@@ -17,7 +17,7 @@ class SCryptImpl
 {
     private SCryptImpl()
     {
-         // not used.
+        // not used.
     }
 
     /**

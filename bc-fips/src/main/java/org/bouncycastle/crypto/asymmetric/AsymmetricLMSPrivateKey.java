@@ -5,8 +5,6 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.security.auth.Destroyable;
-
 import org.bouncycastle.asn1.ASN1BitString;
 import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Set;
@@ -19,6 +17,7 @@ import org.bouncycastle.crypto.internal.Permissions;
 import org.bouncycastle.crypto.internal.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.internal.pqc.lms.Composer;
 import org.bouncycastle.crypto.internal.pqc.lms.HSSPrivateKeyParameters;
+import org.bouncycastle.crypto.internal.pqc.lms.LMSContextBasedSigner;
 import org.bouncycastle.crypto.internal.pqc.lms.LMSPrivateKeyParameters;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Pack;
@@ -29,7 +28,7 @@ import org.bouncycastle.util.Properties;
  */
 public final class AsymmetricLMSPrivateKey
     extends AsymmetricLMSKey
-    implements Destroyable, AsymmetricPrivateKey
+    implements AsymmetricPrivateKey
 {
     private final AtomicBoolean hasBeenDestroyed = new AtomicBoolean(false);
 
@@ -136,20 +135,18 @@ public final class AsymmetricLMSPrivateKey
 
         KeyUtils.checkPermission(Permissions.CanOutputPrivateKey);
 
-        byte[] clone = Arrays.clone(keyData);
+        byte[] kd = Arrays.clone(keyData);
 
         KeyUtils.checkDestroyed(this);
 
-        return clone;
+        return kd;
     }
 
     public byte[] getPublicData()
     {
-        byte[] clone = Arrays.clone(publicData);
-
         KeyUtils.checkDestroyed(this);
 
-        return clone;
+        return Arrays.clone(publicData);
     }
 
     public AsymmetricLMSPrivateKey extractKeyShard(int usageCount)
@@ -174,10 +171,10 @@ public final class AsymmetricLMSPrivateKey
 
         KeyUtils.checkPermission(Permissions.CanOutputPrivateKey);
 
+        KeyUtils.checkDestroyed(this);
+
         byte[] encoding = Composer.compose().u32str(L).bytes(keyData).build();
         byte[] pubEncoding = Composer.compose().u32str(L).bytes(publicData).build();
-
-        KeyUtils.checkDestroyed(this);
 
         AlgorithmIdentifier algorithmIdentifier = new AlgorithmIdentifier(PKCSObjectIdentifiers.id_alg_hss_lms_hashsig);
         if (Properties.isOverrideSet("org.bouncycastle.pkcs8.v1_info_only"))
@@ -188,12 +185,6 @@ public final class AsymmetricLMSPrivateKey
         {
             return KeyUtils.getEncodedPrivateKeyInfo(algorithmIdentifier, new DEROctetString(encoding), attributes, pubEncoding);
         }
-    }
-
-    @Override
-    protected Object getInternalKey()
-    {
-        return lwKey;
     }
 
     public void destroy()
@@ -241,7 +232,12 @@ public final class AsymmetricLMSPrivateKey
 
         other.checkApprovedOnlyModeStatus();
 
-        if (!Arrays.constantTimeAreEqual(keyData, other.keyData))
+        if (this.isDestroyed() || other.isDestroyed())
+        {
+            return false;
+        }
+
+        if (!Arrays.constantTimeAreEqual(getSecret(), other.getSecret()))
         {
             return false;
         }
@@ -264,29 +260,10 @@ public final class AsymmetricLMSPrivateKey
         return result;
     }
 
-    /*
-    @Override
-    protected void finalize()
-        throws Throwable
+    public LMSContextBasedSigner getContextBasedSigner()
     {
-        try
-        {
-            Arrays.clear(keyData);
-            if (publicData != null)
-            {
-                Arrays.clear(publicData);
-            }
-            this.publicData = null;
-            this.attributes = null;
-            this.lwKey = null;
-            this.hashCode = -1;
-        }
-        finally
-        {
-            super.finalize();
-        }
+        return (LMSContextBasedSigner)lwKey;
     }
-    */
 
     private static AsymmetricKeyParameter getLwKey(final AsymmetricLMSPrivateKey privKey)
     {

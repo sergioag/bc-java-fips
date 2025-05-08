@@ -9,17 +9,17 @@ import org.bouncycastle.util.encoders.Hex;
 
 class X931RNG
 {
-    private static final long       BLOCK64_RESEED_MAX = 1L << (16 - 1);
-    private static final long       BLOCK128_RESEED_MAX = 1L << (24 - 1);
-    private static final int        BLOCK64_MAX_BITS_REQUEST = 1 << (13 - 1);
-    private static final int        BLOCK128_MAX_BITS_REQUEST = 1 << (19 - 1);
+    private static final long BLOCK64_RESEED_MAX = 1L << (16 - 1);
+    private static final long BLOCK128_RESEED_MAX = 1L << (24 - 1);
+    private static final int BLOCK64_MAX_BITS_REQUEST = 1 << (13 - 1);
+    private static final int BLOCK128_MAX_BITS_REQUEST = 1 << (19 - 1);
 
     private final static Map<String, byte[][]> kats = new HashMap<String, byte[][]>();
 
     static
     {
-        kats.put("AES", new byte[][] { Hex.decode("f7d36762b9915f1ed585eb8e91700eb2"), Hex.decode("259e67249288597a4d61e7c0e690afae"), Hex.decode("35cc0ea481fc8a4f5f05c7d4667233b2"), Hex.decode("15f013af5a8e9df9a8e37500edaeac43") });
-        kats.put("DESede", new byte[][] { Hex.decode("ef16ec643e5db5892cbc6eabba310b3410e6f8759e3e382c"), Hex.decode("55df103deaf68dc4"), Hex.decode("96d872b9122c5e74"), Hex.decode("9c960bb9662ce6de") });
+        kats.put("AES", new byte[][]{Hex.decode("f7d36762b9915f1ed585eb8e91700eb2"), Hex.decode("259e67249288597a4d61e7c0e690afae"), Hex.decode("35cc0ea481fc8a4f5f05c7d4667233b2"), Hex.decode("15f013af5a8e9df9a8e37500edaeac43")});
+        kats.put("DESede", new byte[][]{Hex.decode("ef16ec643e5db5892cbc6eabba310b3410e6f8759e3e382c"), Hex.decode("55df103deaf68dc4"), Hex.decode("96d872b9122c5e74"), Hex.decode("9c960bb9662ce6de")});
     }
 
     private BlockCipher engine;
@@ -27,14 +27,14 @@ class X931RNG
 
     private final byte[] DT;
     private final byte[] I;
-    private final byte[] R;;
+    private final byte[] R;
+    ;
 
     private byte[] V;
 
     private long reseedCounter = 1;
 
     /**
-     *
      * @param engine
      * @param entropySource
      */
@@ -64,9 +64,8 @@ class X931RNG
     /**
      * Populate a passed in array with random data.
      *
-     * @param output output array for generated bits.
+     * @param output              output array for generated bits.
      * @param predictionResistant true if a reseed should be forced, false otherwise.
-     *
      * @return number of bits generated, -1 if a reseed required.
      */
     int generate(byte[] output, boolean predictionResistant)
@@ -95,7 +94,7 @@ class X931RNG
                 throw new IllegalArgumentException("Number of bits per request limited to " + BLOCK128_MAX_BITS_REQUEST);
             }
         }
-        
+
         if (predictionResistant || V == null)
         {
             V = getEntropy();
@@ -129,7 +128,7 @@ class X931RNG
 
         reseedCounter++;
 
-        return output.length;
+        return output.length * 8;
     }
 
     /**
@@ -173,7 +172,7 @@ class X931RNG
             }
         }
     }
-    
+
     private static boolean isTooLarge(byte[] bytes, int maxBytes)
     {
         return bytes != null && bytes.length > maxBytes;

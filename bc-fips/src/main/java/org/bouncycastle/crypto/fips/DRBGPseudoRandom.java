@@ -155,8 +155,8 @@ class DRBGPseudoRandom
         // this code will result in reseed always been tested on first use.
         if (reseedTestThreshold == 0 || (reseedTestThreshold > ((System.currentTimeMillis() & 0x3ff) + 50)))
         {
-             reseedTestThreshold = 1;
-             return true;
+            reseedTestThreshold = 1;
+            return true;
         }
 
         reseedTestThreshold = (reseedTestThreshold + 1) & 0x3ff;

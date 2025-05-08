@@ -8,16 +8,16 @@ import java.math.BigInteger;
 import org.bouncycastle.crypto.internal.CipherParameters;
 
 class Gost3410Parameters
-   implements CipherParameters
+    implements CipherParameters
 {
-    private BigInteger              p;
-    private BigInteger              q;
-    private BigInteger              a;
+    private BigInteger p;
+    private BigInteger q;
+    private BigInteger a;
 
     public Gost3410Parameters(
-        BigInteger  p,
-        BigInteger  q,
-        BigInteger  a)
+        BigInteger p,
+        BigInteger q,
+        BigInteger a)
     {
         this.p = p;
         this.q = q;
@@ -45,14 +45,14 @@ class Gost3410Parameters
     }
 
     public boolean equals(
-        Object  obj)
+        Object obj)
     {
         if (!(obj instanceof Gost3410Parameters))
         {
             return false;
         }
 
-        Gost3410Parameters    pm = (Gost3410Parameters)obj;
+        Gost3410Parameters pm = (Gost3410Parameters)obj;
 
         return (pm.getP().equals(p) && pm.getQ().equals(q) && pm.getA().equals(a));
     }

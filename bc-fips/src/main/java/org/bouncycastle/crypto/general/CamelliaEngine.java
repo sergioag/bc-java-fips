@@ -36,10 +36,10 @@ class CamelliaEngine
     };
 
     /*
-    *
-    * S-box data
-    *
-    */
+     *
+     * S-box data
+     *
+     */
     private static final int SBOX1_1110[] = {
         0x70707000, 0x82828200, 0x2c2c2c00, 0xececec00, 0xb3b3b300, 0x27272700,
         0xc0c0c000, 0xe5e5e500, 0xe4e4e400, 0x85858500, 0x57575700, 0x35353500,
@@ -235,7 +235,7 @@ class CamelliaEngine
     }
 
     private static void roldq(int rot, int[] ki, int ioff,
-                                    int[] ko, int ooff)
+                              int[] ko, int ooff)
     {
         ko[0 + ooff] = (ki[0 + ioff] << rot) | (ki[1 + ioff] >>> (32 - rot));
         ko[1 + ooff] = (ki[1 + ioff] << rot) | (ki[2 + ioff] >>> (32 - rot));
@@ -248,7 +248,7 @@ class CamelliaEngine
     }
 
     private static void decroldq(int rot, int[] ki, int ioff,
-                                       int[] ko, int ooff)
+                                 int[] ko, int ooff)
     {
         ko[2 + ooff] = (ki[0 + ioff] << rot) | (ki[1 + ioff] >>> (32 - rot));
         ko[3 + ooff] = (ki[1 + ioff] << rot) | (ki[2 + ioff] >>> (32 - rot));
@@ -261,7 +261,7 @@ class CamelliaEngine
     }
 
     private static void roldqo32(int rot, int[] ki, int ioff,
-                                       int[] ko, int ooff)
+                                 int[] ko, int ooff)
     {
         ko[0 + ooff] = (ki[1 + ioff] << (rot - 32)) | (ki[2 + ioff] >>> (64 - rot));
         ko[1 + ooff] = (ki[2 + ioff] << (rot - 32)) | (ki[3 + ioff] >>> (64 - rot));
@@ -274,7 +274,7 @@ class CamelliaEngine
     }
 
     private static void decroldqo32(int rot, int[] ki, int ioff,
-                                          int[] ko, int ooff)
+                                    int[] ko, int ooff)
     {
         ko[2 + ooff] = (ki[1 + ioff] << (rot - 32)) | (ki[2 + ioff] >>> (64 - rot));
         ko[3 + ooff] = (ki[2 + ioff] << (rot - 32)) | (ki[3 + ioff] >>> (64 - rot));
@@ -358,39 +358,39 @@ class CamelliaEngine
 
         switch (key.length)
         {
-            case 16:
-                _keyIs128 = true;
-                k[0] = bytes2int(key, 0);
-                k[1] = bytes2int(key, 4);
-                k[2] = bytes2int(key, 8);
-                k[3] = bytes2int(key, 12);
-                k[4] = k[5] = k[6] = k[7] = 0;
-                break;
-            case 24:
-                k[0] = bytes2int(key, 0);
-                k[1] = bytes2int(key, 4);
-                k[2] = bytes2int(key, 8);
-                k[3] = bytes2int(key, 12);
-                k[4] = bytes2int(key, 16);
-                k[5] = bytes2int(key, 20);
-                k[6] = ~k[4];
-                k[7] = ~k[5];
-                _keyIs128 = false;
-                break;
-            case 32:
-                k[0] = bytes2int(key, 0);
-                k[1] = bytes2int(key, 4);
-                k[2] = bytes2int(key, 8);
-                k[3] = bytes2int(key, 12);
-                k[4] = bytes2int(key, 16);
-                k[5] = bytes2int(key, 20);
-                k[6] = bytes2int(key, 24);
-                k[7] = bytes2int(key, 28);
-                _keyIs128 = false;
-                break;
-            default:
-                throw new
-                    IllegalArgumentException("key sizes are only 16/24/32 bytes.");
+        case 16:
+            _keyIs128 = true;
+            k[0] = bytes2int(key, 0);
+            k[1] = bytes2int(key, 4);
+            k[2] = bytes2int(key, 8);
+            k[3] = bytes2int(key, 12);
+            k[4] = k[5] = k[6] = k[7] = 0;
+            break;
+        case 24:
+            k[0] = bytes2int(key, 0);
+            k[1] = bytes2int(key, 4);
+            k[2] = bytes2int(key, 8);
+            k[3] = bytes2int(key, 12);
+            k[4] = bytes2int(key, 16);
+            k[5] = bytes2int(key, 20);
+            k[6] = ~k[4];
+            k[7] = ~k[5];
+            _keyIs128 = false;
+            break;
+        case 32:
+            k[0] = bytes2int(key, 0);
+            k[1] = bytes2int(key, 4);
+            k[2] = bytes2int(key, 8);
+            k[3] = bytes2int(key, 12);
+            k[4] = bytes2int(key, 16);
+            k[5] = bytes2int(key, 20);
+            k[6] = bytes2int(key, 24);
+            k[7] = bytes2int(key, 28);
+            _keyIs128 = false;
+            break;
+        default:
+            throw new
+                IllegalArgumentException("key sizes are only 16/24/32 bytes.");
         }
 
         for (int i = 0; i < 4; i++)
@@ -551,7 +551,7 @@ class CamelliaEngine
     }
 
     private int processBlock128(byte[] in, int inOff,
-                                      byte[] out, int outOff)
+                                byte[] out, int outOff)
     {
         for (int i = 0; i < 4; i++)
         {
@@ -585,7 +585,7 @@ class CamelliaEngine
     }
 
     private int processBlock192or256(byte[] in, int inOff,
-                                           byte[] out, int outOff)
+                                     byte[] out, int outOff)
     {
         for (int i = 0; i < 4; i++)
         {

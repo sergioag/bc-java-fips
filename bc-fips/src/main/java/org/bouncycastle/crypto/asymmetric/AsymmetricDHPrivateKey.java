@@ -18,6 +18,7 @@ import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import org.bouncycastle.crypto.Algorithm;
 import org.bouncycastle.crypto.AsymmetricPrivateKey;
 import org.bouncycastle.crypto.internal.Permissions;
+import org.bouncycastle.util.Arrays;
 
 /**
  * Class for Diffie-Hellman private keys.
@@ -83,9 +84,11 @@ public final class AsymmetricDHPrivateKey
      */
     public final DHDomainParameters getDomainParameters()
     {
+        DHDomainParameters parameters = super.getDomainParameters();
+
         KeyUtils.checkDestroyed(this);
 
-        return super.getDomainParameters();
+        return parameters;
     }
 
     public final byte[] getEncoded()
@@ -163,17 +166,6 @@ public final class AsymmetricDHPrivateKey
         return result;
     }
 
-    /*
-    @Override
-    protected void finalize()
-        throws Throwable
-    {
-        //destroy();
-
-        super.finalize();
-    }
-     */
-
     @Override
     public boolean equals(Object o)
     {
@@ -191,8 +183,11 @@ public final class AsymmetricDHPrivateKey
 
         other.checkApprovedOnlyModeStatus();
 
-        return this.hashCode == other.hashCode
-            && KeyUtils.isFieldEqual(this.x, other.x)
-            && KeyUtils.isFieldEqual(this.domainParameters, other.domainParameters);
+        if (this.isDestroyed() || other.isDestroyed())
+        {
+            return false;
+        }
+
+        return Arrays.constantTimeAreEqual(getX().toByteArray(), other.getX().toByteArray()) && this.getDomainParameters().equals(other.getDomainParameters());
     }
 }

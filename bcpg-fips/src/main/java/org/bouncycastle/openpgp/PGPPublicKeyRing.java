@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 import org.bouncycastle.bcpg.ArmoredInputException;
 import org.bouncycastle.bcpg.BCPGInputStream;
 import org.bouncycastle.bcpg.BCPGOutputStream;
+import org.bouncycastle.bcpg.KeyIdentifier;
 import org.bouncycastle.bcpg.Packet;
 import org.bouncycastle.bcpg.PacketFormat;
 import org.bouncycastle.bcpg.PacketTags;
@@ -194,6 +195,35 @@ public class PGPPublicKeyRing
         return null;
     }
 
+    @Override
+    public PGPPublicKey getPublicKey(KeyIdentifier identifier)
+    {
+        for (Iterator it = keys.iterator(); it.hasNext();)
+        {
+            PGPPublicKey k = (PGPPublicKey)it.next();
+            if (identifier.matches(k.getKeyIdentifier()))
+            {
+                return k;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Iterator<PGPPublicKey> getPublicKeys(KeyIdentifier identifier)
+    {
+        List<PGPPublicKey> matches = new ArrayList<PGPPublicKey>();
+        for (Iterator it = keys.iterator(); it.hasNext();)
+        {
+            PGPPublicKey k = (PGPPublicKey)it.next();
+            if (identifier.matches(k.getKeyIdentifier()))
+            {
+                matches.add(k);
+            }
+        }
+        return matches.iterator();
+    }
+
     /**
      * Return any keys carrying a signature issued by the key represented by keyID.
      *
@@ -216,6 +246,22 @@ public class PGPPublicKeyRing
             }
         }
 
+        return keysWithSigs.iterator();
+    }
+
+    @Override
+    public Iterator<PGPPublicKey> getKeysWithSignaturesBy(KeyIdentifier identifier)
+    {
+        List<PGPPublicKey> keysWithSigs = new ArrayList<PGPPublicKey>();
+        for (Iterator it = keys.iterator(); it.hasNext();)
+        {
+            PGPPublicKey k = (PGPPublicKey)it.next();
+            Iterator<PGPSignature> sigIt = k.getSignaturesForKey(identifier);
+            if (sigIt.hasNext())
+            {
+                keysWithSigs.add(k);
+            }
+        }
         return keysWithSigs.iterator();
     }
 

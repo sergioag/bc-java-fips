@@ -94,12 +94,12 @@ class RsaKeyPairGenerator
                     continue;
                 }
 
-	            /*
+                /*
                  * Require a minimum weight of the NAF representation, since low-weight composites may
-	             * be weak against a version of the number-field-sieve for factoring.
-	             *
-	             * See "The number field sieve for integers of low weight", Oliver Schirokauer.
-	             */
+                 * be weak against a version of the number-field-sieve for factoring.
+                 *
+                 * See "The number field sieve for integers of low weight", Oliver Schirokauer.
+                 */
                 if (WNafUtil.getNafWeight(n) < minWeight)
                 {
                     p = chooseRandomPrime(pbitlength, e, squaredBound);
@@ -210,26 +210,26 @@ class RsaKeyPairGenerator
          */
         if (bits >= 1536)
         {
-            return  certainty <= 100 ? 3
-                :   certainty <= 128 ? 4
-                :   4 + (certainty - 128 + 1) / 2;
+            return certainty <= 100 ? 3
+                : certainty <= 128 ? 4
+                : 4 + (certainty - 128 + 1) / 2;
         }
         else if (bits >= 1024)
         {
-            return  certainty <= 100 ? 4
-                :   certainty <= 112 ? 5
-                :   5 + (certainty - 112 + 1) / 2;
+            return certainty <= 100 ? 4
+                : certainty <= 112 ? 5
+                : 5 + (certainty - 112 + 1) / 2;
         }
         else if (bits >= 512)
         {
-            return  certainty <= 80  ? 5
-                :   certainty <= 100 ? 7
-                :   7 + (certainty - 100 + 1) / 2;
+            return certainty <= 80 ? 5
+                : certainty <= 100 ? 7
+                : 7 + (certainty - 100 + 1) / 2;
         }
         else
         {
-            return  certainty <= 80  ? 40
-                :   40 + (certainty - 80 + 1) / 2;
+            return certainty <= 80 ? 40
+                : 40 + (certainty - 80 + 1) / 2;
         }
     }
 }

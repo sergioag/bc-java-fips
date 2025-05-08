@@ -22,7 +22,7 @@ class EcKeyPairGenerator
     implements AsymmetricCipherKeyPairGenerator, ECConstants
 {
     EcDomainParameters params;
-    SecureRandom        random;
+    SecureRandom random;
 
     public void init(
         KeyGenerationParameters param)
@@ -49,11 +49,11 @@ class EcKeyPairGenerator
         int minWeight = nBitLength >>> 2;
 
         BigInteger d;
-        for (;;)
+        for (; ; )
         {
             d = new BigInteger(nBitLength, random);
 
-            if (d.compareTo(TWO) < 0  || (d.compareTo(n) >= 0))
+            if (d.compareTo(TWO) < 0 || (d.compareTo(n) >= 0))
             {
                 continue;
             }

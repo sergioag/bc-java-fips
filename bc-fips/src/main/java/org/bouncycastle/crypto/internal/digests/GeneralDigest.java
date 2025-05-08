@@ -14,10 +14,10 @@ public abstract class GeneralDigest
     implements ExtendedDigest, Memoable
 {
     private static final int BYTE_LENGTH = 64;
-    private byte[]  xBuf;
-    private int     xBufOff;
+    private byte[] xBuf;
+    private int xBufOff;
 
-    private long    byteCount;
+    private long byteCount;
 
     /**
      * Standard constructor
@@ -63,11 +63,11 @@ public abstract class GeneralDigest
     }
 
     public void update(
-        byte[]  in,
-        int     inOff,
-        int     len)
+        byte[] in,
+        int inOff,
+        int len)
     {
-        len = Math.max(0,  len);
+        len = Math.max(0, len);
 
         //
         // fill the current word
@@ -109,7 +109,7 @@ public abstract class GeneralDigest
 
     public void finish()
     {
-        long    bitLength = (byteCount << 3);
+        long bitLength = (byteCount << 3);
 
         //
         // add the pad bytes.
@@ -141,10 +141,23 @@ public abstract class GeneralDigest
     {
         return BYTE_LENGTH;
     }
-    
+
     protected abstract void processWord(byte[] in, int inOff);
 
     protected abstract void processLength(long bitLength);
 
     protected abstract void processBlock();
+
+    @Override
+    public String toString()
+    {
+        String name = this.getClass().getName();
+        int p = name.lastIndexOf(".");
+        if (p >= 0 && p + 1 < name.length())
+        {
+            name = name.substring(p + 1);
+        }
+        name = name.replace("Digest", "");
+        return name + "[Java]()";
+    }
 }

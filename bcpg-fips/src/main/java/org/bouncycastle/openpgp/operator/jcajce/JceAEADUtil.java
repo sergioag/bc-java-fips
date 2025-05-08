@@ -17,6 +17,7 @@ import org.bouncycastle.bcpg.SymmetricKeyAlgorithmTags;
 import org.bouncycastle.bcpg.SymmetricKeyUtils;
 import org.bouncycastle.crypto.KDFCalculator;
 import org.bouncycastle.crypto.fips.FipsKDF;
+import org.bouncycastle.crypto.fips.FipsSHS;
 import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPSessionKey;
 import org.bouncycastle.openpgp.PGPUtil;
@@ -107,10 +108,12 @@ class JceAEADUtil
 
     static byte[] generateHKDFBytes(byte[] sessionKey, byte[] salt, byte[] hkdfInfo, int len)
     {
+        FipsKDF.HKDFKey key = FipsKDF.HKDF_KEY_BUILDER.withPrf(FipsKDF.AgreementKDFPRF.SHA256_HMAC)
+            .withSalt(salt)
+            .build(sessionKey);
+
         KDFCalculator hkdfGen = new FipsKDF.AgreementOperatorFactory().createKDFCalculator(
-                  FipsKDF.HKDF.withPRF(FipsKDF.AgreementKDFPRF.SHA256).using(sessionKey)
-                      .withSalt(salt)
-                      .withIV(hkdfInfo));
+                    FipsKDF.HKDF.withPRF(key.getPRF()).using(key.getKey()).withIV(hkdfInfo));
 
         byte[] messageKeyAndIv = new byte[len];
         hkdfGen.generateBytes(messageKeyAndIv, 0, messageKeyAndIv.length);
@@ -273,6 +276,29 @@ class JceAEADUtil
             + "/" + mode + "/NoPadding";
 
         return helper.createCipher(cName);
+    }
+
+    static byte[] processAeadKeyData(JceAEADUtil aeadUtil, int mode, int encAlgorithm, int aeadAlgorithm, byte[] s2kKey, byte[] iv, int packetTag, int keyVersion, byte[] keyData, int keyOff, int keyLen, byte[] pubkeyData)
+        throws PGPException
+    {
+        // TODO: Replace HDKF code with JCE based implementation
+        byte[] key = generateHKDFBytes(s2kKey, null,
+            new byte[]{(byte)(0xC0 | packetTag), (byte)keyVersion, (byte)encAlgorithm, (byte)aeadAlgorithm},
+            SymmetricKeyUtils.getKeyLengthInOctets(encAlgorithm));
+
+        try
+        {
+            byte[] aad = Arrays.prepend(pubkeyData, (byte)(0xC0 | packetTag));
+            SecretKey secretKey = new SecretKeySpec(key, PGPUtil.getSymmetricCipherName(encAlgorithm));
+            final Cipher c = aeadUtil.createAEADCipher(encAlgorithm, aeadAlgorithm);
+
+            JceAEADCipherUtil.setUpAeadCipher(c, secretKey, mode, iv, 128, aad);
+            return c.doFinal(keyData, keyOff, keyLen);
+        }
+        catch (GeneralSecurityException e)
+        {
+            throw new PGPException("Exception recovering AEAD protected private key material", e);
+        }
     }
 
     static class PGPAeadInputStream

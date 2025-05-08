@@ -245,12 +245,16 @@ class ProvBCFKS
 
                         PrivateKey privateKey = kFact.generatePrivate(new PKCS8EncodedKeySpec(pInfo.getEncoded()));
 
-                        // check that the key pair and the certificate public key are consistent
-                        // FSM_STATE:5.IKP.0,"IMPORTED KEY PAIR CONSISTENCY TEST", "The module is verifying the consistency of an imported key pair"
-                        // FSM_TRANS:5.IKP.0.0,"CONDITIONAL TEST", "IMPORTED KEY PAIR CONSISTENCY TEST", "Invoke public/private key Consistency test on imported key pair"
-                        new ConsistentKeyPair(engineGetCertificate(alias).getPublicKey(), privateKey);
-                        // FSM_TRANS:5.IKP.0.1, "IMPORTED KEY PAIR CONSISTENCY TEST", "CONDITIONAL TEST", "Consistency test on imported key pair successful"
-                        // FSM_TRANS:5.IKP.0.2, "IMPORTED KEY PAIR CONSISTENCY TEST", "USER COMMAND REJECTED", "Consistency test on imported key pair failed"
+                        // only done for keys created by our provider - impossible to check otherwise.
+                        if (fipsProvider != null)
+                        {
+                            // check that the key pair and the certificate public key are consistent
+                            // FSM_STATE:5.IKP.0,"IMPORTED KEY PAIR CONSISTENCY TEST", "The module is verifying the consistency of an imported key pair"
+                            // FSM_TRANS:5.IKP.0.0,"CONDITIONAL TEST", "IMPORTED KEY PAIR CONSISTENCY TEST", "Invoke public/private key Consistency test on imported key pair"
+                            new ConsistentKeyPair(engineGetCertificate(alias).getPublicKey(), privateKey);
+                            // FSM_TRANS:5.IKP.0.1, "IMPORTED KEY PAIR CONSISTENCY TEST", "CONDITIONAL TEST", "Consistency test on imported key pair successful"
+                            // FSM_TRANS:5.IKP.0.2, "IMPORTED KEY PAIR CONSISTENCY TEST", "USER COMMAND REJECTED", "Consistency test on imported key pair failed"
+                        }
 
                         privateKeyCache.put(alias, privateKey);
 
@@ -415,13 +419,17 @@ class ProvBCFKS
 
                 try
                 {
-                    // check that the key pair and the certificate public are consistent
-                    // FSM_STATE:5.IKP.0,"IMPORTED KEY PAIR CONSISTENCY TEST", "The module is verifying the consistency of an imported key pair"
-                    // FSM_TRANS:5.IKP.0.0,"CONDITIONAL TEST", "IMPORTED KEY PAIR CONSISTENCY TEST", "Invoke public/private key Consistency test on imported key pair"
-                    new ConsistentKeyPair(chain[0].getPublicKey(), (PrivateKey)key);
-                    // FSM_TRANS:5.IKP.0.1, "IMPORTED KEY PAIR CONSISTENCY TEST", "CONDITIONAL TEST", "Consistency test on imported key pair successful"
-                    // FSM_TRANS:5.IKP.0.2, "IMPORTED KEY PAIR CONSISTENCY TEST", "USER COMMAND REJECTED", "Consistency test on imported key pair failed"
-
+                    // only done for keys created by our provider - impossible to check otherwise.
+                    if (fipsProvider != null)
+                    {
+                        // check that the key pair and the certificate public are consistent
+                        // FSM_STATE:5.IKP.0,"IMPORTED KEY PAIR CONSISTENCY TEST", "The module is verifying the consistency of an imported key pair"
+                        // FSM_TRANS:5.IKP.0.0,"CONDITIONAL TEST", "IMPORTED KEY PAIR CONSISTENCY TEST", "Invoke public/private key Consistency test on imported key pair"
+                        new ConsistentKeyPair(chain[0].getPublicKey(), (PrivateKey)key);
+                        // FSM_TRANS:5.IKP.0.1, "IMPORTED KEY PAIR CONSISTENCY TEST", "CONDITIONAL TEST", "Consistency test on imported key pair successful"
+                        // FSM_TRANS:5.IKP.0.2, "IMPORTED KEY PAIR CONSISTENCY TEST", "USER COMMAND REJECTED", "Consistency test on imported key pair failed"
+                    }
+                    
                     byte[] encodedKey = key.getEncoded();
 
                     KeyDerivationFunc pbkdAlgId = generatePkbdAlgorithmIdentifier(256 / 8);

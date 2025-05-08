@@ -178,6 +178,7 @@ public class AuthorityKeyIdentifier
 
     public String toString()
     {
+        // -DM Hex.toHexString
         return ("AuthorityKeyIdentifier: KeyID(" + ((keyidentifier != null) ? Hex.toHexString(this.keyidentifier.getOctets()) : "null") + ")");
     }
 }

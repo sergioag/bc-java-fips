@@ -764,12 +764,16 @@ class ProvPKCS12
 
                     if (cert != null)
                     {
-                        // check that the key pair and the certificate public key are consistent
-                        // FSM_STATE:5.IKP.0,"IMPORTED KEY PAIR CONSISTENCY TEST", "The module is verifying the consistency of an imported key pair"
-                        // FSM_TRANS:5.IKP.0.0,"CONDITIONAL TEST", "IMPORTED KEY PAIR CONSISTENCY TEST", "Invoke public/private key Consistency test on imported key pair"
-                        new ConsistentKeyPair(cert.getPublicKey(), (PrivateKey)key);
-                        // FSM_TRANS:5.IKP.0.1, "IMPORTED KEY PAIR CONSISTENCY TEST", "CONDITIONAL TEST", "Consistency test on imported key pair successful"
-                        // FSM_TRANS:5.IKP.0.2, "IMPORTED KEY PAIR CONSISTENCY TEST", "USER COMMAND REJECTED", "Consistency test on imported key pair failed"
+                        // only done for keys created by our provider - impossible to check otherwise.
+                        if (fipsProvider != null)
+                        {
+                            // check that the key pair and the certificate public key are consistent
+                            // FSM_STATE:5.IKP.0,"IMPORTED KEY PAIR CONSISTENCY TEST", "The module is verifying the consistency of an imported key pair"
+                            // FSM_TRANS:5.IKP.0.0,"CONDITIONAL TEST", "IMPORTED KEY PAIR CONSISTENCY TEST", "Invoke public/private key Consistency test on imported key pair"
+                            new ConsistentKeyPair(cert.getPublicKey(), (PrivateKey)key);
+                            // FSM_TRANS:5.IKP.0.1, "IMPORTED KEY PAIR CONSISTENCY TEST", "CONDITIONAL TEST", "Consistency test on imported key pair successful"
+                            // FSM_TRANS:5.IKP.0.2, "IMPORTED KEY PAIR CONSISTENCY TEST", "USER COMMAND REJECTED", "Consistency test on imported key pair failed"
+                        }
 
                         privateKeyCache.put(alias, key);
                     }
@@ -840,18 +844,23 @@ class ProvPKCS12
                 engineDeleteEntry(alias);
             }
 
-            try
+            // only done for keys created by our provider - impossible to check otherwise.
+            if (fipsProvider != null)
             {
-                // check that the key pair and the certificate public key are consistent
-                // FSM_STATE:5.IKP.0,"IMPORTED KEY PAIR CONSISTENCY TEST", "The module is verifying the consistency of an imported key pair"
-                // FSM_TRANS:5.IKP.0.0,"CONDITIONAL TEST", "IMPORTED KEY PAIR CONSISTENCY TEST", "Invoke public/private key Consistency test on imported key pair"
-                new ConsistentKeyPair(chain[0].getPublicKey(), (PrivateKey)key);
-                // FSM_TRANS:5.IKP.0.1, "IMPORTED KEY PAIR CONSISTENCY TEST", "CONDITIONAL TEST", "Consistency test on imported key pair successful"
-                // FSM_TRANS:5.IKP.0.2, "IMPORTED KEY PAIR CONSISTENCY TEST", "USER COMMAND REJECTED", "Consistency test on imported key pair failed"
-            }
-            catch (IllegalArgumentException e)
-            {
-                throw new KeyStoreException(e.getMessage());
+                try
+                {
+                        // check that the key pair and the certificate public key are consistent
+                        // FSM_STATE:5.IKP.0,"IMPORTED KEY PAIR CONSISTENCY TEST", "The module is verifying the consistency of an imported key pair"
+                        // FSM_TRANS:5.IKP.0.0,"CONDITIONAL TEST", "IMPORTED KEY PAIR CONSISTENCY TEST", "Invoke public/private key Consistency test on imported key pair"
+                        new ConsistentKeyPair(chain[0].getPublicKey(), (PrivateKey)key);
+                        // FSM_TRANS:5.IKP.0.1, "IMPORTED KEY PAIR CONSISTENCY TEST", "CONDITIONAL TEST", "Consistency test on imported key pair successful"
+                        // FSM_TRANS:5.IKP.0.2, "IMPORTED KEY PAIR CONSISTENCY TEST", "USER COMMAND REJECTED", "Consistency test on imported key pair failed"
+
+                }
+                catch (IllegalArgumentException e)
+                {
+                    throw new KeyStoreException(e.getMessage());
+                }
             }
 
             keys.put(alias, key);
@@ -1652,6 +1661,7 @@ class ProvPKCS12
 
                     fName.add(new DERSequence(fSeq));
 
+                    // add trusted certificate attribute.
                     TBSCertificate tbsCert = TBSCertificate.getInstance(((X509Certificate)cert).getTBSCertificate());
                     Extensions exts = tbsCert.getExtensions();
                     if (exts != null)
@@ -1683,6 +1693,7 @@ class ProvPKCS12
                         fSeq.add(new DERSet(KeyPurposeId.anyExtendedKeyUsage));
                         fName.add(new DERSequence(fSeq));
                     }
+
                     SafeBag sBag = new SafeBag(certBag, cBag.toASN1Primitive(), new DERSet(fName));
 
                     certSeq.add(sBag);

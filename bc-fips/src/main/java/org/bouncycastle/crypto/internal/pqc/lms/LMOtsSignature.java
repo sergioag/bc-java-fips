@@ -35,17 +35,15 @@ class LMOtsSignature
         }
         else if (src instanceof DataInputStream)
         {
-
-
             LMOtsParameters type = LMOtsParameters.getParametersForType(((DataInputStream)src).readInt());
             byte[] C = new byte[type.getN()];
 
             ((DataInputStream)src).readFully(C);
 
             byte[] sig = new byte[type.getP()*type.getN()];
+
             ((DataInputStream)src).readFully(sig);
-
-
+            
             return new LMOtsSignature(type, C, sig);
         }
         else if (src instanceof byte[])

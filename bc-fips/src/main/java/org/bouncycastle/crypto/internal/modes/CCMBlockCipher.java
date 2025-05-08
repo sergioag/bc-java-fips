@@ -25,14 +25,14 @@ import org.bouncycastle.util.Arrays;
 public class CCMBlockCipher
     implements AEADBlockCipher
 {
-    private BlockCipher           cipher;
-    private int                   blockSize;
-    private boolean               forEncryption;
-    private byte[]                nonce;
-    private byte[]                initialAssociatedText;
-    private int                   macSize;
-    private CipherParameters      keyParam;
-    private byte[]                macBlock;
+    private BlockCipher cipher;
+    private int blockSize;
+    private boolean forEncryption;
+    private byte[] nonce;
+    private byte[] initialAssociatedText;
+    private int macSize;
+    private CipherParameters keyParam;
+    private byte[] macBlock;
     private ExposedByteArrayOutputStream associatedText = new ExposedByteArrayOutputStream();
     private ExposedByteArrayOutputStream data = new ExposedByteArrayOutputStream();
 
@@ -65,7 +65,7 @@ public class CCMBlockCipher
 
 
     public void init(boolean forEncryption, CipherParameters params)
-          throws IllegalArgumentException
+        throws IllegalArgumentException
     {
         this.forEncryption = forEncryption;
 
@@ -186,7 +186,7 @@ public class CCMBlockCipher
 
         if (forEncryption)
         {
-             return totalData + macSize;
+            return totalData + macSize;
         }
 
         return totalData < macSize ? 0 : totalData - macSize;
@@ -195,15 +195,15 @@ public class CCMBlockCipher
     /**
      * Process a packet of data for either CCM decryption or encryption.
      *
-     * @param in data for processing.
-     * @param inOff offset at which data starts in the input array.
-     * @param inLen length of the data in the input array.
+     * @param in     data for processing.
+     * @param inOff  offset at which data starts in the input array.
+     * @param inLen  length of the data in the input array.
      * @param output output array.
      * @param outOff offset into output array to start putting processed bytes.
      * @return the number of bytes added to output.
-     * @throws IllegalStateException if the cipher is not appropriately set up.
+     * @throws IllegalStateException      if the cipher is not appropriately set up.
      * @throws InvalidCipherTextException if the input data is truncated or the mac check fails.
-     * @throws DataLengthException if output buffer too short.
+     * @throws DataLengthException        if output buffer too short.
      */
     public int processPacket(byte[] in, int inOff, int inLen, byte[] output, int outOff)
         throws IllegalStateException, InvalidCipherTextException, DataLengthException

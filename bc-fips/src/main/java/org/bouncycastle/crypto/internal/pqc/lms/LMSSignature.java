@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
+import org.bouncycastle.crypto.InvalidSignatureException;
 import org.bouncycastle.util.Encodable;
 import org.bouncycastle.util.io.Streams;
 
@@ -39,7 +40,15 @@ class LMSSignature
         {
             int q = ((DataInputStream)src).readInt();
             LMOtsSignature otsSignature = LMOtsSignature.getInstance(src);
-            LMSigParameters type = LMSigParameters.getParametersForType(((DataInputStream)src).readInt());
+            int typeId = ((DataInputStream)src).readInt();
+
+            LMSigParameters type = LMSigParameters.getParametersForType(typeId);
+
+            if (type == null)
+            {
+                throw new InvalidSignatureException("invalid signature, type "+typeId+" not found");
+            }
+
 
             byte[][] path = new byte[type.getH()][];
             for (int h = 0; h < path.length; h++)

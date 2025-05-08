@@ -56,9 +56,9 @@ abstract class GuardedSymmetricStreamOperatorFactory<T extends Parameters>
 
         return new OutputDecryptor<T>()
         {
-            public CipherOutputStreamImpl getDecryptingStream(OutputStream out)
+            public CipherOutputStream getDecryptingStream(OutputStream out)
             {
-                return new CipherOutputStreamImpl(out, cipher);
+                return CipherOutputStreamImpl.getInstance(out, cipher);
             }
 
             public T getParameters()
@@ -120,7 +120,7 @@ abstract class GuardedSymmetricStreamOperatorFactory<T extends Parameters>
 
         public CipherOutputStream getEncryptingStream(OutputStream out)
         {
-            return new CipherOutputStreamImpl(out, cipher);
+            return CipherOutputStreamImpl.getInstance(out, cipher);
         }
 
         public OutputEncryptor<T> withSecureRandom(SecureRandom random)

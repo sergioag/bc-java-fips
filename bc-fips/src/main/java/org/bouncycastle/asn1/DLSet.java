@@ -89,9 +89,9 @@ public class DLSet
         super(elements, false);
     }
 
-    DLSet(boolean isSorted, ASN1Encodable[] elements)
+    DLSet(ASN1Encodable[] elements, ASN1Encodable[] sortedElements)
     {
-        super(isSorted, elements);
+        super(elements, sortedElements);
     }
 
     private int getBodyLength() throws IOException

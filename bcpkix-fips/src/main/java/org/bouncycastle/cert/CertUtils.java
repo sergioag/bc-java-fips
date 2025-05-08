@@ -319,20 +319,20 @@ class CertUtils
         return signer.getSignature();
     }
 
-//    static ASN1TaggedObject trimExtensions(int tagNo, Extensions exts)
-//    {
-//        ASN1Sequence extSeq = ASN1Sequence.getInstance(exts.toASN1Primitive());
-//        ASN1EncodableVector extV = new ASN1EncodableVector();
-//        for (int i = 0; i != extSeq.size(); i++)
-//        {
-//            ASN1Sequence ext = ASN1Sequence.getInstance(extSeq.getObjectAt(i));
-//
-//            if (!Extension.altSignatureValue.equals(ext.getObjectAt(0)))
-//            {
-//                extV.add(ext);
-//            }
-//        }
-//
-//        return new DERTaggedObject(true, tagNo, new DERSequence(extV));
-//    }
+    static ASN1TaggedObject trimExtensions(int tagNo, Extensions exts)
+    {
+        ASN1Sequence extSeq = ASN1Sequence.getInstance(exts.toASN1Primitive());
+        ASN1EncodableVector extV = new ASN1EncodableVector();
+        for (int i = 0; i != extSeq.size(); i++)
+        {
+            ASN1Sequence ext = ASN1Sequence.getInstance(extSeq.getObjectAt(i));
+
+            if (!Extension.altSignatureValue.equals(ext.getObjectAt(0)))
+            {
+                extV.add(ext);
+            }
+        }
+
+        return new DERTaggedObject(true, tagNo, new DERSequence(extV));
+    }
 }

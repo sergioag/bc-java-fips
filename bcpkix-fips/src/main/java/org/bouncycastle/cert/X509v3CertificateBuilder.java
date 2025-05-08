@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Locale;
 
 import org.bouncycastle.asn1.ASN1Encodable;
@@ -14,6 +15,8 @@ import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.DERBitString;
+import org.bouncycastle.asn1.DERNull;
+import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -24,7 +27,6 @@ import org.bouncycastle.asn1.x509.ExtensionsGenerator;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x509.TBSCertificate;
 import org.bouncycastle.asn1.x509.Time;
-import org.bouncycastle.asn1.x509.V3TBSCertificateGenerator;
 import org.bouncycastle.operator.ContentSigner;
 
 
@@ -33,6 +35,8 @@ import org.bouncycastle.operator.ContentSigner;
  */
 public class X509v3CertificateBuilder
 {
+    private static ASN1ObjectIdentifier deltaCertificateDescriptor = new ASN1ObjectIdentifier("2.16.840.1.114027.80.6.1");
+
     private V3TBSCertificateGenerator   tbsGen;
     private ExtensionsGenerator extGenerator;
 
@@ -112,7 +116,16 @@ public class X509v3CertificateBuilder
 
         for (Enumeration en = exts.oids(); en.hasMoreElements();)
         {
-            extGenerator.addExtension(exts.getExtension((ASN1ObjectIdentifier)en.nextElement()));
+            ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier)en.nextElement();
+            // we remove the altSignatureAlgorithm, altSignatureValue, and subjectAltPublicKeyInfo
+            // extensions as they probably need to be regenerated.
+            if (Extension.subjectAltPublicKeyInfo.equals(oid)
+                || Extension.altSignatureAlgorithm.equals(oid)
+                || Extension.altSignatureValue.equals(oid))
+            {
+                continue;
+            }
+            extGenerator.addExtension(exts.getExtension(oid));
         }
     }
 
@@ -262,7 +275,8 @@ public class X509v3CertificateBuilder
     {
         try
         {
-            extGenerator = CertUtils.doReplaceExtension(extGenerator, new Extension(oid, isCritical, value.toASN1Primitive().getEncoded(ASN1Encoding.DER)));
+            extGenerator = CertUtils.doReplaceExtension(extGenerator,
+                new Extension(oid, isCritical, new DEROctetString(value)));
         }
         catch (IOException e)
         {
@@ -364,91 +378,125 @@ public class X509v3CertificateBuilder
     public X509CertificateHolder build(
         ContentSigner signer)
     {
-        tbsGen.setSignature(signer.getAlgorithmIdentifier());
+        AlgorithmIdentifier sigAlgID = signer.getAlgorithmIdentifier();
+
+        tbsGen.setSignature(sigAlgID);
 
         if (!extGenerator.isEmpty())
         {
+            Extension deltaExtension = extGenerator.getExtension(new ASN1ObjectIdentifier("2.16.840.1.114027.80.6.1"));
+            if (deltaExtension != null)
+            {
+                DeltaCertificateDescriptor descriptor = DeltaCertificateTool.trimDeltaCertificateDescriptor(
+                    DeltaCertificateDescriptor.getInstance(deltaExtension.getParsedValue()),
+                    TBSCertificate.getInstance(tbsGen.generateTBSCertificate().toASN1Primitive()),
+                    extGenerator.generate());
+
+                try
+                {
+                    extGenerator.replaceExtension(deltaCertificateDescriptor, deltaExtension.isCritical(),
+                        descriptor);
+                }
+                catch (IOException e)
+                {
+                    throw new IllegalStateException("unable to replace deltaCertificateDescriptor: " + e.getMessage()) ;
+                }
+            }
+
             tbsGen.setExtensions(extGenerator.generate());
         }
 
         try
         {
             TBSCertificate tbsCert = tbsGen.generateTBSCertificate();
-            return new X509CertificateHolder(generateStructure(tbsCert, signer.getAlgorithmIdentifier(), generateSig(signer, tbsCert)));
+            byte[] signature = generateSig(signer, tbsCert);
+            return new X509CertificateHolder(generateStructure(tbsCert, sigAlgID, signature));
         }
         catch (IOException e)
         {
-            throw new IllegalArgumentException("cannot produce certificate signature");
+            throw Exceptions.illegalArgumentException("cannot produce certificate signature", e);
         }
     }
 
-//    /**
-//     * Generate an X.509 certificate, based on the current issuer and subject
-//     * using the passed in signer and containing altSignatureAlgorithm and altSignatureValue extensions
-//     * based on the passed altSigner.
-//     *
-//     * @param signer the content signer to be used to generate the signature validating the certificate.
-//     * @param altSigner the content signer used to create the altSignatureAlgorithm and altSignatureValue extension.
-//     * @return a holder containing the resulting signed certificate.
-//     */
-//    public X509CertificateHolder build(
-//        ContentSigner signer,
-//        boolean isCritical,
-//        ContentSigner altSigner)
-//    {
-//        try
-//        {
-//            extGenerator.addExtension(Extension.altSignatureAlgorithm, isCritical, altSigner.getAlgorithmIdentifier());
-//        }
-//        catch (IOException e)
-//        {
-//            throw new IllegalStateException("cannot add altSignatureAlgorithm extension", e);
-//        }
-//
-//        if (extGenerator.hasExtension(Extension.deltaCertificateDescriptor))
-//        {
-//            tbsGen.setSignature(signer.getAlgorithmIdentifier());
-//            
-//            Extension deltaExt = extGenerator.getExtension(Extension.deltaCertificateDescriptor);
-//            DeltaCertificateDescriptor deltaDesc = DeltaCertificateDescriptor.getInstance(deltaExt.getParsedValue());
-//
-//            try
-//            {
-//                // the altSignatureValue is not present yet, but it must be in the deltaCertificate and
-//                // it must be different (by definition!). We add a dummy one to trigger inclusion.
-//                ExtensionsGenerator tmpExtGen = new ExtensionsGenerator();
-//                tmpExtGen.addExtension(extGenerator.generate());
-//                tmpExtGen.addExtension(Extension.altSignatureValue, false, DERNull.INSTANCE);
-//
-//                extGenerator.replaceExtension(Extension.deltaCertificateDescriptor, deltaExt.isCritical(),
-//                    deltaDesc.trimTo(tbsGen.generateTBSCertificate(), tmpExtGen.generate()));
-//            }
-//            catch (IOException e)
-//            {
-//                throw new IllegalStateException("unable to replace deltaCertificateDescriptor: " + e.getMessage());
-//            }
-//        }
-//
-//        tbsGen.setSignature(null);
-//
-//        tbsGen.setExtensions(extGenerator.generate());
-//
-//        try
-//        {
-//            extGenerator.addExtension(Extension.altSignatureValue, isCritical, new DERBitString(generateSig(altSigner, tbsGen.generatePreTBSCertificate())));
-//
-//            tbsGen.setSignature(signer.getAlgorithmIdentifier());
-//
-//            tbsGen.setExtensions(extGenerator.generate());
-//            
-//            TBSCertificate tbsCert = tbsGen.generateTBSCertificate();
-//            return new X509CertificateHolder(generateStructure(tbsCert, signer.getAlgorithmIdentifier(), generateSig(signer, tbsCert)));
-//        }
-//        catch (IOException e)
-//        {
-//            throw new IllegalArgumentException("cannot produce certificate signature");
-//        }
-//    }
+    /**
+     * Generate an X.509 certificate, based on the current issuer and subject
+     * using the passed in signer and containing altSignatureAlgorithm and altSignatureValue extensions
+     * based on the passed altSigner.
+     *
+     * @param signer the content signer to be used to generate the signature validating the certificate.
+     * @param altSigner the content signer used to create the altSignatureAlgorithm and altSignatureValue extension.
+     * @return a holder containing the resulting signed certificate.
+     */
+    public X509CertificateHolder build(
+        ContentSigner signer,
+        boolean isCritical,
+        ContentSigner altSigner)
+    {
+        AlgorithmIdentifier sigAlgID = signer.getAlgorithmIdentifier();
+        AlgorithmIdentifier altSigAlgID = altSigner.getAlgorithmIdentifier();
+
+        try
+        {
+            extGenerator.addExtension(Extension.altSignatureAlgorithm, isCritical, altSigAlgID);
+        }
+        catch (IOException e)
+        {
+            throw Exceptions.illegalStateException("cannot add altSignatureAlgorithm extension", e);
+        }
+
+        Extension deltaExtension = extGenerator.getExtension(deltaCertificateDescriptor);
+        if (deltaExtension != null)
+        {
+            tbsGen.setSignature(sigAlgID);
+
+            try
+            {
+                // the altSignatureValue is not present yet, but it must be in the deltaCertificate and
+                // it must be different (by definition!). We add a dummy one to trigger inclusion.
+                ExtensionsGenerator tmpExtGen = new ExtensionsGenerator();
+                Extensions exts = extGenerator.generate();
+                for (Enumeration en = exts.oids(); en.hasMoreElements();)
+                {
+                    ASN1ObjectIdentifier oid = (ASN1ObjectIdentifier)en.nextElement();
+                    Extension ext = exts.getExtension(oid);
+                    tmpExtGen.addExtension(oid, ext.isCritical(), ext.getParsedValue());
+                }
+                tmpExtGen.addExtension(Extension.altSignatureValue, false, DERNull.INSTANCE);
+
+                DeltaCertificateDescriptor descriptor = DeltaCertificateTool.trimDeltaCertificateDescriptor(
+                    DeltaCertificateDescriptor.getInstance(deltaExtension.getParsedValue()),
+                    tbsGen.generateTBSCertificate(),
+                    tmpExtGen.generate());
+
+                extGenerator.replaceExtension(deltaCertificateDescriptor, deltaExtension.isCritical(),
+                    descriptor);
+            }
+            catch (IOException e)
+            {
+                throw new IllegalStateException("unable to replace deltaCertificateDescriptor: " + e.getMessage());
+            }
+        }
+
+        tbsGen.setSignature(null);
+        tbsGen.setExtensions(extGenerator.generate());
+
+        try
+        {
+            byte[] altSignature = generateSig(altSigner, tbsGen.generatePreTBSCertificate()); 
+            extGenerator.addExtension(Extension.altSignatureValue, isCritical, new DERBitString(altSignature));
+
+            tbsGen.setSignature(sigAlgID);
+            tbsGen.setExtensions(extGenerator.generate());
+
+            TBSCertificate tbsCert = tbsGen.generateTBSCertificate();
+            byte[] signature = generateSig(signer, tbsCert);
+            return new X509CertificateHolder(generateStructure(tbsCert, sigAlgID, signature));
+        }
+        catch (IOException e)
+        {
+            throw Exceptions.illegalArgumentException("cannot produce certificate signature", e);
+        }
+    }
 
     private static byte[] generateSig(ContentSigner signer, ASN1Object tbsObj)
         throws IOException
@@ -462,7 +510,7 @@ public class X509v3CertificateBuilder
 
     private static Certificate generateStructure(TBSCertificate tbsCert, AlgorithmIdentifier sigAlgId, byte[] signature)
     {
-        ASN1EncodableVector v = new ASN1EncodableVector();
+        ASN1EncodableVector v = new ASN1EncodableVector(3);
 
         v.add(tbsCert);
         v.add(sigAlgId);
@@ -477,18 +525,9 @@ public class X509v3CertificateBuilder
 
         for (int i = 0; i != id.length; i++)
         {
-            bytes[i / 8] |= (id[i]) ? (1 << ((7 - (i % 8)))) : 0;
+            bytes[i >>> 3] |= id[i] ? (byte)(0x80 >> (i & 7)) : 0;
         }
 
-        int pad = id.length % 8;
-
-        if (pad == 0)
-        {
-            return new DERBitString(bytes);
-        }
-        else
-        {
-            return new DERBitString(bytes, 8 - pad);
-        }
+        return new DERBitString(bytes, (8 - id.length) & 7);
     }
 }

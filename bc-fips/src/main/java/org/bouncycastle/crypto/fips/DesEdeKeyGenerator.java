@@ -38,7 +38,7 @@ class DesEdeKeyGenerator
             strength = 2 * DesParameters.DES_KEY_LENGTH;
         }
         else if (strength != DesEdeParameters.DES_EDE_KEY_LENGTH
-                && strength != (2 * DesParameters.DES_KEY_LENGTH))
+            && strength != (2 * DesParameters.DES_KEY_LENGTH))
         {
             throw new IllegalArgumentException("Key must be "
                 + (DesEdeParameters.DES_EDE_KEY_LENGTH * 8) + " or "
@@ -49,7 +49,7 @@ class DesEdeKeyGenerator
 
     public byte[] generateKey()
     {
-        byte[]  newKey = new byte[strength];
+        byte[] newKey = new byte[strength];
         int count = 0;
 
         do

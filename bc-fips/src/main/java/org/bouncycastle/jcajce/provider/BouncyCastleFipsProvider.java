@@ -16,7 +16,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,8 +29,10 @@ import org.bouncycastle.crypto.EntropySource;
 import org.bouncycastle.crypto.EntropySourceProvider;
 import org.bouncycastle.crypto.SecureRandomProvider;
 import org.bouncycastle.crypto.fips.FipsDRBG;
+import org.bouncycastle.crypto.fips.FipsNative;
 import org.bouncycastle.crypto.fips.FipsSecureRandom;
 import org.bouncycastle.crypto.fips.FipsStatus;
+import org.bouncycastle.crypto.util.BasicEntropySourceProvider;
 import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.Pack;
 import org.bouncycastle.util.Properties;
@@ -48,10 +50,10 @@ import org.bouncycastle.util.Strings;
  * with "C:" and finish with "ENABLE{ALL};". The command for setting the actual DRBG type is DEFRND so a configuration
  * string requesting the use of a SHA1 DRBG would look like:
  * <pre>
- *         C:DEFRND[SHA1];ENABLE{All};
+ *         C:DEFRND[SHA1];ENABLE{ALL};
  *     </pre>
  * Possible values for the DRBG type are "SHA1", "SHA224", "SHA256", "SHA384", "SHA512", "SHA512(224)", "SHA512(256)",
- * "HMACrovRandSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA512(224)", "HMACSHA512(256)", "CTRAES128",
+ * "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA512(224)", "HMACSHA512(256)", "CTRAES128",
  * "CTRAES192", CTRAES256", and "CTRDESEDE".
  * </p>
  * <p>
@@ -75,15 +77,30 @@ import org.bouncycastle.util.Strings;
  *     </pre>
  * </p>
  * <p>
+ * If "local" is specified a thread local will be used to store the DRBG instead.
+ * <pre>
+ *          C:DEFRND[SHA256,local];ENABLE{ALL};
+ *     </pre>
+ * or
+ * <pre>
+ *          C:DEFRND[local];ENABLE{ALL};
+ *     </pre>
+ * </p>
+ * <p>
  * <b>Note</b>: if the provider is created by an "approved mode" thread, only FIPS approved algorithms will be available from it.
  * </p>
  */
 public final class BouncyCastleFipsProvider
     extends Provider
 {
-    private static final String info = "BouncyCastle Security Provider (FIPS edition) v2.0.0";
+    private static final String info = "BouncyCastle Security Provider (FIPS edition) v2.1.0";
 
     public static final String PROVIDER_NAME = "BCFIPS";
+
+    public static String getInfoString()
+    {
+        return info;
+    }
 
     private static final Map<String, FipsDRBG.Base> drbgTable = new HashMap<String, FipsDRBG.Base>();
     private static final Map<String, Integer> drbgStrengthTable = new HashMap<String, Integer>();
@@ -136,20 +153,20 @@ public final class BouncyCastleFipsProvider
     private FipsDRBG.Base providerDefaultRandomBuilder = FipsDRBG.SHA512;
     private int providerDefaultSecurityStrength = 256;
     private boolean providerDefaultPredictionResistance = true;
+    private boolean useThreadLocal = false;
 
     private boolean hybridSource = false;
-    private final AtomicReference<SecureRandom>[] providerDefaultRandom = new AtomicReference[16];
-    private final AtomicInteger providerDefaultRandomCount = new AtomicInteger(0);
     private final AtomicInteger providerDefaultRandomSecurityStrength = new AtomicInteger(providerDefaultSecurityStrength);
     private final SecureRandomProvider providerDefaultSecureRandomProvider;
 
-    private Map<String, BcService> serviceMap = new HashMap<String, BcService>();
+    private Map<String, BcService> serviceMap = new ConcurrentHashMap<String, BcService>();
     private Map<String, EngineCreator> creatorMap = new HashMap<String, EngineCreator>();
 
     private final Map<ASN1ObjectIdentifier, AsymmetricKeyInfoConverter> keyInfoConverters = new HashMap<ASN1ObjectIdentifier, AsymmetricKeyInfoConverter>();
 
     private WeakReference<Set<Service>> serviceSetCache = new WeakReference<Set<Service>>(null);
-    private Thread entropyThread= null;
+    private SecureRandom entopySource = null;
+    private Thread entropyThread = null;
     private EntropyDaemon entropyDaemon = null;
 
     /**
@@ -175,12 +192,13 @@ public final class BouncyCastleFipsProvider
      * configured DRBG.
      *
      * @param config        the config string.
-     * @param entropySource a SecureRandom which can act as an entropy source.
+     * @param entropySource a SecureRandom which can act as an entropy source. (now ignored)
      */
     public BouncyCastleFipsProvider(String config, SecureRandom entropySource)
     {
-        super(PROVIDER_NAME, 2.0000, info);
+        super(PROVIDER_NAME, 2.1000, getInfoString());
 
+        this.entopySource = entropySource;
         // TODO: add support for file parsing, selective disable.
 
         if (config != null)
@@ -195,37 +213,14 @@ public final class BouncyCastleFipsProvider
             }
         }
 
-        for (int i = 0; i != providerDefaultRandom.length; i++)
+        if (useThreadLocal)
         {
-            providerDefaultRandom[i] = new AtomicReference<SecureRandom>();
+            providerDefaultSecureRandomProvider = new ThreadLocalSecureRandomProvider();
         }
-
-        providerDefaultSecureRandomProvider = new SecureRandomProvider()
+        else
         {
-            public SecureRandom get()
-            {
-                // See SP 800-90A R1 8.6.7 for setting of Nonce - at least 1/2 security strength bits
-                int rngIndex = providerDefaultRandomCount.getAndSet((providerDefaultRandomCount.get() + 1) % providerDefaultRandom.length);
-                if (providerDefaultRandom[rngIndex].get() == null)
-                {
-                    synchronized (providerDefaultRandom)
-                    {
-                        if (providerDefaultRandom[rngIndex].get() == null)
-                        {
-                            SecureRandom sourceOfEntropy = getDefaultEntropySource();
-
-                            // we set providerDefault here as we end up recursing due to personalization string
-                            providerDefaultRandom[rngIndex].compareAndSet(null, providerDefaultRandomBuilder
-                                .fromEntropySource(sourceOfEntropy, true)
-                                .setPersonalizationString(generatePersonalizationString(rngIndex))
-                                .build(sourceOfEntropy.generateSeed((providerDefaultSecurityStrength / (2 * 8)) + 1), providerDefaultPredictionResistance, Strings.toByteArray("Bouncy Castle FIPS Provider")));
-                        }
-                    }
-                }
-
-                return providerDefaultRandom[rngIndex].get();
-            }
-        };
+            providerDefaultSecureRandomProvider = new PooledSecureRandomProvider();
+        }
 
         // must always be first (SecureRandom constructor)
         new ProvRandom().configure(this);
@@ -326,6 +321,20 @@ public final class BouncyCastleFipsProvider
         }
     }
 
+    private EntropySourceProvider getDefaultEntropySourceProvider()
+    {
+        EntropySourceProvider entropySourceProvider;
+        if (FipsNative.isEnabled())
+        {
+            entropySourceProvider = CryptoServicesRegistrar.getDefaultEntropySourceProvider();
+        }
+        else
+        {
+            entropySourceProvider = getEntropySourceProvider();
+        }
+        return entropySourceProvider;
+    }
+
     // for Java 11
     public Provider configure(String configArg)
     {
@@ -356,6 +365,10 @@ public final class BouncyCastleFipsProvider
                     if (rndConfig.equals("TRUE") || rndConfig.equals("FALSE"))
                     {
                         prOn = rndConfig;
+                    }
+                    else if (rndConfig.equals("LOCAL"))
+                    {
+                        useThreadLocal = true;
                     }
                     else
                     {
@@ -455,24 +468,31 @@ public final class BouncyCastleFipsProvider
         return defRandom;
     }
 
-    SecureRandom getDefaultEntropySource()
+    EntropySourceProvider getEntropySourceProvider()
     {
         // this has to be a lazy evaluation
-        return AccessController.doPrivileged(new PrivilegedAction<SecureRandom>()
+        return AccessController.doPrivileged(new PrivilegedAction<EntropySourceProvider>()
         {
-            public SecureRandom run()
+            public EntropySourceProvider run()
             {
                 if (hybridSource)
                 {
-                    return new HybridSecureRandom(entropyDaemon);
+                    return new EntropySourceProvider()
+                    {
+                        @Override
+                        public EntropySource get(int bitsRequired)
+                        {
+                            return new HybridEntropySource(entropyDaemon, bitsRequired, getCoreSecureRandom());
+                        }
+                    };
                 }
 
-                return getCoreSecureRandom();
+                return new BasicEntropySourceProvider(getCoreSecureRandom(), true);
             }
         });
     }
 
-    private static SecureRandom getCoreSecureRandom()
+    private SecureRandom getCoreSecureRandom()
     {
         return AccessController.doPrivileged(new PrivilegedAction<SecureRandom>()
         {
@@ -480,7 +500,7 @@ public final class BouncyCastleFipsProvider
             {
                 try
                 {
-                    return (SecureRandom)SecureRandom.class.getMethod("getInstanceStrong").invoke(null);
+                    return SecureRandom.getInstanceStrong();
                 }
                 catch (Exception e)
                 {
@@ -645,7 +665,7 @@ public final class BouncyCastleFipsProvider
         put(key, name);
     }
 
-    public synchronized final Service getService(String type, String algorithm)
+    public final Service getService(String type, String algorithm)
     {
         String upperCaseAlgName = Strings.toUpperCase(algorithm);
 
@@ -668,7 +688,7 @@ public final class BouncyCastleFipsProvider
                 return null;
             }
 
-            String attributeKeyStart = type + "." + upperCaseAlgName + " ";
+            String attributeKeyStart = type + "." + realName + " ";
 
             List<String> aliases = new ArrayList<String>();
             Map<String, String> attributes = new HashMap<String, String>();
@@ -691,33 +711,38 @@ public final class BouncyCastleFipsProvider
 
             service = new BcService(this, type, upperCaseAlgName, className, aliases, getAttributeMap(attributes), creatorMap.get(className));
 
-            serviceMap.put(type + "." + upperCaseAlgName, service);
+            BcService altService = serviceMap.putIfAbsent(type + "." + upperCaseAlgName, service);
+
+            service = altService != null ? altService : service;
         }
 
         return service;
     }
 
-    public synchronized final Set<Service> getServices()
+    public final Set<Service> getServices()
     {
         Set<Service> bcServiceSet = serviceSetCache.get();
 
         if (bcServiceSet == null)
         {
-            Set<Service> serviceSet = super.getServices();
-
-            bcServiceSet = new LinkedHashSet<Service>();
-
-            bcServiceSet.add(getService("SecureRandom", "DEFAULT"));
-            bcServiceSet.add(getService("SecureRandom", "NONCEANDIV"));
-
-            for (Service service : serviceSet)
+            synchronized (this)
             {
-                bcServiceSet.add(getService(service.getType(), service.getAlgorithm()));
+                Set<Service> serviceSet = super.getServices();
+
+                bcServiceSet = new LinkedHashSet<Service>();
+
+                bcServiceSet.add(getService("SecureRandom", "DEFAULT"));
+                bcServiceSet.add(getService("SecureRandom", "NONCEANDIV"));
+
+                for (Service service : serviceSet)
+                {
+                    bcServiceSet.add(getService(service.getType(), service.getAlgorithm()));
+                }
+
+                bcServiceSet = Collections.unmodifiableSet(bcServiceSet);
+
+                serviceSetCache = new WeakReference<Set<Service>>(bcServiceSet);
             }
-
-            bcServiceSet = Collections.unmodifiableSet(bcServiceSet);
-
-            serviceSetCache = new WeakReference<Set<Service>>(bcServiceSet);
         }
 
         return bcServiceSet;
@@ -735,14 +760,14 @@ public final class BouncyCastleFipsProvider
         return disabled != null && (disabled.indexOf(algName) >= 0);
     }
 
-    private byte[] generatePersonalizationString(int randomIndex)
+    private byte[] generatePersonalizationString(int rngIndex)
     {
-        return Arrays.concatenate(Pack.intToBigEndian(randomIndex), Pack.longToBigEndian(Thread.currentThread().getId()), Pack.longToBigEndian(System.currentTimeMillis()));
+        return Arrays.concatenate(Pack.intToBigEndian(rngIndex), Pack.longToBigEndian(Thread.currentThread().getId()), Pack.longToBigEndian(System.currentTimeMillis()));
     }
 
     private final Map<Map<String, String>, Map<String, String>> attributeMaps = new HashMap<Map<String, String>, Map<String, String>>();
 
-    private Map<String, String> getAttributeMap(Map<String, String> attributeMap)
+    private synchronized Map<String, String> getAttributeMap(Map<String, String> attributeMap)
     {
         Map<String, String> attrMap = attributeMaps.get(attributeMap);
         if (attrMap != null)
@@ -832,102 +857,43 @@ public final class BouncyCastleFipsProvider
         }
     }
 
-    private static class HybridRandomProvider
-        extends Provider
-    {
-        protected HybridRandomProvider()
-        {
-            super("BCFHEP", 1.0, "Bouncy Castle FIPS Hybrid Entropy Provider");
-        }
-    }
-
-    private static class EntropyDaemon
-        implements Runnable
-    {
-        private final ConcurrentLinkedDeque<Runnable> tasks = new ConcurrentLinkedDeque<Runnable>();
-
-        void addTask(Runnable task)
-        {
-            tasks.add(task);
-        }
-
-        @Override
-        public void run()
-        {
-            while (!Thread.currentThread().isInterrupted())
-            {
-                Runnable task = tasks.pollFirst();
-
-                if (task != null)
-                {
-                    try
-                    {
-                        task.run();
-                    }
-                    catch (Throwable e)
-                    {
-                        // ignore
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        Thread.sleep(5000);
-                    }
-                    catch (InterruptedException e)
-                    {
-                        Thread.currentThread().interrupt();
-                    }
-                }
-            }
-        }
-    }
-
-    private static class HybridSecureRandom
-        extends SecureRandom
+    private static class HybridEntropySource
+        implements EntropySource
     {
         private final AtomicBoolean seedAvailable = new AtomicBoolean(false);
         private final AtomicInteger samples = new AtomicInteger(0);
 
         private final FipsSecureRandom drbg;
+        private final SignallingEntropySource entropySource;
+        private final int bytesRequired;
 
-        HybridSecureRandom(final EntropyDaemon entropyDaemon)
+        HybridEntropySource(final EntropyDaemon entropyDaemon, final int bitsRequired, SecureRandom baseRandom)
         {
-            super(null, new HybridRandomProvider());         // stop getDefaultRNG() call
-
-            SecureRandom baseRandom = getCoreSecureRandom();
-
+            bytesRequired = (bitsRequired + 7) / 8;
+            // remember for the seed generator we need the correct security strength for SHA-512
+            entropySource = new SignallingEntropySource(entropyDaemon, seedAvailable, baseRandom, 256);
             drbg = FipsDRBG.SHA512.fromEntropySource(new EntropySourceProvider()
                 {
                     public EntropySource get(final int bitsRequired)
                     {
-                        return new SignallingEntropySource(entropyDaemon, baseRandom, bitsRequired);
+                        return entropySource;
                     }
                 })
-            .setPersonalizationString(Strings.toByteArray("Bouncy Castle Hybrid Entropy Source"))
-            .build(baseRandom.generateSeed(32), false, null);     // 32 byte nonce
+                .setPersonalizationString(Strings.toByteArray("Bouncy Castle Hybrid Entropy Source"))
+                .build(baseRandom.generateSeed(32), false, null);     // 32 byte nonce
         }
 
-        public void setSeed(byte[] seed)
+        @Override
+        public boolean isPredictionResistant()
         {
-            if (drbg != null)
-            {
-                drbg.setSeed(seed);
-            }
+            return true;
         }
 
-        public void setSeed(long seed)
+        @Override
+        public byte[] getEntropy()
         {
-            if (drbg != null)
-            {
-                drbg.setSeed(seed);
-            }
-        }
+            byte[] entropy = new byte[bytesRequired];
 
-        public byte[] generateSeed(int numBytes)
-        {
-            byte[] data = new byte[numBytes];
             // after 20 samples we'll start to check if there is new seed material.
             if (samples.getAndIncrement() > 20)
             {
@@ -936,25 +902,37 @@ public final class BouncyCastleFipsProvider
                     samples.set(0);
                     drbg.reseed();
                 }
+                else
+                {
+                    entropySource.schedule();
+                }
             }
 
-            drbg.nextBytes(data);
+            drbg.nextBytes(entropy);
 
-            return data;
+            return entropy;
+        }
+
+        @Override
+        public int entropySize()
+        {
+            return bytesRequired * 8;
         }
 
         private class SignallingEntropySource
             implements EntropySource
         {
             private final EntropyDaemon entropyDaemon;
+            private final AtomicBoolean seedAvailable;
             private final SecureRandom baseRandom;
             private final int byteLength;
             private final AtomicReference entropy = new AtomicReference();
             private final AtomicBoolean scheduled = new AtomicBoolean(false);
 
-            SignallingEntropySource(EntropyDaemon entropyDaemon, SecureRandom baseRandom, int bitsRequired)
+            SignallingEntropySource(EntropyDaemon entropyDaemon, AtomicBoolean seedAvailable, SecureRandom baseRandom, int bitsRequired)
             {
                 this.entropyDaemon = entropyDaemon;
+                this.seedAvailable = seedAvailable;
                 this.baseRandom = baseRandom;
                 this.byteLength = (bitsRequired + 7) / 8;
             }
@@ -977,12 +955,17 @@ public final class BouncyCastleFipsProvider
                     scheduled.set(false);
                 }
 
-                if (!scheduled.getAndSet(true))
-                {
-                    entropyDaemon.addTask(new EntropyGatherer(byteLength, baseRandom, entropy));
-                }
+                schedule();
 
                 return seed;
+            }
+
+            void schedule()
+            {
+                if (!scheduled.getAndSet(true))
+                {
+                    entropyDaemon.addTask(new EntropyGatherer(byteLength, baseRandom, seedAvailable, entropy));
+                }
             }
 
             public int entropySize()
@@ -991,73 +974,93 @@ public final class BouncyCastleFipsProvider
             }
         }
 
-        private class EntropyGatherer
-            implements Runnable
+    }
+
+    static final int POOL_SIZE = getPoolSize(); // must be power of 2
+
+    private static int getPoolSize()
+    {
+        String poolSize = Properties.getPropertyValue("org.bouncycastle.drbg.pool_size");
+
+        int size;
+        if (poolSize != null)
         {
-            private final int numBytes;
-            private final SecureRandom baseRandom;
-            private final AtomicReference<byte[]> entropy;
+            size = Integer.parseInt(poolSize);
 
-            EntropyGatherer(int numBytes, SecureRandom baseRandom, AtomicReference<byte[]> entropy)
+            if (size < 2)
             {
-                this.numBytes = numBytes;
-                this.baseRandom = baseRandom;
-                this.entropy = entropy;
+                return 2;
             }
+        }
+        else
+        {
+            size = Runtime.getRuntime().availableProcessors() * 2;
+        }
 
-            private void sleep(long ms)
+        return Integer.highestOneBit(size);  // size needs to be a power of 2.
+    }
+
+    private class PooledSecureRandomProvider
+        implements SecureRandomProvider
+    {
+        private final AtomicReference<SecureRandom>[] providerDefaultRandom = new AtomicReference[POOL_SIZE];
+
+        PooledSecureRandomProvider()
+        {
+            for (int i = 0; i != providerDefaultRandom.length; i++)
             {
-                try
-                {
-                    Thread.sleep(ms);
-                }
-                catch (InterruptedException e)
-                {
-                    Thread.currentThread().interrupt();
-                }
+                providerDefaultRandom[i] = new AtomicReference<SecureRandom>();
             }
+        }
 
-            public void run()
+        public SecureRandom get()
+        {
+            // See SP 800-90A R1 8.6.7 for setting of Nonce - at least 1/2 security strength bits
+            int rngIndex = (Thread.currentThread().hashCode() & (POOL_SIZE - 1)) % providerDefaultRandom.length;
+            if (providerDefaultRandom[rngIndex].get() == null)
             {
-                long ms;
-                String pause = Properties.getPropertyValue("org.bouncycastle.drbg.gather_pause_secs");
-
-                if (pause != null)
+                synchronized (providerDefaultRandom)
                 {
-                    try
+                    if (providerDefaultRandom[rngIndex].get() == null)
                     {
-                        ms = Long.parseLong(pause) * 1000;
-                    }
-                    catch (Exception e)
-                    {
-                        ms = 5000;
-                    }
-                }
-                else
-                {
-                    ms = 5000;
-                }
- 
-                byte[] seed = new byte[numBytes];
-                for (int i = 0; i < numBytes / 8; i++)
-                {
-                    // we need to be mindful that we may not be the only thread/process looking for entropy
-                    sleep(ms);
-                    byte[] rn = baseRandom.generateSeed(8);
-                    System.arraycopy(rn, 0, seed, i * 8, rn.length);
-                }
+                        EntropySourceProvider entropySourceProvider = getDefaultEntropySourceProvider();
 
-                int extra = numBytes - ((numBytes / 8) * 8);
-                if (extra != 0)
-                {
-                    sleep(ms);
-                    byte[] rn = baseRandom.generateSeed(extra);
-                    System.arraycopy(rn, 0, seed, seed.length - rn.length, rn.length);
-                }
+                        EntropySource seedSource = entropySourceProvider.get((providerDefaultSecurityStrength / 2) + 1);
 
-                entropy.set(seed);
-                seedAvailable.set(true);
+                        // we set providerDefault here as we end up recursing due to personalization string
+                        providerDefaultRandom[rngIndex].compareAndSet(null, providerDefaultRandomBuilder
+                            .fromEntropySource(entropySourceProvider)
+                            .setPersonalizationString(generatePersonalizationString(rngIndex))
+                            .build(seedSource.getEntropy(), providerDefaultPredictionResistance, Strings.toByteArray("Bouncy Castle FIPS Provider")));
+                    }
+                }
             }
+
+            return providerDefaultRandom[rngIndex].get();
+        }
+    }
+
+    private class ThreadLocalSecureRandomProvider
+        implements SecureRandomProvider
+    {
+        final ThreadLocal<FipsSecureRandom> defaultRandoms = new ThreadLocal<FipsSecureRandom>();
+
+        public SecureRandom get ()
+        {
+            // See SP 800-90A R1 8.6.7 for setting of Nonce - at least 1/2 security strength bits
+            if (defaultRandoms.get() == null)
+            {
+                EntropySourceProvider entropySourceProvider = getDefaultEntropySourceProvider();
+                EntropySource seedSource = entropySourceProvider.get((providerDefaultSecurityStrength / 2) + 1);
+
+                // we set providerDefault here as we end up recursing due to personalization string
+                defaultRandoms.set(providerDefaultRandomBuilder
+                    .fromEntropySource(entropySourceProvider)
+                    .setPersonalizationString(generatePersonalizationString((int)Thread.currentThread().getId()))
+                    .build(seedSource.getEntropy(), providerDefaultPredictionResistance, Strings.toByteArray("Bouncy Castle FIPS Provider")));
+            }
+
+            return defaultRandoms.get();
         }
     }
 }

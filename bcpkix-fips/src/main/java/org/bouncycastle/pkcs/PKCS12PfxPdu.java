@@ -8,6 +8,7 @@ import org.bouncycastle.asn1.ASN1Sequence;
 import org.bouncycastle.asn1.pkcs.ContentInfo;
 import org.bouncycastle.asn1.pkcs.MacData;
 import org.bouncycastle.asn1.pkcs.PKCS12PBEParams;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.pkcs.Pfx;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.util.Arrays;
@@ -108,7 +109,7 @@ public class PKCS12PfxPdu
         {
             MacData pfxmData = pfx.getMacData();
             MacDataGenerator mdGen;
-            if (PKCSObjectIdentifiers.id_PBMAC1.equals(pfxmData.getMac().getAlgorithmId().getAlgorithm()))
+            if (PKCSObjectIdentifiers.pkcs_5.branch("14").equals(pfxmData.getMac().getAlgorithmId().getAlgorithm()))
             {
                 PBMAC1Params pbmac1Params = PBMAC1Params.getInstance(pfxmData.getMac().getAlgorithmId().getParameters());
                 if (pbmac1Params == null)

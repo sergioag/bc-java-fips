@@ -12,19 +12,15 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.cryptlib.CryptlibObjectIdentifiers;
 import org.bouncycastle.asn1.edec.EdECObjectIdentifiers;
 import org.bouncycastle.bcpg.PublicKeyPacket;
 import org.bouncycastle.crypto.asymmetric.ECDomainParametersIndex;
 import org.bouncycastle.crypto.asymmetric.NamedECDomainParameters;
 import org.bouncycastle.jcajce.spec.HybridValueParameterSpec;
-import org.bouncycastle.jcajce.spec.UserKeyingMaterialSpec;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.openpgp.PGPException;
-import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.BigIntegers;
-import org.bouncycastle.util.Strings;
 
 /**
  * Basic utility class
@@ -66,7 +62,7 @@ class JcaJcePGPUtil
         // TODO: update HybridValueParameterSpec
         //return new HybridValueParameterSpec(Arrays.concatenate(ephmeralPublicKey, pkp.getEncoded()), true, new UserKeyingMaterialSpec(Strings.toByteArray("OpenPGP " + algorithmName)));
     }
-
+    
     static Key getSecret(OperatorHelper helper, PublicKey cryptoPublicKey, String keyEncryptionOID, String agreementName, AlgorithmParameterSpec ukmSpec, Key privKey)
         throws GeneralSecurityException
     {

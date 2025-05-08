@@ -144,7 +144,7 @@ class LMOtsPublicKey
 
     LMSContext createOtsContext(LMOtsSignature signature)
     {
-        Digest ctx = LmsDigestUtil.getDigest(parameter.getDigestOID());
+        Digest ctx = LmsDigestUtil.getDigest(parameter);
 
         LmsUtils.byteArray(I, ctx);
         LmsUtils.u32str(q, ctx);
@@ -156,7 +156,7 @@ class LMOtsPublicKey
 
     LMSContext createOtsContext(LMSSignature signature)
     {
-        Digest ctx = LmsDigestUtil.getDigest(parameter.getDigestOID());
+        Digest ctx = LmsDigestUtil.getDigest(parameter);
 
         LmsUtils.byteArray(I, ctx);
         LmsUtils.u32str(q, ctx);

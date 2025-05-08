@@ -26,7 +26,6 @@ import org.bouncycastle.asn1.x509.Extensions;
 import org.bouncycastle.asn1.x509.ExtensionsGenerator;
 import org.bouncycastle.asn1.x509.TBSCertList;
 import org.bouncycastle.asn1.x509.Time;
-import org.bouncycastle.asn1.x509.V2TBSCertListGenerator;
 import org.bouncycastle.operator.ContentSigner;
 
 /**
@@ -478,41 +477,41 @@ public class X509v2CRLBuilder
      * @param altSigner the content signer used to create the altSignatureAlgorithm and altSignatureValue extension.
      * @return a holder containing the resulting signed CRL.
      */
-//    public X509CRLHolder build(
-//        ContentSigner signer,
-//        boolean isCritical,
-//        ContentSigner altSigner)
-//    {
-//        tbsGen.setSignature(null);  // no signature field for altSig
-//
-//        try
-//        {
-//            extGenerator.addExtension(Extension.altSignatureAlgorithm, isCritical, altSigner.getAlgorithmIdentifier());
-//        }
-//        catch (IOException e)
-//        {
-//            throw new IllegalStateException("cannot add altSignatureAlgorithm extension", e);
-//        }
-//
-//        tbsGen.setExtensions(extGenerator.generate());
-//
-//        try
-//        {
-//            extGenerator.addExtension(Extension.altSignatureValue, isCritical, new DERBitString(generateSig(altSigner, tbsGen.generatePreTBSCertList())));
-//
-//            tbsGen.setSignature(signer.getAlgorithmIdentifier());
-//
-//            tbsGen.setExtensions(extGenerator.generate());
-//
-//            TBSCertList tbsCert = tbsGen.generateTBSCertList();
-//
-//            return new X509CRLHolder(generateCRLStructure(tbsCert, signer.getAlgorithmIdentifier(), generateSig(signer, tbsCert)));
-//        }
-//        catch (IOException e)
-//        {
-//            throw new IllegalArgumentException("cannot produce certificate signature", e);
-//        }
-//    }
+    public X509CRLHolder build(
+        ContentSigner signer,
+        boolean isCritical,
+        ContentSigner altSigner)
+    {
+        tbsGen.setSignature(null);  // no signature field for altSig
+
+        try
+        {
+            extGenerator.addExtension(Extension.altSignatureAlgorithm, isCritical, altSigner.getAlgorithmIdentifier());
+        }
+        catch (IOException e)
+        {
+            throw Exceptions.illegalStateException("cannot add altSignatureAlgorithm extension", e);
+        }
+
+        tbsGen.setExtensions(extGenerator.generate());
+
+        try
+        {
+            extGenerator.addExtension(Extension.altSignatureValue, isCritical, new DERBitString(generateSig(altSigner, tbsGen.generatePreTBSCertList())));
+
+            tbsGen.setSignature(signer.getAlgorithmIdentifier());
+
+            tbsGen.setExtensions(extGenerator.generate());
+
+            TBSCertList tbsCert = tbsGen.generateTBSCertList();
+
+            return new X509CRLHolder(generateCRLStructure(tbsCert, signer.getAlgorithmIdentifier(), generateSig(signer, tbsCert)));
+        }
+        catch (IOException e)
+        {
+            throw Exceptions.illegalArgumentException("cannot produce certificate signature", e);
+        }
+    }
 
     private static X509CRLHolder generateFullCRL(ContentSigner signer, TBSCertList tbsCertList)
     {
@@ -522,7 +521,7 @@ public class X509v2CRLBuilder
         }
         catch (IOException e)
         {
-            throw new IllegalStateException("cannot produce certificate signature", e);
+            throw Exceptions.illegalStateException("cannot produce certificate signature", e);
         }
     }
 

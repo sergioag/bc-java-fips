@@ -18,14 +18,14 @@ import org.bouncycastle.crypto.internal.params.KeyParameter;
  * <p>
  * It can be found at ftp://ftp.funet.fi/pub/crypt/cryptography/symmetric/idea/
  * <p>
- * Note: This algorithm was patented in the USA, Japan and Europe. These patents expired in 2011/2012. 
+ * Note: This algorithm was patented in the USA, Japan and Europe. These patents expired in 2011/2012.
  */
 class IDEAEngine
     implements BlockCipher
 {
-    protected static final int  BLOCK_SIZE = 8;
+    protected static final int BLOCK_SIZE = 8;
 
-    private int[]               workingKey = null;
+    private int[] workingKey = null;
 
     /**
      * standard constructor.
@@ -38,18 +38,18 @@ class IDEAEngine
      * initialise an IDEA cipher.
      *
      * @param forEncryption whether or not we are for encryption.
-     * @param params the parameters required to set up the cipher.
-     * @exception IllegalArgumentException if the params argument is
-     * inappropriate.
+     * @param params        the parameters required to set up the cipher.
+     * @throws IllegalArgumentException if the params argument is
+     *                                  inappropriate.
      */
     public void init(
-        boolean           forEncryption,
-        CipherParameters  params)
+        boolean forEncryption,
+        CipherParameters params)
     {
         if (params instanceof KeyParameter)
         {
             workingKey = generateWorkingKey(forEncryption,
-                                  ((KeyParameter)params).getKey());
+                ((KeyParameter)params).getKey());
             return;
         }
 
@@ -96,20 +96,20 @@ class IDEAEngine
     {
     }
 
-    private static final int    MASK = 0xffff;
-    private static final int    BASE = 0x10001;
+    private static final int MASK = 0xffff;
+    private static final int BASE = 0x10001;
 
     private int bytesToWord(
-        byte[]  in,
-        int     inOff)
+        byte[] in,
+        int inOff)
     {
         return ((in[inOff] << 8) & 0xff00) + (in[inOff + 1] & 0xff);
     }
 
     private void wordToBytes(
-        int     word,
-        byte[]  out,
-        int     outOff)
+        int word,
+        byte[] out,
+        int outOff)
     {
         out[outOff] = (byte)(word >>> 8);
         out[outOff + 1] = (byte)word;
@@ -138,7 +138,7 @@ class IDEAEngine
         }
         else
         {
-            int     p = x * y;
+            int p = x * y;
 
             y = p & MASK;
             x = p >>> 16;
@@ -149,14 +149,14 @@ class IDEAEngine
     }
 
     private void ideaFunc(
-        int[]   workingKey,
-        byte[]  in,
-        int     inOff,
-        byte[]  out,
-        int     outOff)
+        int[] workingKey,
+        byte[] in,
+        int inOff,
+        byte[] out,
+        int outOff)
     {
-        int     x0, x1, x2, x3, t0, t1;
-        int     keyOff = 0;
+        int x0, x1, x2, x3, t0, t1;
+        int keyOff = 0;
 
         x0 = bytesToWord(in, inOff);
         x1 = bytesToWord(in, inOff + 2);
@@ -204,13 +204,13 @@ class IDEAEngine
      * and so on until the subkey is completed.
      */
     private int[] expandKey(
-        byte[]  uKey)
+        byte[] uKey)
     {
-        int[]   key = new int[52];
+        int[] key = new int[52];
 
         if (uKey.length < 16)
         {
-            byte[]  tmp = new byte[16];
+            byte[] tmp = new byte[16];
 
             System.arraycopy(uKey, 0, tmp, tmp.length - uKey.length, uKey.length);
 
@@ -251,7 +251,7 @@ class IDEAEngine
         int x)
     {
         int t0, t1, q, y;
-        
+
         if (x < 2)
         {
             return x;
@@ -259,7 +259,7 @@ class IDEAEngine
 
         t0 = 1;
         t1 = BASE / x;
-        y  = BASE % x;
+        y = BASE % x;
 
         while (y != 1)
         {
@@ -288,7 +288,7 @@ class IDEAEngine
     {
         return (0 - x) & MASK;
     }
-    
+
     /**
      * The function to invert the encryption subkey to the decryption subkey.
      * It also involves the multiplicative inverse and the additive inverse functions.
@@ -296,11 +296,11 @@ class IDEAEngine
     private int[] invertKey(
         int[] inKey)
     {
-        int     t1, t2, t3, t4;
-        int     p = 52;                 /* We work backwards */
-        int[]   key = new int[52];
-        int     inOff = 0;
-    
+        int t1, t2, t3, t4;
+        int p = 52;                 /* We work backwards */
+        int[] key = new int[52];
+        int inOff = 0;
+
         t1 = mulInv(inKey[inOff++]);
         t2 = addInv(inKey[inOff++]);
         t3 = addInv(inKey[inOff++]);
@@ -309,14 +309,14 @@ class IDEAEngine
         key[--p] = t3;
         key[--p] = t2;
         key[--p] = t1;
-    
+
         for (int round = 1; round < 8; round++)
         {
             t1 = inKey[inOff++];
             t2 = inKey[inOff++];
             key[--p] = t2;
             key[--p] = t1;
-    
+
             t1 = mulInv(inKey[inOff++]);
             t2 = addInv(inKey[inOff++]);
             t3 = addInv(inKey[inOff++]);
@@ -331,7 +331,7 @@ class IDEAEngine
         t2 = inKey[inOff++];
         key[--p] = t2;
         key[--p] = t1;
-    
+
         t1 = mulInv(inKey[inOff++]);
         t2 = addInv(inKey[inOff++]);
         t3 = addInv(inKey[inOff++]);
@@ -343,10 +343,10 @@ class IDEAEngine
 
         return key;
     }
-    
+
     private int[] generateWorkingKey(
         boolean forEncryption,
-        byte[]  userKey)
+        byte[] userKey)
     {
         if (forEncryption)
         {

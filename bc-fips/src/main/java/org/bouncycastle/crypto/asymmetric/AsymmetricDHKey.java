@@ -22,8 +22,8 @@ public abstract class AsymmetricDHKey
 {
     private final boolean    approvedModeOnly;
 
-    protected Algorithm algorithm;
-    protected DHDomainParameters domainParameters;
+    private Algorithm algorithm;
+    private DHDomainParameters domainParameters;
 
     AsymmetricDHKey(Algorithm algorithm, DHDomainParameters domainParameters)
     {

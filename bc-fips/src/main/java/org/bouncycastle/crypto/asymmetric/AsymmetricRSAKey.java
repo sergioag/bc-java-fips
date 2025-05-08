@@ -62,7 +62,7 @@ public abstract class AsymmetricRSAKey
     private final KeyMarker  keyMarker;
 
     private Algorithm algorithm;
-    protected BigInteger modulus;
+    private BigInteger modulus;
 
     protected final AlgorithmIdentifier rsaAlgIdentifier;
 

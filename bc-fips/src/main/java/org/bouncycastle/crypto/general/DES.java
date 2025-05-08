@@ -31,7 +31,7 @@ public final class DES
      * Raw DES algorithm, can be used for creating general purpose DES keys.
      */
     public static final GeneralAlgorithm ALGORITHM = new GeneralAlgorithm("DES");
-    
+
     private static final EngineProvider ENGINE_PROVIDER;
 
     static

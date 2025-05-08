@@ -1,11 +1,8 @@
-/***************************************************************/
-/******    DO NOT EDIT THIS CLASS bc-java SOURCE FILE     ******/
-/***************************************************************/
 package org.bouncycastle.asn1.cms;
 
 import java.math.BigInteger;
 
-import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1Integer;
 import org.bouncycastle.asn1.ASN1Object;
 import org.bouncycastle.asn1.ASN1Primitive;
@@ -15,7 +12,7 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.Certificate;
 
 /**
- * <a href="http://tools.ietf.org/html/rfc5652#section-10.2.4">RFC 5652</a>: IssuerAndSerialNumber object.
+ * <a href="https://tools.ietf.org/html/rfc5652#section-10.2.4">RFC 5652</a>: IssuerAndSerialNumber object.
  * <p>
  * <pre>
  * IssuerAndSerialNumber ::= SEQUENCE {
@@ -60,7 +57,10 @@ public class IssuerAndSerialNumber
         return null;
     }
 
-    private IssuerAndSerialNumber(
+    /**
+     * @deprecated  use getInstance() method.
+     */
+    public IssuerAndSerialNumber(
         ASN1Sequence    seq)
     {
         this.name = X500Name.getInstance(seq.getObjectAt(0));
@@ -94,11 +94,6 @@ public class IssuerAndSerialNumber
 
     public ASN1Primitive toASN1Primitive()
     {
-        ASN1EncodableVector    v = new ASN1EncodableVector();
-
-        v.add(name);
-        v.add(serialNumber);
-
-        return new DERSequence(v);
+        return new DERSequence(new ASN1Encodable[] { name, serialNumber });
     }
 }

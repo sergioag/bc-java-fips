@@ -22,17 +22,21 @@ public class FipsOperationError
      * Constructor for an error associated with a specific algorithm.
      *
      * @param message a message describing the error.
-     * @param cause the throwable that caused this exception to be raised.
+     * @param cause   the throwable that caused this exception to be raised.
      */
     public FipsOperationError(String message, Throwable cause)
     {
         super(message);
-
         this.cause = cause;
     }
 
     public Throwable getCause()
     {
         return this.cause;
+    }
+
+    public static void flag(String message)
+    {
+        FipsStatus.moveToErrorStatus(message);
     }
 }

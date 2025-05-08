@@ -108,7 +108,7 @@ public class GeneralAlgorithm
     @Override
     public int hashCode()
     {
-        int result =  name.hashCode();
+        int result = name.hashCode();
 
         result = 31 * result + (basicVariation != null ? basicVariation.hashCode() : 0);
         result = 31 * result + (additionalVariation != null ? additionalVariation.hashCode() : 0);

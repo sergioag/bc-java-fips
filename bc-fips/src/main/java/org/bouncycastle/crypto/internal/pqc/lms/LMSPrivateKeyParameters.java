@@ -60,7 +60,7 @@ public class LMSPrivateKeyParameters
         this.masterSecret = Arrays.clone(masterSecret);
         this.maxCacheR = 1 << (parameters.getH() + 1);
         this.tCache = new WeakHashMap<CacheKey, byte[]>();
-        this.tDigest = LmsDigestUtil.getDigest(lmsParameter.getDigestOID());
+        this.tDigest = LmsDigestUtil.getDigest(lmsParameter);
     }
 
     private LMSPrivateKeyParameters(LMSPrivateKeyParameters parent, int q, int maxQ)
@@ -74,7 +74,7 @@ public class LMSPrivateKeyParameters
         this.masterSecret = parent.masterSecret;
         this.maxCacheR = 1 << parameters.getH();
         this.tCache = parent.tCache;
-        this.tDigest = LmsDigestUtil.getDigest(parameters.getDigestOID());
+        this.tDigest = LmsDigestUtil.getDigest(parameters);
         this.publicKey = parent.publicKey;
     }
 

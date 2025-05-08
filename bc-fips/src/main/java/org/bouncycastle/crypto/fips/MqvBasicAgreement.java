@@ -68,10 +68,10 @@ class MqvBasicAgreement
         int w = (q.bitLength() + 1) / 2;
         BigInteger twoW = BigInteger.valueOf(2).pow(w);
 
-        BigInteger TA =  tA.getY().mod(twoW).add(twoW);
-        BigInteger SA =  rA.getX().add(TA.multiply(xA.getX())).mod(q);
-        BigInteger TB =  tB.getY().mod(twoW).add(twoW);
-        BigInteger Z =   tB.getY().multiply(yB.getY().modPow(TB, parameters.getP())).modPow(SA, parameters.getP());
+        BigInteger TA = tA.getY().mod(twoW).add(twoW);
+        BigInteger SA = rA.getX().add(TA.multiply(xA.getX())).mod(q);
+        BigInteger TB = tB.getY().mod(twoW).add(twoW);
+        BigInteger Z = tB.getY().multiply(yB.getY().modPow(TB, parameters.getP())).modPow(SA, parameters.getP());
 
         return Z;
     }
