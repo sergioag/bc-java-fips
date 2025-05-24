@@ -41,6 +41,9 @@ The following is the list of known issues:
   Thus, I have left it commented and it shouldn't affect anything because all packages are
   private by default and the Export-Package and Import-Package are generated fine. Any help
   fixing this would be appreciated.
+- There is a native component for bc-fips when ran in Linux x86_64. The sources are included
+  in this repo, but they are not compiled as part of this build. Instead, the ones present in
+  the certified binary are used.
 
 How to build
 ============
