@@ -1,28 +1,20 @@
 package org.bouncycastle.crypto.fips;
 
 import org.bouncycastle.crypto.internal.Digest;
-import org.bouncycastle.crypto.internal.io.DigestOutputStream;
-import org.bouncycastle.util.Arrays;
+import org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider;
 import org.bouncycastle.util.Properties;
 import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.io.Streams;
-import org.bouncycastle.util.io.TeeOutputStream;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.jar.JarException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 class NativeLoader
@@ -33,6 +25,12 @@ class NativeLoader
 
     public static final String BCFIPS_LIB_CPU_VARIANT = "org.bouncycastle.native.cpu_variant";
 
+    /**
+     * Set this property to change the root path where extracted libraries will be stored.
+     * By default, they are installed in the system / user temp dir, but on some platforms loading native
+     * libraries from system / user temp directories is disabled.
+     */
+    public static final String LIB_INSTALL_DIR = "org.bouncycastle.native.loader.install_dir";
 
     private final static AtomicBoolean nativeLibsAvailableForSystem = new AtomicBoolean(false);
     private final static AtomicBoolean nativeInstalled = new AtomicBoolean(false);
@@ -123,7 +121,7 @@ class NativeLoader
 
 
     static File installLib(String name, String libPathSegment, String jarPath, File bcLibPath, Set<File> filesInInstallLocation)
-            throws Exception
+    throws Exception
     {
 
         //
@@ -135,9 +133,9 @@ class NativeLoader
         List<String> deps = loadVariantsDeps(jarPath + "/deps.list", libLocalName);
         for (String dep : deps)
         {
-            filesInInstallLocation.remove(copyFromJar(jarPath + "/" + dep, bcLibPath, dep));
+            filesInInstallLocation.remove(LoaderUtils.extractFromClasspath(bcLibPath, jarPath + "/" + dep, dep));
         }
-        File libToLoad = copyFromJar(libPathSegment + "/" + libLocalName, bcLibPath, libLocalName);
+        File libToLoad = LoaderUtils.extractFromClasspath(bcLibPath, libPathSegment + "/" + libLocalName, libLocalName);
 
         filesInInstallLocation.remove(libToLoad);
 
@@ -193,107 +191,29 @@ class NativeLoader
             return;
         }
 
-
-        File bcFipsLibPath = AccessController.doPrivileged(new PrivilegedAction<File>()
+        File bcFipsLibPath;
+        try
         {
-            @Override
-            public File run()
+            String fixedInstallDirProp = Properties.getPropertyValue(LIB_INSTALL_DIR);
+
+            if (fixedInstallDirProp != null)
             {
+                String version = BouncyCastleFipsProvider.INFO.substring(BouncyCastleFipsProvider.INFO.lastIndexOf('v') + 1);
 
-
-                File ioTmpDir = new File(Properties.getPropertyValue("java.io.tmpdir"));
-                if (!ioTmpDir.exists())
-                {
-                    nativeInstalled.set(false);
-                    nativeStatusMessage.set(ioTmpDir + " did not exist");
-                    return null;
-                }
-
-                File bcFipsLibPath;
-                try
-                {
-
-                    //
-                    // Create a temporary file, we cannot use the inbuilt method as it will attempt to start
-                    // an entropy source and the provider is not in a ready state.
-                    //
-                    File dir = null;
-                    long time = System.nanoTime();
-                    for (int t = 0; t < 1000; t++)
-                    {
-                        dir = new File(ioTmpDir, "bc-fips-jni" + Long.toString(time + t, 32) + "-libs");
-                        if (dir.mkdirs())
-                        {
-                            break;
-                        }
-                        dir = null;
-                        Thread.sleep(time % 97);
-                    }
-
-                    if (dir == null)
-                    {
-                        nativeInstalled.set(false);
-                        nativeStatusMessage.set("unable to create directory in " + ioTmpDir + " after 1000 unique attempts");
-                        return null;
-                    }
-
-                    //
-                    // Create a directory using that file as a stem
-                    //
-                    if (!dir.exists())
-                    {
-                        nativeInstalled.set(false);
-                        nativeStatusMessage.set("unable to create temp directory for jni libs: " + dir);
-                        return null;
-                    }
-
-                    final File tmpDir = dir;
-
-                    //
-                    // Shutdown hook clean up installed libraries.
-                    //
-                    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                        {
-                            if (!tmpDir.exists())
-                            {
-                                return;
-                            }
-                            boolean isDeleted = true;
-                            if (tmpDir.isDirectory())
-                            {
-                                for (File f : tmpDir.listFiles())
-                                {
-                                    isDeleted &= f.delete();
-                                }
-                            }
-
-                            isDeleted &= tmpDir.delete();
-
-                            if (!isDeleted)
-                            {
-                                LOG.fine(" failed to delete: " + tmpDir.getAbsolutePath());
-                            }
-                            else
-                            {
-                                LOG.fine("successfully cleaned up: " + tmpDir.getAbsolutePath());
-                            }
-                        }
-                    }));
-
-                    return tmpDir;
-                }
-                catch (Exception ex)
-                {
-                    nativeInstalled.set(false);
-                    nativeStatusMessage.set("failed because it was not able to create a temporary file in 'java.io.tmpdir' " + ex.getMessage());
-                    return null;
-                }
-
+                bcFipsLibPath = LoaderUtils.createVersionedTempDir(fixedInstallDirProp, version);
             }
-        });
+            else
+            {
+                bcFipsLibPath = LoaderUtils.createTempDir("bc-fips-jni");
+            }
+        }
+        catch (Exception ex)
+        {
+            LOG.log(Level.FINE, "temporary file creation failed", ex);
+            nativeInstalled.set(false);
+            nativeStatusMessage.set("temporary file creation failed: " + ex.getMessage());
+            bcFipsLibPath = null;
+        }
 
         if (bcFipsLibPath == null)
         {
@@ -308,10 +228,7 @@ class NativeLoader
         //
         Set<File> filesInInstallLocation = new HashSet<>();
 
-        for (File f : bcFipsLibPath.listFiles())
-        {
-            filesInInstallLocation.add(f);
-        }
+        Collections.addAll(filesInInstallLocation, bcFipsLibPath.listFiles());
 
 
         //
@@ -330,7 +247,9 @@ class NativeLoader
         InputStream tmpIn = NativeLoader.class.getResourceAsStream(probeLibInJarPath + "/" + System.mapLibraryName("bc-probe"));
         if (tmpIn == null)
         {
-            nativeStatusMessage.set(String.format("platform '%s' and architecture '%s' are not supported", platform, arch));
+            String msg = String.format("platform '%s' and architecture '%s' are not supported", platform, arch);
+            LOG.log(Level.FINE, msg);
+            nativeStatusMessage.set(msg);
             nativeInstalled.set(false);
             return;
         }
@@ -370,6 +289,7 @@ class NativeLoader
             }
             catch (Exception ex)
             {
+                LOG.log(Level.FINE, "probe lib failed to load", ex);
                 nativeStatusMessage.set("probe lib failed to load " + ex.getMessage());
                 nativeInstalled.set(false);
                 return;
@@ -381,17 +301,20 @@ class NativeLoader
             }
             catch (Throwable ex)
             {
+                LOG.log(Level.FINE, "probe lib failed return a variant", ex);
                 nativeStatusMessage.set("probe lib failed return a variant " + ex.getMessage());
                 nativeInstalled.set(false);
                 return;
             }
         }
 
-        if ( selectedVariant.get().equals("none"))
+        if (selectedVariant.get().equals("none"))
         {
             nativeEnabled.set(false);
             nativeInstalled.set(false);
-            nativeStatusMessage.set("probe returned no suitable CPU features, java support only");
+            String msg = "probe returned no suitable CPU features, java support only";
+            LOG.log(Level.FINE, msg);
+            nativeStatusMessage.set(msg);
             return;
         }
 
@@ -422,7 +345,9 @@ class NativeLoader
                     }
                     sBld.append(f.getName());
                 }
-                nativeStatusMessage.set(String.format("unexpected files in %s: %s", bcFipsLibPath.toString(), sBld.toString()));
+                String msg = String.format("unexpected files in %s: %s", bcFipsLibPath, sBld);
+                LOG.log(Level.FINE, msg);
+                nativeStatusMessage.set(msg);
                 nativeInstalled.set(false);
                 return;
             }
@@ -442,6 +367,7 @@ class NativeLoader
         }
         catch (Exception ex)
         {
+            LOG.log(Level.FINE, "native capabilities lib failed to load", ex);
             nativeStatusMessage.set("native capabilities lib failed to load " + ex.getMessage());
             nativeInstalled.set(false);
             return;
@@ -449,13 +375,16 @@ class NativeLoader
 
         if (!selectedVariant.get().equals(NativeLibIdentity.getLibraryIdent()))
         {
-            nativeStatusMessage.set(String.format("loaded native library variant is %s but the requested library variant is %s", NativeLibIdentity.getLibraryIdent(), selectedVariant));
+            String msg = String.format("loaded native library variant is %s but the requested library variant is %s", NativeLibIdentity.getLibraryIdent(), selectedVariant);
+            LOG.fine(msg);
+            nativeStatusMessage.set(msg);
             nativeInstalled.set(false);
             return;
         }
 
         nativeLibsAvailableForSystem.set(true);
         nativeStatusMessage.set("successfully loaded");
+        LOG.fine("successfully loaded");
         nativeInstalled.set(true);
         nativeEnabled.set(true);
     }
@@ -496,81 +425,6 @@ class NativeLoader
         {
             throw new RuntimeException(ex.getMessage(), ex);
         }
-    }
-
-    private static File copyFromJar(String inJarPath, File dir, String targetName)
-            throws Exception
-    {
-        InputStream inputStream = NativeLoader.class.getResourceAsStream(inJarPath);
-        if (inputStream == null)
-        {
-            throw new JarException(inJarPath + " lib not found in jar");
-        }
-
-        File dest = new File(dir, targetName);
-
-        if (dest.exists())
-        {
-            //
-            // A file already exists check it is the same file.
-            // Replacing a ".so" file arbitrarily can cause other JVMS using it to segfault.
-            //
-
-
-            byte[] digestOfOriginalFileInJar = takeSHA256Digest(inputStream);
-            inputStream.close();
-
-
-            FileInputStream fin = new FileInputStream(dest);
-            byte[] currentDigest = takeSHA256Digest(fin);
-            fin.close();
-
-            if (Arrays.constantTimeAreEqual(currentDigest, digestOfOriginalFileInJar))
-            {
-                // Same file so do nothing!
-                return dest;
-            }
-            else
-            {
-                throw new IOException("pre existing file found and is different to file in jar file");
-            }
-
-        }
-
-
-        //
-        // Copy file from jar to destination
-        //
-        FileOutputStream fos = new FileOutputStream(dest);
-
-        Digest dig = FipsSHS.createBaseDigest(FipsSHS.Algorithm.SHA256);
-        DigestOutputStream dos = new DigestOutputStream(dig);
-        TeeOutputStream tos = new TeeOutputStream(fos, dos);
-
-        Streams.pipeAll(inputStream, tos);
-        tos.flush();
-        tos.close();
-        inputStream.close();
-
-        //
-        // Take digest of file after writing to the file system
-        //
-        FileInputStream fin = new FileInputStream(dest);
-        byte[] digestOfSavedFile = takeSHA256Digest(fin);
-        fin.close();
-
-        //
-        // Check copied file has the same digest as the original in the jar.
-        //
-        byte[] digestOfOriginalFileInJar = dos.getDigest();
-
-        if (!Arrays.constantTimeAreEqual(digestOfOriginalFileInJar, digestOfSavedFile))
-        {
-            throw new IOException("file copied from jar does not have same digest as source file in jar");
-        }
-
-
-        return dest;
     }
 
     public static boolean isNativeEnabled()

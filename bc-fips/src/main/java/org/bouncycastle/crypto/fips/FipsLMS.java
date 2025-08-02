@@ -289,11 +289,6 @@ public class FipsLMS
         {
             final LMSContextBasedVerifier verifier = ((AsymmetricLMSPublicKey)key).getContextBasedVerifier();
 
-            if (CryptoServicesRegistrar.isInApprovedOnlyMode())
-            {
-                throw new UnsupportedOperationException("LMS signature verification not available in approved mode");
-            }
-
             return new FipsOutputVerifier<Parameters>()
             {
                 final ByteArrayUpdateOutputStream bOut = new ByteArrayUpdateOutputStream();
@@ -336,11 +331,6 @@ public class FipsLMS
             throws InvalidSignatureException
         {
             final LMSContextBasedVerifier verifier = ((AsymmetricLMSPublicKey)key).getContextBasedVerifier();
-
-            if (CryptoServicesRegistrar.isInApprovedOnlyMode())
-            {
-                throw new UnsupportedOperationException("LMS signature validation not available in approved mode");
-            }
 
             final LMSContext lmsContext;
             try

@@ -10,7 +10,7 @@
     <artifactId>bc-fips</artifactId>
     <packaging>bundle</packaging>
     <name>Bouncy Castle Provider (FIPS Distribution)</name>
-    <version>2.1.0</version>
+    <version>2.1.1</version>
     <description>The FIPS 140-3 Bouncy Castle Crypto package is a Java implementation of cryptographic algorithms certified to FIPS 140-3 level 1. This jar contains JCE provider and low-level API for the BC-FJA version 2.0.0, FIPS Certificate #4743. Please see certificate for certified platform details.</description>
     <url>https://www.bouncycastle.org/fips-java</url>
     <licenses>

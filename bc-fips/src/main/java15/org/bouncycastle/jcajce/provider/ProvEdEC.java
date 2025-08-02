@@ -12,6 +12,11 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.interfaces.XECPrivateKey;
 import java.security.interfaces.XECPublicKey;
+import java.security.interfaces.EdECPrivateKey;
+import java.security.interfaces.EdECPublicKey;
+import java.security.spec.EdECPoint;
+import java.security.spec.EdECPrivateKeySpec;
+import java.security.spec.EdECPublicKeySpec;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
@@ -20,6 +25,7 @@ import java.security.spec.NamedParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.bouncycastle.asn1.ASN1Encoding;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
@@ -30,6 +36,7 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.crypto.AgreementFactory;
 import org.bouncycastle.crypto.Algorithm;
 import org.bouncycastle.crypto.AsymmetricKeyPairGenerator;
+import org.bouncycastle.crypto.CryptoServicesRegistrar;
 import org.bouncycastle.crypto.Parameters;
 import org.bouncycastle.crypto.asymmetric.AsymmetricEdDSAPrivateKey;
 import org.bouncycastle.crypto.asymmetric.AsymmetricEdDSAPublicKey;
@@ -54,7 +61,7 @@ class ProvEdEC
     private static final Map<String, String> generalEdDSAAttributes = new HashMap<String, String>();
     private static final Map<String, String> generalXDHAttributes = new HashMap<String, String>();
 
-    private static final AgreementFactory xdhFactory = new EdEC.XDHAgreementFactory();
+    private static AgreementFactory xdhFactory;
 
     static
     {
@@ -306,6 +313,29 @@ class ProvEdEC
                 throw new InvalidKeySpecException("null spec is invalid");
             }
 
+            if (spec.isAssignableFrom(EdECPrivateKeySpec.class))
+            {
+                if (key instanceof EdECPrivateKey)
+                {
+                    Optional<byte[]> bytes = ((EdECPrivateKey)key).getBytes();
+                    if (bytes.isPresent())
+                    {
+                        return new EdECPrivateKeySpec(((EdECPrivateKey)key).getParams(), bytes.get());
+                    }
+                    else
+                    {
+                        throw new IllegalArgumentException("no byte[] data associated with key");
+                    }
+                }
+            }
+            else if (spec.isAssignableFrom(EdECPublicKeySpec.class))
+            {
+                if (key instanceof EdECPublicKey)
+                {
+                    return new EdECPublicKeySpec(((EdECPublicKey)key).getParams(), ((EdECPublicKey)key).getPoint());
+                }
+            }
+
             return super.engineGetKeySpec(key, spec);
         }
 
@@ -313,6 +343,26 @@ class ProvEdEC
             KeySpec keySpec)
             throws InvalidKeySpecException
         {
+            if (keySpec instanceof EdECPrivateKeySpec)
+            {
+                EdECPrivateKeySpec edSpec = (EdECPrivateKeySpec)keySpec;
+
+                AsymmetricEdDSAPrivateKey parameters;
+                if (NamedParameterSpec.ED448.getName().equalsIgnoreCase(edSpec.getParams().getName()))
+                {
+                    parameters = getEd448PrivateKey(edSpec.getBytes());
+                }
+                else if (NamedParameterSpec.ED25519.getName().equalsIgnoreCase(edSpec.getParams().getName()))
+                {
+                    parameters = getEd25519PrivateKey(edSpec.getBytes());
+                }
+                else
+                {
+                    throw new InvalidKeySpecException("unrecognized named parameters: " + edSpec.getParams().getName());
+                }
+                return new Prov15EdDSAPrivateKey(parameters, new AsymmetricEdDSAPublicKey(parameters.getAlgorithm(), parameters.getPublicData()));
+            }
+
             return super.engineGeneratePrivate(keySpec);
         }
 
@@ -371,7 +421,25 @@ class ProvEdEC
                     }
                 }
             }
+            else if (keySpec instanceof EdECPublicKeySpec)
+            {
+                EdECPublicKeySpec edSpec = (EdECPublicKeySpec)keySpec;
 
+                AsymmetricEdDSAPublicKey parameters;
+                if (NamedParameterSpec.ED448.getName().equalsIgnoreCase(edSpec.getParams().getName()))
+                {
+                    parameters = getEd448PublicKey(edSpec.getPoint());
+                }
+                else if (NamedParameterSpec.ED25519.getName().equalsIgnoreCase(edSpec.getParams().getName()))
+                {
+                    parameters = getEd25519PublicKey(edSpec.getPoint());
+                }
+                else
+                {
+                    throw new InvalidKeySpecException("unrecognized named parameters: " + edSpec.getParams().getName());
+                }
+                return new Prov15EdDSAPublicKey(parameters);
+            }
             return super.engineGeneratePublic(keySpec);
         }
 
@@ -557,7 +625,7 @@ class ProvEdEC
                     if (params != null && params != FipsEdEC.Ed448)
                     {
                         throw new InvalidParameterException("key size not configurable");
-                    }                       
+                    }
                     this.params = FipsEdEC.Ed448;
                 }
                 break;
@@ -703,31 +771,103 @@ class ProvEdEC
             }
             return params;
         }
-    };
+    }
+
+    static AsymmetricEdDSAPublicKey getEd25519PublicKey(EdECPoint point)
+        throws InvalidKeySpecException
+    {
+        byte[] keyData = getPublicKeyData(FipsEdEC.Ed25519_PUBLIC_KEY_SIZE, point);
+
+        return new AsymmetricEdDSAPublicKey(FipsEdEC.Algorithm.Ed25519, keyData);
+    }
+
+    static AsymmetricEdDSAPublicKey getEd448PublicKey(EdECPoint point)
+        throws InvalidKeySpecException
+    {
+        byte[] keyData = getPublicKeyData(FipsEdEC.Ed448_PUBLIC_KEY_SIZE, point);
+
+        return new AsymmetricEdDSAPublicKey(FipsEdEC.Algorithm.Ed448, keyData);
+    }
+
+    static AsymmetricEdDSAPrivateKey getEd25519PrivateKey(byte[] keyData)
+        throws InvalidKeySpecException
+    {
+        if (FipsEdEC.Ed25519_PRIVATE_KEY_SIZE != keyData.length)
+        {
+            throw new InvalidKeySpecException("cannot use EdEC private key (Ed25519) with bytes of incorrect length");
+        }
+
+        return new AsymmetricEdDSAPrivateKey(FipsEdEC.Algorithm.Ed25519, keyData, null);
+    }
+
+    static AsymmetricEdDSAPrivateKey getEd448PrivateKey(byte[] keyData)
+        throws InvalidKeySpecException
+    {
+        if (FipsEdEC.Ed448_PRIVATE_KEY_SIZE != keyData.length)
+        {
+            throw new InvalidKeySpecException("cannot use EdEC private key (Ed448) with bytes of incorrect length");
+        }
+
+        return new AsymmetricEdDSAPrivateKey(FipsEdEC.Algorithm.Ed448, keyData, null);
+    }
+
+    private static byte[] getPublicKeyData(int length, EdECPoint point)
+        throws InvalidKeySpecException
+    {
+        BigInteger y = point.getY();
+        if (y.signum() < 0)
+        {
+            throw new InvalidKeySpecException("cannot use EdEC public key with negative Y value");
+        }
+
+        try
+        {
+            byte[] keyData = BigIntegers.asUnsignedByteArray(length, y);
+            if ((keyData[0] & 0x80) == 0)
+            {
+                if (point.isXOdd())
+                {
+                    keyData[0] |= 0x80;
+                }
+
+                return Arrays.reverseInPlace(keyData);
+            }
+        }
+        catch (RuntimeException e)
+        {
+        }
+
+        throw new InvalidKeySpecException("cannot use EdEC public key with invalid Y value");
+    }
 
     public void configure(final BouncyCastleFipsProvider provider)
     {
-        provider.addAlgorithmImplementation("KeyFactory.XDH", PREFIX + "KeyFactorySpi$XDH", new GuardedEngineCreator(new EngineCreator()
+        if (!CryptoServicesRegistrar.isInApprovedOnlyMode())
         {
-            public Object createInstance(Object constructorParameter)
+            xdhFactory = new EdEC.XDHAgreementFactory();
+
+            provider.addAlgorithmImplementation("KeyFactory.XDH", PREFIX + "KeyFactorySpi$XDH", new GuardedEngineCreator(new EngineCreator()
             {
-                return new KeyFactorySpi.XDH();
-            }
-        }));
-        provider.addAlgorithmImplementation("KeyFactory.X448", PREFIX + "KeyFactorySpi$X448", new GuardedEngineCreator(new EngineCreator()
-        {
-            public Object createInstance(Object constructorParameter)
+                public Object createInstance(Object constructorParameter)
+                {
+                    return new KeyFactorySpi.XDH();
+                }
+            }));
+            provider.addAlgorithmImplementation("KeyFactory.X448", PREFIX + "KeyFactorySpi$X448", new GuardedEngineCreator(new EngineCreator()
             {
-                return new KeyFactorySpi.X448();
-            }
-        }));
-        provider.addAlgorithmImplementation("KeyFactory.X25519", PREFIX + "KeyFactorySpi$X25519", new GuardedEngineCreator(new EngineCreator()
-        {
-            public Object createInstance(Object constructorParameter)
+                public Object createInstance(Object constructorParameter)
+                {
+                    return new KeyFactorySpi.X448();
+                }
+            }));
+            provider.addAlgorithmImplementation("KeyFactory.X25519", PREFIX + "KeyFactorySpi$X25519", new GuardedEngineCreator(new EngineCreator()
             {
-                return new KeyFactorySpi.X25519();
-            }
-        }));
+                public Object createInstance(Object constructorParameter)
+                {
+                    return new KeyFactorySpi.X25519();
+                }
+            }));
+        }
 
         provider.addAlgorithmImplementation("KeyFactory.EDDSA", PREFIX + "KeyFactorySpi$EdDH", new EngineCreator()
         {
@@ -775,29 +915,32 @@ class ProvEdEC
             }
         });
 
-        provider.addAlgorithmImplementation("KeyPairGenerator.XDH", PREFIX + "KeyPairGeneratorSpi$XDH", new GuardedEngineCreator(new EngineCreator()
+        if (!CryptoServicesRegistrar.isInApprovedOnlyMode())
         {
-            public Object createInstance(Object constructorParameter)
+            provider.addAlgorithmImplementation("KeyPairGenerator.XDH", PREFIX + "KeyPairGeneratorSpi$XDH", new GuardedEngineCreator(new EngineCreator()
             {
-                return new KeyPairGeneratorSpi(provider, true,null);
-            }
-        }));
+                public Object createInstance(Object constructorParameter)
+                {
+                    return new KeyPairGeneratorSpi(provider, true, null);
+                }
+            }));
 
-        provider.addAlgorithmImplementation("KeyPairGenerator.X448", PREFIX + "KeyPairGeneratorSpi$X448", new GuardedEngineCreator(new EngineCreator()
-        {
-            public Object createInstance(Object constructorParameter)
+            provider.addAlgorithmImplementation("KeyPairGenerator.X448", PREFIX + "KeyPairGeneratorSpi$X448", new GuardedEngineCreator(new EngineCreator()
             {
-                return new KeyPairGeneratorSpi(provider, true, EdEC.X448);
-            }
-        }));
+                public Object createInstance(Object constructorParameter)
+                {
+                    return new KeyPairGeneratorSpi(provider, true, EdEC.X448);
+                }
+            }));
 
-        provider.addAlgorithmImplementation("KeyPairGenerator.X25519", PREFIX + "KeyPairGeneratorSpi$X25519", new GuardedEngineCreator(new EngineCreator()
-        {
-            public Object createInstance(Object constructorParameter)
+            provider.addAlgorithmImplementation("KeyPairGenerator.X25519", PREFIX + "KeyPairGeneratorSpi$X25519", new GuardedEngineCreator(new EngineCreator()
             {
-                return new KeyPairGeneratorSpi(provider, true, EdEC.X25519);
-            }
-        }));
+                public Object createInstance(Object constructorParameter)
+                {
+                    return new KeyPairGeneratorSpi(provider, true, EdEC.X25519);
+                }
+            }));
+        }
 
         provider.addAlgorithmImplementation("Signature.EDDSA", PREFIX + "Signature$EDDSA", new EngineCreator()
         {
@@ -814,7 +957,7 @@ class ProvEdEC
                 return new BaseSignature(provider, new FipsEdEC.EdDSAOperatorFactory(), edPublicKeyConverter, edPrivateKeyConverter, FipsEdEC.EdDSAph);
             }
         });
-        
+
         provider.addAlgorithmImplementation("Signature.ED448", PREFIX + "Signature$Ed448", new EngineCreator()
         {
             public Object createInstance(Object constructorParameter)
@@ -849,76 +992,80 @@ class ProvEdEC
             }
         });
 
-        addKeyAgreementAlgorithm(provider, "X448", PREFIX + "KeyAgreementSpi$X448", generalXDHAttributes, new GuardedEngineCreator(new EngineCreator()
+        if (!CryptoServicesRegistrar.isInApprovedOnlyMode())
         {
-            public Object createInstance(Object constructorParameter)
+            addKeyAgreementAlgorithm(provider, "X448", PREFIX + "KeyAgreementSpi$X448", generalXDHAttributes, new GuardedEngineCreator(new EngineCreator()
             {
-                return new BaseAgreement(xdhFactory, xPublicKeyConverter, xPrivateKeyConverter, new XDHParametersCreator(EdEC.X448));
-            }
-        }));
-        provider.addAlias("KeyAgreement", "X448", EdECObjectIdentifiers.id_X448);
-
-        final ParametersCreator x448CParametersCreator = new ParametersCreator()
-        {
-
-            public Parameters createParameters(boolean forEncryption, AlgorithmParameterSpec spec, SecureRandom random)
-                throws InvalidAlgorithmParameterException
-            {
-                if (spec != null && !(spec instanceof UserKeyingMaterialSpec))
+                public Object createInstance(Object constructorParameter)
                 {
-                    throw new InvalidAlgorithmParameterException("X448 can only take a UserKeyingMaterialSpec");
+                    return new BaseAgreement(xdhFactory, xPublicKeyConverter, xPrivateKeyConverter, new XDHParametersCreator(EdEC.X448));
                 }
-                return EdEC.X448;
-            }
-        };
+            }));
+            provider.addAlias("KeyAgreement", "X448", EdECObjectIdentifiers.id_X448);
 
-        addCDHAlgorithm(provider, "X448", "SHA224", FipsKDF.AgreementKDFPRF.SHA224, x448CParametersCreator);
-        addCDHAlgorithm(provider, "X448", "SHA256", FipsKDF.AgreementKDFPRF.SHA256, x448CParametersCreator);
-        addCDHAlgorithm(provider, "X448", "SHA384", FipsKDF.AgreementKDFPRF.SHA384, x448CParametersCreator);
-        addCDHAlgorithm(provider, "X448", "SHA512", FipsKDF.AgreementKDFPRF.SHA512, x448CParametersCreator);
-        addCDHAlgorithm(provider, "X448", "SHA512(224)", FipsKDF.AgreementKDFPRF.SHA512_224, x448CParametersCreator);
-        addCDHAlgorithm(provider, "X448", "SHA512(256)", FipsKDF.AgreementKDFPRF.SHA512_256, x448CParametersCreator);
-        addCDHAlgorithm(provider, "X448", "SHA3-224", FipsKDF.AgreementKDFPRF.SHA3_224, x448CParametersCreator);
-        addCDHAlgorithm(provider, "X448", "SHA3-256", FipsKDF.AgreementKDFPRF.SHA3_256, x448CParametersCreator);
-        addCDHAlgorithm(provider, "X448", "SHA3-384", FipsKDF.AgreementKDFPRF.SHA3_384, x448CParametersCreator);
-        addCDHAlgorithm(provider, "X448", "SHA3-512", FipsKDF.AgreementKDFPRF.SHA3_512, x448CParametersCreator);
-
-        addKeyAgreementAlgorithm(provider, "X25519", PREFIX + "KeyAgreementSpi$X25519", generalXDHAttributes, new GuardedEngineCreator(new EngineCreator()
-        {
-            public Object createInstance(Object constructorParameter)
+            final ParametersCreator x448CParametersCreator = new ParametersCreator()
             {
-                return new BaseAgreement(new EdEC.XDHAgreementFactory(), xPublicKeyConverter, xPrivateKeyConverter, new XDHParametersCreator(EdEC.X25519));
-            }
-        }));
-        provider.addAlias("KeyAgreement", "X25519", EdECObjectIdentifiers.id_X25519);
 
-        final ParametersCreator x25519CParametersCreator = new ParametersCreator()
-        {
-
-            public Parameters createParameters(boolean forEncryption, AlgorithmParameterSpec spec, SecureRandom random)
-                throws InvalidAlgorithmParameterException
-            {
-                if (spec != null && !(spec instanceof UserKeyingMaterialSpec))
+                public Parameters createParameters(boolean forEncryption, AlgorithmParameterSpec spec, SecureRandom random)
+                    throws InvalidAlgorithmParameterException
                 {
-                    throw new InvalidAlgorithmParameterException("X25519 can only take a UserKeyingMaterialSpec");
+                    if (spec != null && !(spec instanceof UserKeyingMaterialSpec))
+                    {
+                        throw new InvalidAlgorithmParameterException("X448 can only take a UserKeyingMaterialSpec");
+                    }
+                    return EdEC.X448;
                 }
-                return EdEC.X25519;
-            }
-        };
+            };
 
-        addCDHAlgorithm(provider, "X25519", "SHA224", FipsKDF.AgreementKDFPRF.SHA224, x25519CParametersCreator);
-        addCDHAlgorithm(provider, "X25519", "SHA256", FipsKDF.AgreementKDFPRF.SHA256, x25519CParametersCreator);
-        addCDHAlgorithm(provider, "X25519", "SHA384", FipsKDF.AgreementKDFPRF.SHA384, x25519CParametersCreator);
-        addCDHAlgorithm(provider, "X25519", "SHA512", FipsKDF.AgreementKDFPRF.SHA512, x25519CParametersCreator);
-        addCDHAlgorithm(provider, "X25519", "SHA512(224)", FipsKDF.AgreementKDFPRF.SHA512_224, x25519CParametersCreator);
-        addCDHAlgorithm(provider, "X25519", "SHA512(256)", FipsKDF.AgreementKDFPRF.SHA512_256, x25519CParametersCreator);
-        addCDHAlgorithm(provider, "X25519", "SHA3-224", FipsKDF.AgreementKDFPRF.SHA3_224, x25519CParametersCreator);
-        addCDHAlgorithm(provider, "X25519", "SHA3-256", FipsKDF.AgreementKDFPRF.SHA3_256, x25519CParametersCreator);
-        addCDHAlgorithm(provider, "X25519", "SHA3-384", FipsKDF.AgreementKDFPRF.SHA3_384, x25519CParametersCreator);
-        addCDHAlgorithm(provider, "X25519", "SHA3-512", FipsKDF.AgreementKDFPRF.SHA3_512, x25519CParametersCreator);
+            addCDHAlgorithm(provider, "X448", "SHA224", FipsKDF.AgreementKDFPRF.SHA224, x448CParametersCreator);
+            addCDHAlgorithm(provider, "X448", "SHA256", FipsKDF.AgreementKDFPRF.SHA256, x448CParametersCreator);
+            addCDHAlgorithm(provider, "X448", "SHA384", FipsKDF.AgreementKDFPRF.SHA384, x448CParametersCreator);
+            addCDHAlgorithm(provider, "X448", "SHA512", FipsKDF.AgreementKDFPRF.SHA512, x448CParametersCreator);
+            addCDHAlgorithm(provider, "X448", "SHA512(224)", FipsKDF.AgreementKDFPRF.SHA512_224, x448CParametersCreator);
+            addCDHAlgorithm(provider, "X448", "SHA512(256)", FipsKDF.AgreementKDFPRF.SHA512_256, x448CParametersCreator);
+            addCDHAlgorithm(provider, "X448", "SHA3-224", FipsKDF.AgreementKDFPRF.SHA3_224, x448CParametersCreator);
+            addCDHAlgorithm(provider, "X448", "SHA3-256", FipsKDF.AgreementKDFPRF.SHA3_256, x448CParametersCreator);
+            addCDHAlgorithm(provider, "X448", "SHA3-384", FipsKDF.AgreementKDFPRF.SHA3_384, x448CParametersCreator);
+            addCDHAlgorithm(provider, "X448", "SHA3-512", FipsKDF.AgreementKDFPRF.SHA3_512, x448CParametersCreator);
 
-        registerOid(provider, EdECObjectIdentifiers.id_X448, "X448", new KeyFactorySpi.X448());
-        registerOid(provider, EdECObjectIdentifiers.id_X25519, "X25519", new KeyFactorySpi.X25519());
+            addKeyAgreementAlgorithm(provider, "X25519", PREFIX + "KeyAgreementSpi$X25519", generalXDHAttributes, new GuardedEngineCreator(new EngineCreator()
+            {
+                public Object createInstance(Object constructorParameter)
+                {
+                    return new BaseAgreement(new EdEC.XDHAgreementFactory(), xPublicKeyConverter, xPrivateKeyConverter, new XDHParametersCreator(EdEC.X25519));
+                }
+            }));
+            provider.addAlias("KeyAgreement", "X25519", EdECObjectIdentifiers.id_X25519);
+
+            final ParametersCreator x25519CParametersCreator = new ParametersCreator()
+            {
+
+                public Parameters createParameters(boolean forEncryption, AlgorithmParameterSpec spec, SecureRandom random)
+                    throws InvalidAlgorithmParameterException
+                {
+                    if (spec != null && !(spec instanceof UserKeyingMaterialSpec))
+                    {
+                        throw new InvalidAlgorithmParameterException("X25519 can only take a UserKeyingMaterialSpec");
+                    }
+                    return EdEC.X25519;
+                }
+            };
+
+            addCDHAlgorithm(provider, "X25519", "SHA224", FipsKDF.AgreementKDFPRF.SHA224, x25519CParametersCreator);
+            addCDHAlgorithm(provider, "X25519", "SHA256", FipsKDF.AgreementKDFPRF.SHA256, x25519CParametersCreator);
+            addCDHAlgorithm(provider, "X25519", "SHA384", FipsKDF.AgreementKDFPRF.SHA384, x25519CParametersCreator);
+            addCDHAlgorithm(provider, "X25519", "SHA512", FipsKDF.AgreementKDFPRF.SHA512, x25519CParametersCreator);
+            addCDHAlgorithm(provider, "X25519", "SHA512(224)", FipsKDF.AgreementKDFPRF.SHA512_224, x25519CParametersCreator);
+            addCDHAlgorithm(provider, "X25519", "SHA512(256)", FipsKDF.AgreementKDFPRF.SHA512_256, x25519CParametersCreator);
+            addCDHAlgorithm(provider, "X25519", "SHA3-224", FipsKDF.AgreementKDFPRF.SHA3_224, x25519CParametersCreator);
+            addCDHAlgorithm(provider, "X25519", "SHA3-256", FipsKDF.AgreementKDFPRF.SHA3_256, x25519CParametersCreator);
+            addCDHAlgorithm(provider, "X25519", "SHA3-384", FipsKDF.AgreementKDFPRF.SHA3_384, x25519CParametersCreator);
+            addCDHAlgorithm(provider, "X25519", "SHA3-512", FipsKDF.AgreementKDFPRF.SHA3_512, x25519CParametersCreator);
+
+            registerOid(provider, EdECObjectIdentifiers.id_X448, "X448", new KeyFactorySpi.X448());
+            registerOid(provider, EdECObjectIdentifiers.id_X25519, "X25519", new KeyFactorySpi.X25519());
+        }
+
         registerOid(provider, EdECObjectIdentifiers.id_Ed448, "ED448", new KeyFactorySpi.Ed448());
         registerOid(provider, EdECObjectIdentifiers.id_Ed25519, "ED25519", new KeyFactorySpi.Ed25519());
     }

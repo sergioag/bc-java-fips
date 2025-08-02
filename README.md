@@ -79,8 +79,8 @@ Versions
 ========
 
 Currently, the following versions are used here:
-- Provider: [bc-fips-2.1.0.jar](https://repo1.maven.org/maven2/org/bouncycastle/bc-fips/2.1.0/bc-fips-2.1.0.jar) ``SHA256SUM=caa427f52062e07d0fd6c36eb7d0975dc5c3fa1376f1b611a57c6a1f9d1548d7``
-- Provider source: [bc-fips-2.1.0-sources.jar](https://downloads.bouncycastle.org/fips-java/bc-fips-2.1.0-sources.jar) ``SHA256SUM=d848eccdb94579932fe8cc4fa30ed315a0681ed0315acbabe99bcdd12fd95ef5``
+- Provider: [bc-fips-2.1.1.jar](https://repo1.maven.org/maven2/org/bouncycastle/bc-fips/2.1.1/bc-fips-2.1.1.jar) ``SHA256SUM=a430d935ad6cec6d045930758457740f5a5f8f9715894e347f6800f7926a7321``
+- Provider source: [bc-fips-2.1.1-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bc-fips/2.1.1/bc-fips-2.1.1-sources.jar) ``SHA256SUM=d9fe04bcbb610a7f136c0da559a367d4d6968c03196f6e90cc8057087b86530d``
 - ASN.1 Utility Classes: [bcutil-fips-2.1.4.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcutil-fips/2.1.4/bcutil-fips-2.1.4.jar) ``SHA256SUM=e169519e6441fb19cabf633d44fcef211506793e5be499ac9215648bd20634e0``
 - ASN.1 Utility Classes source: [bcutil-fips-2.1.4-sources.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcutil-fips/2.1.4/bcutil-fips-2.1.4-sources.jar) ``SHA256SUM=59e04c70af8d33f7da11fe7014c04f9cddaaca7f280aa006a066d8eaabe8965c``
 - PKIX/CMS/EAC/PKCS/OCSP/TSP/OPENSSL: [bcpkix-fips-2.1.9.jar](https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-fips/2.1.9/bcpkix-fips-2.1.9.jar) ``SHA256SUM=c31a4aeeda18f98b06deab50f6c5fa972eb87555ef134268be28eed95fadece7``

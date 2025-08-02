@@ -26,6 +26,7 @@ import org.bouncycastle.crypto.Algorithm;
 import org.bouncycastle.crypto.AsymmetricKey;
 import org.bouncycastle.crypto.AsymmetricPrivateKey;
 import org.bouncycastle.crypto.AsymmetricPublicKey;
+import org.bouncycastle.crypto.CryptoServicesRegistrar;
 import org.bouncycastle.crypto.OutputSigner;
 import org.bouncycastle.crypto.OutputVerifier;
 import org.bouncycastle.crypto.Parameters;
@@ -463,31 +464,41 @@ final class ProvLMS
     @Override
     void configure(final BouncyCastleFipsProvider provider)
     {
-        provider.addAlgorithmImplementation("KeyFactory.LMS", PREFIX + "KeyFactorySpi$LMS", new GuardedEngineCreator(new EngineCreator()
+        provider.addAlgorithmImplementation("KeyFactory.LMS", PREFIX + "KeyFactorySpi$LMS", new EngineCreator()
         {
             public Object createInstance(Object constructorParameter)
             {
                 return new KeyFactorySpi("LMS");
             }
-        }));
+        });
 
-        provider.addAlgorithmImplementation("KeyPairGenerator.LMS", PREFIX + "KeyPairGenerator", new GuardedEngineCreator(new EngineCreator()
+        if (!CryptoServicesRegistrar.isInApprovedOnlyMode())
         {
-            public Object createInstance(Object constructorParameter)
+            provider.addAlgorithmImplementation("KeyPairGenerator.LMS", PREFIX + "KeyPairGenerator", new GuardedEngineCreator(new EngineCreator()
             {
-                return new KeyPairGeneratorSpi(provider);
-            }
-        }));
+                public Object createInstance(Object constructorParameter)
+                {
+                    return new KeyPairGeneratorSpi(provider);
+                }
+            }));
+        }
 
-        provider.addAlgorithmImplementation("Signature.LMS", PREFIX + "Signature$LMS", new GuardedEngineCreator(new EngineCreator()
+        provider.addAlgorithmImplementation("Signature.LMS", PREFIX + "Signature$LMS", new EngineCreator()
         {
             public Object createInstance(Object constructorParameter)
             {
                 return new LMSSignatureSpi(provider, new FipsLMS.OperatorFactory(), lmsPublicKeyConverter, lmsPrivateKeyConverter, FipsLMS.SIG);
             }
-        }));
+        });
         provider.addAlias("Signature", "LMS", PKCSObjectIdentifiers.id_alg_hss_lms_hashsig);
-        
-        registerOid(provider, PKCSObjectIdentifiers.id_alg_hss_lms_hashsig, "LMS", new KeyFactorySpi("LMS"));
+
+        if (!CryptoServicesRegistrar.isInApprovedOnlyMode())
+        {
+            registerOid(provider, PKCSObjectIdentifiers.id_alg_hss_lms_hashsig, "LMS", new KeyFactorySpi("LMS"));
+        }
+        else
+        {
+            registerKeyFactoryOid(provider, PKCSObjectIdentifiers.id_alg_hss_lms_hashsig, "LMS", new KeyFactorySpi("LMS"));
+        }
     }
 }

@@ -93,13 +93,13 @@ import org.bouncycastle.util.Strings;
 public final class BouncyCastleFipsProvider
     extends Provider
 {
-    private static final String info = "BouncyCastle Security Provider (FIPS edition) v2.1.0";
+    public static final String INFO = "BouncyCastle Security Provider (FIPS edition) v2.1.1";
 
     public static final String PROVIDER_NAME = "BCFIPS";
 
     public static String getInfoString()
     {
-        return info;
+        return INFO;
     }
 
     private static final Map<String, FipsDRBG.Base> drbgTable = new HashMap<String, FipsDRBG.Base>();
@@ -196,7 +196,7 @@ public final class BouncyCastleFipsProvider
      */
     public BouncyCastleFipsProvider(String config, SecureRandom entropySource)
     {
-        super(PROVIDER_NAME, 2.1000, getInfoString());
+        super(PROVIDER_NAME, 2.1010, getInfoString());
 
         this.entopySource = entropySource;
         // TODO: add support for file parsing, selective disable.
@@ -282,11 +282,11 @@ public final class BouncyCastleFipsProvider
         new ProvX509().configure(this);
         new ProvBCFKS().configure(this);
         new ProvFipsKS().configure(this);
-
+        new ProvEdEC().configure(this);
+        new ProvLMS().configure(this);
+        
         if (!CryptoServicesRegistrar.isInApprovedOnlyMode())
         {
-            new ProvEdEC().configure(this);
-            new ProvLMS().configure(this);
             new ProvDSTU4145().configure(this);
             new ProvElgamal().configure(this);
             new ProvGOST3410().configure(this);
@@ -736,7 +736,11 @@ public final class BouncyCastleFipsProvider
 
                 for (Service service : serviceSet)
                 {
-                    bcServiceSet.add(getService(service.getType(), service.getAlgorithm()));
+                    Service serv = getService(service.getType(), service.getAlgorithm());
+                    if (serv != null)
+                    {
+                        bcServiceSet.add(serv);
+                    }
                 }
 
                 bcServiceSet = Collections.unmodifiableSet(bcServiceSet);

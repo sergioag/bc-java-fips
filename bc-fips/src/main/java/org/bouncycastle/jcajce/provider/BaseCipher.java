@@ -989,7 +989,8 @@ class BaseCipher
             int outputOffset)
             throws ShortBufferException
     {
-        if (outputOffset + cipher.getUpdateOutputSize(inputLen) > output.length)
+        int engineGetOutputLen = cipher.getUpdateOutputSize(inputLen);
+        if (outputOffset + engineGetOutputLen > output.length)
         {
             throw new ShortBufferException("Output buffer too short for input.");
         }
@@ -998,6 +999,13 @@ class BaseCipher
 
         if (inputLen != 0)
         {
+            if (input == output && segmentsOverlap(inputOffset, inputLen, outputOffset, engineGetOutputLen))
+            {
+                input = new byte[inputLen];
+                System.arraycopy(output, inputOffset, input, 0, inputLen);
+                inputOffset = 0;
+            }
+
             processingStream.update(input, inputOffset, inputLen);
         }
 
@@ -1057,7 +1065,9 @@ class BaseCipher
             int outputOffset)
             throws IllegalBlockSizeException, BadPaddingException, ShortBufferException
     {
-        if (outputOffset + engineGetOutputSize(inputLen) > output.length)
+        int engineGetOutputLen = engineGetOutputSize(inputLen);
+
+        if (outputOffset + engineGetOutputLen > output.length)
         {
             throw new ShortBufferException("Output buffer too short for input.");
         }
@@ -1068,6 +1078,14 @@ class BaseCipher
 
             if (inputLen != 0)
             {
+
+                if (input == output && segmentsOverlap(inputOffset, inputLen, outputOffset, engineGetOutputLen))
+                {
+                    input = new byte[inputLen];
+                    System.arraycopy(output, inputOffset, input, 0, inputLen);
+                    inputOffset = 0;
+                }
+
                 processingStream.update(input, inputOffset, inputLen);
             }
 
@@ -1140,5 +1158,11 @@ class BaseCipher
         String name = algorithm.getName();
 
         return name.contains("Poly1305") || name.contains("/CCM") || name.contains("/EAX") || name.contains("/GCM") || name.contains("/OCB");
+    }
+
+    protected boolean segmentsOverlap(int inOff, int inLen, int outOff, int outLen)
+    {
+        // please ensure a valid check for inLen > 0 and outLen > 0 outside this function
+        return inOff <= outOff + outLen && outOff <= inOff + inLen;
     }
 }
